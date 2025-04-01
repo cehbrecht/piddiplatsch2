@@ -3,6 +3,11 @@
 ## Overview
 Piddiplatsch is a Kafka consumer for CMIP7 records that integrates with a Handle Service for persistent identifiers (PIDs).
 
+### Kafka
+
+https://kafka.apache.org/
+
+
 ## Features
 - Listens to a Kafka topic for CMIP7 records
 - Adds, updates, and deletes PIDs in a Handle Service
@@ -17,16 +22,16 @@ Piddiplatsch is a Kafka consumer for CMIP7 records that integrates with a Handle
 
 2. Run the mock Handle Server:
    ```sh
-   python piddiplatsch/mock_handle_server.py
+   python src/piddiplatsch/mock_handle_server.py
    ```
 
 3. Run the Kafka consumer:
    ```sh
-   python piddiplatsch/consumer.py
+   python src/piddiplatsch/consumer.py
    ```
 
 ## Dependencies
 Install required packages with:
 ```sh
-pip install -r requirements.txt
+pip install -e ".[dev]"
 ```
