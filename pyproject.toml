@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "piddiplatsch"
+version = "0.1.0"
+description = "A Kafka consumer for CMIP7 records with Handle Service integration"
+authors = [
+    { name = "Carsten Ehbrecht", email = "ehbrecht@dkrz.de" }
+]
+dependencies = [
+    "flask",
+    "kafka-python",
+    "pyhandle"
+]
+requires-python = ">=3.10"
+
+[project.scripts]
+piddiplatsch-consumer = "piddiplatsch.consumer:main"
+piddiplatsch-mock-handle-server = "piddiplatsch.mock_handle_server:main"
+
+[tool.setuptools]
+packages = ["piddiplatsch"]
