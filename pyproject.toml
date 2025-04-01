@@ -30,7 +30,7 @@ dev = [
 ]
 
 [project.scripts]
-piddiplatsch-consumer = "piddiplatsch.consumer:main"
+piddiplatsch = "piddiplatsch.cli:cli"
 piddiplatsch-mock-handle-server = "piddiplatsch.mock_handle_server:main"
 
 [tool.flit.module]

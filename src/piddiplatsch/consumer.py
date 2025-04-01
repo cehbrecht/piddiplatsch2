@@ -69,11 +69,3 @@ def process_message(message):
         update_pid(record)
     elif action == "delete":
         delete_pid(record.get("pid"))
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    consumer = create_consumer("cmip7.records", "kafka:9092")
-
-    for message in consumer:
-        process_message(message.value)
