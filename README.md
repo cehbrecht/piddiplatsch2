@@ -7,6 +7,10 @@ Piddiplatsch is a Kafka consumer for CMIP7 records that integrates with a Handle
 
 https://kafka.apache.org/
 
+### Handle Client
+
+https://pypi.org/project/pyhandle/
+
 
 ## Features
 - Listens to a Kafka topic for CMIP7 records

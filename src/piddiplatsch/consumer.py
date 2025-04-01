@@ -2,20 +2,22 @@ import json
 import logging
 from kafka import KafkaConsumer
 from functools import lru_cache
-from pyhandle.client.rest import RESTHandleClient
+import pyhandle
 
 # Handle Service Configuration
 HANDLE_SERVER_URL = "http://localhost:5000"  # Mock server for testing
 HANDLE_PREFIX = "21.T11148"
 
 # Initialize Handle Client
-handle_client = RESTHandleClient(url=HANDLE_SERVER_URL)
+handle_client = pyhandle.handleclient.PyHandleClient("rest")
+
 
 def add_pid(record):
     """Adds a PID to the Handle Service."""
     pid = f"{HANDLE_PREFIX}/{record['id']}"
     handle_client.register_handle(pid, record)
     logging.info(f"Added PID {pid} for record: {record}")
+
 
 def update_pid(record):
     """Updates a PID in the Handle Service."""
@@ -24,13 +26,15 @@ def update_pid(record):
         handle_client.modify_handle(pid, record)
         logging.info(f"Updated PID {pid} for record: {record}")
 
+
 def delete_pid(pid):
     """Deletes a PID from the Handle Service."""
     handle_client.delete_handle(pid)
     logging.info(f"Deleted PID: {pid}")
 
+
 @lru_cache(maxsize=1000)
-def search_pid(identifier):
+def lookup_pid(identifier):
     """Searches for an existing PID in the Handle Service (cached)."""
     pid = f"{HANDLE_PREFIX}/{identifier}"
     try:
@@ -41,34 +45,35 @@ def search_pid(identifier):
         logging.info(f"PID {pid} not found.")
         return None
 
+
 def create_consumer(topic: str, bootstrap_servers: str):
     """Creates and returns a Kafka consumer for CMIP7 records."""
     return KafkaConsumer(
         topic,
         bootstrap_servers=bootstrap_servers,
-        auto_offset_reset='earliest',
+        auto_offset_reset="earliest",
         enable_auto_commit=True,
-        value_deserializer=lambda x: json.loads(x.decode('utf-8'))
+        value_deserializer=lambda x: json.loads(x.decode("utf-8")),
     )
+
 
 def process_message(message):
     """Process a CMIP7 record message."""
     logging.info(f"Processing message: {message}")
     action = message.get("action")
     record = message.get("record")
-    
+
     if action == "add":
         add_pid(record)
     elif action == "update":
         update_pid(record)
     elif action == "delete":
         delete_pid(record.get("pid"))
-    elif action == "search":
-        return search_pid(record.get("identifier"))
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     consumer = create_consumer("cmip7.records", "kafka:9092")
-    
+
     for message in consumer:
         process_message(message.value)

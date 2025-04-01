@@ -12,9 +12,10 @@ authors = [
 requires-python = ">=3.8"
 license = {file = "LICENSE"}
 dependencies = [
+    "click",
     "flask",
     "kafka-python",
-    "pyhandle",
+    "pyhandle >=1.2.1",
 ]
 
 [project.optional-dependencies]
