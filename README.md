@@ -14,6 +14,19 @@ https://kafka.apache.org/
 - Caches PID search results
 - Includes a mock Handle Server for testing
 
+## Installation
+
+Create the conda environment:
+```sh
+conda env create
+conda activate piddiplatsch2
+```
+
+Install required packages with:
+```sh
+pip install -e ".[dev]"
+```
+
 ## Setup
 1. Start Kafka with:
    ```sh
@@ -30,8 +43,4 @@ https://kafka.apache.org/
    python src/piddiplatsch/consumer.py
    ```
 
-## Dependencies
-Install required packages with:
-```sh
-pip install -e ".[dev]"
-```
+
