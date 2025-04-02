@@ -1,7 +1,7 @@
 #!/bin/bash
 
 KAFKA_CONTAINER="kafka"
-KAFKA_BROKER="kafka:9092"
+KAFKA_BROKER="localhost:9092"
 
 case "$1" in
   list)
