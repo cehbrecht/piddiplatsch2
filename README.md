@@ -10,6 +10,9 @@ Docs:
 * https://kafka.apache.org/
 * https://pypi.org/project/kafka-python/
 
+Examples:
+* https://github.com/katyagorshkova/kafka-kraft
+
 ### Handle Client
 
 https://pypi.org/project/pyhandle/
@@ -37,7 +40,7 @@ pip install -e ".[dev]"
 ## Setup
 1. Start Kafka with:
    ```sh
-   docker-compose up -d
+   docker-compose up --build -d
    ```
 
 2. Run the mock Handle Server:
@@ -49,5 +52,8 @@ pip install -e ".[dev]"
    ```sh
    python src/piddiplatsch/consumer.py
    ```
-
+4. Stop Kafka with:
+   ```sh
+   docker-compose down -v
+   ```
 
