@@ -37,23 +37,34 @@ Install required packages with:
 pip install -e ".[dev]"
 ```
 
-## Setup
-1. Start Kafka with:
-   ```sh
-   docker-compose up --build -d
-   ```
+## Run kafka
 
-2. Run the mock Handle Server:
-   ```sh
-   python src/piddiplatsch/mock_handle_server.py
-   ```
+Start Kafka with:
+```sh
+docker-compose up --build -d
+```
 
-3. Run the Kafka consumer:
-   ```sh
-   python src/piddiplatsch/consumer.py
-   ```
-4. Stop Kafka with:
-   ```sh
-   docker-compose down -v
-   ```
+Stop Kafka with:
+```sh
+docker-compose down -v
+```
+
+## Use kafka
+
+Run the following script:
+
+```sh
+# create topic cmip7
+./scripts/kafka.sh create cmip7
+
+# list all topics
+./scripts/kafka.sh list
+
+# send message to topic cmip7
+./scripts/kafka.sh send cmip7 hi
+
+# consume all messages from topic cmip7
+./scripts/kafka.sh consume cmip7  
+```
+
 
