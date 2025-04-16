@@ -49,9 +49,9 @@ Stop Kafka with:
 docker-compose down -v
 ```
 
-## Use kafka
+## Use kafka client
 
-Run the following script:
+Run the `kafka.sh` script :
 
 ```sh
 # create topic cmip7
@@ -66,5 +66,23 @@ Run the following script:
 # consume all messages from topic cmip7
 ./scripts/kafka.sh consume cmip7  
 ```
+
+## Use piddiplatsch client
+
+Create topic CMIP7:
+```sh
+piddiplatsch init
+```
+
+Send a message:
+```sh
+piddiplatsch send -m '{"greetings": "hey"}'
+```
+
+Consume messages:
+```sh
+piddiplatsch consume
+```
+
 
 
