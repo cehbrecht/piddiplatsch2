@@ -84,5 +84,12 @@ Consume messages:
 piddiplatsch consume
 ```
 
+## Example with PIDs
+
+Add a PID record:
+```sh
+piddiplatsch send -m '{"action": "add", "record": {"pid": "1234", "name": "tas-2025-04-16.nc"}}'
+```
+
 
 
