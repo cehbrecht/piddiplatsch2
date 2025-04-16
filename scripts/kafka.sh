@@ -14,6 +14,13 @@ case "$1" in
     fi
     docker exec -it "$KAFKA_CONTAINER" /usr/bin/kafka-topics --bootstrap-server "$KAFKA_BROKER" --create --topic "$2" --partitions 1 --replication-factor 1
     ;;
+  delete)
+    if [ -z "$2" ]; then
+      echo "Usage: $0 delete <topic-name>"
+      exit 1
+    fi
+    docker exec -it "$KAFKA_CONTAINER" /usr/bin/kafka-topics --bootstrap-server "$KAFKA_BROKER" --delete --topic "$2"
+    ;;
   consume)
     if [ -z "$2" ]; then
       echo "Usage: $0 consume <topic-name>"

@@ -5,7 +5,7 @@ from kafka.admin import NewTopic
 from piddiplatsch.consumer import create_consumer, process_message
 
 # Kafka configuration
-KAFKA_SERVER = "localhost:9092"
+KAFKA_SERVER = "localhost:39092"
 KAFKA_TOPIC = "CMIP7"
 
 
