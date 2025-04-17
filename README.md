@@ -10,6 +10,9 @@ Docs:
 * https://kafka.apache.org/
 * https://pypi.org/project/kafka-python/
 
+Examples:
+* https://github.com/katyagorshkova/kafka-kraft
+
 ### Handle Client
 
 https://pypi.org/project/pyhandle/
@@ -34,20 +37,72 @@ Install required packages with:
 pip install -e ".[dev]"
 ```
 
-## Setup
-1. Start Kafka with:
-   ```sh
-   docker-compose up -d
-   ```
+## Run kafka
 
-2. Run the mock Handle Server:
-   ```sh
-   python src/piddiplatsch/mock_handle_server.py
-   ```
+Start Kafka with:
+```sh
+docker-compose up --build -d
+```
 
-3. Run the Kafka consumer:
-   ```sh
-   python src/piddiplatsch/consumer.py
-   ```
+Stop Kafka with:
+```sh
+docker-compose down -v
+```
+
+## Use kafka client
+
+Run the `kafka.sh` script :
+
+```sh
+# create topic cmip7
+./scripts/kafka.sh create CMIP7
+
+# list all topics
+./scripts/kafka.sh list
+
+# send message to topic cmip7
+./scripts/kafka.sh send CMIP7 hi
+
+# consume all messages from topic cmip7
+./scripts/kafka.sh consume CMIP7  
+```
+
+## Use piddiplatsch client
+
+Create topic CMIP7:
+```sh
+piddiplatsch init
+```
+
+Send a message:
+```sh
+piddiplatsch send -m '{"greetings": "hey"}'
+```
+
+Consume messages:
+```sh
+piddiplatsch consume
+```
+
+## Example with PIDs
+
+Add a PID record:
+```sh
+piddiplatsch send -m '{"action": "add", "record": {"pid": "1234", "name": "tas-2025-04-16.nc"}}'
+```
+
+## Use mock handle service
+
+Start mock handle service:
+```sh
+python src/piddiplatsch/testing/mock_handle_server.py
+```
+
+Register dummy handle:
+```sh
+curl -X PUT "http://localhost:5000/api/handles/21.T11148/1234?overwrite=true" \
+  -H "Content-Type: application/json" \
+  -d '{"location": "http://dummy.org/test"}'
+```
 
 
