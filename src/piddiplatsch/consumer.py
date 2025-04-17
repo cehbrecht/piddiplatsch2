@@ -16,11 +16,13 @@ client.instantiate_with_username_and_password(
     password="testpass",
     HTTPS_verify=False,  # optional for HTTP or self-signed certs
 )
+# Patch the internal REST connector to set the config
 client.handle_client._RESTHandleClient__handlesystemconnector._HandleSystemConnector__has_write_access = (
     True
 )
-# Patch the internal REST connector's base URL to include /api/handles
 client.handle_client._RESTHandleClient__handlesystemconnector._HandleSystemConnector__handle_server_url = HANDLE_SERVER_URL
+client.handle_client._RESTHandleClient__handlesystemconnector._HandleSystemConnector__HTTPS_verify = False
+
 
 
 def add_pid(record):
@@ -31,8 +33,11 @@ def add_pid(record):
     pid = f"{HANDLE_PREFIX}/{record['pid']}"
 
     try:
-        client.register_handle(pid, record)
+        # client.register_handle(pid, record, overwrite=True)
+        client.register_handle(handle=pid, location="https://example.com", overwrite=True, **record)
         logging.info(f"Added PID {pid} for record: {record}")
+    except pyhandle.handleexceptions.HandleAlreadyExistsException:
+        logging.info(f"Handle already exists!")
     except Exception as e:
         logging.error(f"Failed to register PID {pid}: {e}")
         raise

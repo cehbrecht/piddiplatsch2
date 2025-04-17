@@ -91,5 +91,18 @@ Add a PID record:
 piddiplatsch send -m '{"action": "add", "record": {"pid": "1234", "name": "tas-2025-04-16.nc"}}'
 ```
 
+## Use mock handle service
+
+Start mock handle service:
+```sh
+python src/piddiplatsch/mock_handle_server.py
+```
+
+Register dummy handle:
+```sh
+curl -X PUT "http://localhost:5000/api/handles/21.T11148/1234?overwrite=true" \
+  -H "Content-Type: application/json" \
+  -d '{"location": "http://dummy.org/test"}'
+```
 
 
