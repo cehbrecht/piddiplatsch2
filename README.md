@@ -55,16 +55,16 @@ Run the `kafka.sh` script :
 
 ```sh
 # create topic cmip7
-./scripts/kafka.sh create cmip7
+./scripts/kafka.sh create CMIP7
 
 # list all topics
 ./scripts/kafka.sh list
 
 # send message to topic cmip7
-./scripts/kafka.sh send cmip7 hi
+./scripts/kafka.sh send CMIP7 hi
 
 # consume all messages from topic cmip7
-./scripts/kafka.sh consume cmip7  
+./scripts/kafka.sh consume CMIP7  
 ```
 
 ## Use piddiplatsch client

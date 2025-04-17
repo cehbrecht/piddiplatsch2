@@ -5,20 +5,22 @@ from functools import lru_cache
 import pyhandle
 
 # Handle Service Configuration
-HANDLE_SERVER_URL = "http://localhost:5000/"  # Mock server for testing
+HANDLE_SERVER_URL = "http://localhost:5000"  # Mock server for testing
 HANDLE_PREFIX = "21.T11148"
 
 # Initialize Handle Client
 client = pyhandle.handleclient.PyHandleClient("rest")
 client.instantiate_with_username_and_password(
     handle_server_url=HANDLE_SERVER_URL,
-    username="300:foo/bar",
-    password="mypassword",
+    username=f"300:{HANDLE_PREFIX}/testuser",
+    password="testpass",
     HTTPS_verify=False,  # optional for HTTP or self-signed certs
 )
 client.handle_client._RESTHandleClient__handlesystemconnector._HandleSystemConnector__has_write_access = (
     True
 )
+# Patch the internal REST connector's base URL to include /api/handles
+client.handle_client._RESTHandleClient__handlesystemconnector._HandleSystemConnector__handle_server_url = HANDLE_SERVER_URL
 
 
 def add_pid(record):
