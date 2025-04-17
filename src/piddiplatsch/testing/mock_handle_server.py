@@ -87,10 +87,12 @@ def put_handle(prefix, suffix):
     overwrite = request.args.get("overwrite", "false").lower() == "true"
 
     if handle in handles and not overwrite:
+        app.logger.debug("handle already exist")
         return jsonify({"message": f"Handle {handle} already exists"}), 409
 
     data = request.get_json()
     handles[handle] = data
+    app.logger.debug(f"register handle {handle}, data={data}")
     return jsonify({"responseCode": 1, "handle": handle, "message": f"Handle {handle} registered"}), 201
 
 @app.route("/api/handles/<prefix>/<suffix>", methods=["DELETE"])
