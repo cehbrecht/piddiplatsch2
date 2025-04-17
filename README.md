@@ -95,7 +95,7 @@ piddiplatsch send -m '{"action": "add", "record": {"pid": "1234", "name": "tas-2
 
 Start mock handle service:
 ```sh
-python src/piddiplatsch/mock_handle_server.py
+python src/piddiplatsch/testing/mock_handle_server.py
 ```
 
 Register dummy handle:
