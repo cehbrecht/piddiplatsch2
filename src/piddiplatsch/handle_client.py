@@ -3,7 +3,7 @@ from functools import lru_cache
 import pyhandle
 
 
-class HandleServiceClient:
+class HandleClient:
     def __init__(self, server_url, prefix, username, password, verify_https=False):
         self.server_url = server_url
         self.prefix = prefix
