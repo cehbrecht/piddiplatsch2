@@ -1,6 +1,7 @@
 import click
 import logging
 import json
+import uuid
 from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient, NewTopic
 from piddiplatsch.consumer import Consumer, process_message
@@ -90,6 +91,12 @@ def send(ctx, message, topic, kafka_server):
     """Send a message to the Kafka topic."""
     producer = Producer({"bootstrap.servers": kafka_server})
 
+    # Generate a UUID using uuid5
+    generated_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, message)
+
+    # Get the UUID as a string
+    key = str(generated_uuid)
+
     def delivery_report(err, msg):
         if err is not None:
             click.echo(f"Delivery failed: {err}")
@@ -97,7 +104,12 @@ def send(ctx, message, topic, kafka_server):
             click.echo(f"Message delivered to {msg.topic()} [{msg.partition()}]")
 
     # Send the message (assuming it's a stringified JSON or simple string)
-    producer.produce(topic, value=message.encode("utf-8"), callback=delivery_report)
+    producer.produce(
+        topic,
+        key=key.encode("utf-8"),
+        value=message.encode("utf-8"),
+        callback=delivery_report,
+    )
     producer.flush()
 
 

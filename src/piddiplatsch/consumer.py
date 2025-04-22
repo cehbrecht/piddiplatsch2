@@ -22,7 +22,7 @@ def build_client():
 
 class Consumer:
     def __init__(
-        self, topic: str, kafka_server: str, group_id: str = "piddiplatsch-consumer"
+        self, topic: str, kafka_server: str, group_id: str = "piddiplatsch-consumer-1"
     ):
         """Initialize the Kafka Consumer."""
         self.topic = topic
@@ -43,10 +43,15 @@ class Consumer:
         try:
             while True:
                 msg = self.consumer.poll(timeout=1.0)
+                print(f"consumed message: {msg}")
                 if msg is None:
                     continue
                 if msg.error():
                     raise KafkaException(msg.error())
+
+                # Get the message key
+                key = msg.key().decode("utf-8")
+                print(f"got a message: {key}")
 
                 # Parse the JSON payload
                 value = json.loads(msg.value().decode("utf-8"))
