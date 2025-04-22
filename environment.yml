@@ -5,4 +5,4 @@ dependencies:
   - pip
   - python>=3.8
   - flask
-  - kafka-python
+  - python-confluent-kafka>=2.9
