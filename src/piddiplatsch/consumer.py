@@ -1,5 +1,6 @@
 import logging
 import json
+import uuid
 from confluent_kafka import Consumer as ConfluentConsumer, KafkaException
 from piddiplatsch.handle_client import HandleClient
 
@@ -22,7 +23,7 @@ def build_client():
 
 class Consumer:
     def __init__(
-        self, topic: str, kafka_server: str, group_id: str = "piddiplatsch-consumer-1"
+        self, topic: str, kafka_server: str, group_id: str = "piddiplatsch-consumer-4"
     ):
         """Initialize the Kafka Consumer."""
         self.topic = topic
@@ -55,55 +56,35 @@ class Consumer:
 
                 # Parse the JSON payload
                 value = json.loads(msg.value().decode("utf-8"))
-                yield value
+                yield key, value
         finally:
             self.consumer.close()
 
 
-def process_message(message_data):
+def process_message(key, value):
     """Process a CMIP7 record message."""
-    logging.info(f"Processing message: {message_data}")
+    print(f"Processing message: {key}")
 
-    action = message_data.get("action")
-    record = message_data.get("record")
+    pid = make_pid(key)
 
-    if action == "add":
-        add_pid(record)
-    elif action == "update":
-        update_pid(record)
-    elif action == "delete":
-        delete_pid(record.get("pid"))
+    location_url = value["data"]["payload"]["item"]["links"][0]["href"]
+    record = {"location_url": location_url}
+    create_or_update_pid(pid, record)
 
 
-def add_pid(record):
+def make_pid(key):
+    id = str(uuid.uuid5(uuid.NAMESPACE_DNS, key))
+    pid = f"{HANDLE_PREFIX}/{id}"
+    return pid
+
+
+def create_or_update_pid(pid, record):
     """Adds a PID to the Handle Service."""
+    print(f"add pid = {pid}, record = {record}")
     handle_client = build_client()
-    pid = f"21.T11148/{record.get('pid')}"
 
     try:
         handle_client.add_pid(record)
         logging.info(f"Added PID {pid} for record: {record}")
     except Exception as e:
         logging.error(f"Failed to add PID {pid}: {e}")
-
-
-def update_pid(record):
-    """Updates a PID in the Handle Service."""
-    handle_client = build_client()
-    pid = record.get("pid")
-    if pid:
-        try:
-            handle_client.update_pid(pid, record)
-            logging.info(f"Updated PID {pid} for record: {record}")
-        except Exception as e:
-            logging.error(f"Failed to update PID {pid}: {e}")
-
-
-def delete_pid(pid):
-    """Deletes a PID from the Handle Service."""
-    handle_client = build_client()
-    try:
-        handle_client.delete_pid(pid)
-        logging.info(f"Deleted PID: {pid}")
-    except Exception as e:
-        logging.error(f"Failed to delete PID {pid}: {e}")

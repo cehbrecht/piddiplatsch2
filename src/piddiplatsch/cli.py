@@ -1,7 +1,7 @@
 import click
+import os
 import logging
 import json
-import uuid
 from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient, NewTopic
 from piddiplatsch.consumer import Consumer, process_message
@@ -13,8 +13,8 @@ DEFAULT_KAFKA_SERVER = "localhost:39092"
 def start_consumer(topic, kafka_server):
     logging.info(f"Starting Kafka consumer for topic: {topic}...")
     consumer = Consumer(topic, kafka_server)
-    for message in consumer.consume():
-        process_message(message)
+    for key, value in consumer.consume():
+        process_message(key, value)
 
 
 CONTEXT_OBJ = dict()
@@ -74,7 +74,7 @@ def init(ctx, topic, kafka_server):
 
 @cli.command()
 @click.pass_context
-@click.option("--message", "-m", required=True, help="Message to send to Kafka topic")
+@click.option("--path", "-p", required=True, help="JSON file to send to Kafka topic")
 @click.option(
     "--topic",
     "-t",
@@ -87,15 +87,15 @@ def init(ctx, topic, kafka_server):
     default=DEFAULT_KAFKA_SERVER,
     help="Kafka server (default: localhost:39092)",
 )
-def send(ctx, message, topic, kafka_server):
+def send(ctx, path, topic, kafka_server):
     """Send a message to the Kafka topic."""
     producer = Producer({"bootstrap.servers": kafka_server})
 
-    # Generate a UUID using uuid5
-    generated_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, message)
+    with open(path, "r") as f:
+        data = json.load(f)
 
-    # Get the UUID as a string
-    key = str(generated_uuid)
+    key = os.path.splitext(os.path.basename(path))[0]
+    value = json.dumps(data)
 
     def delivery_report(err, msg):
         if err is not None:
@@ -107,7 +107,7 @@ def send(ctx, message, topic, kafka_server):
     producer.produce(
         topic,
         key=key.encode("utf-8"),
-        value=message.encode("utf-8"),
+        value=value.encode("utf-8"),
         callback=delivery_report,
     )
     producer.flush()
