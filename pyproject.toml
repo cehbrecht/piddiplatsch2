@@ -14,7 +14,7 @@ license = {file = "LICENSE"}
 dependencies = [
     "click",
     "flask",
-    "kafka-python",
+    "confluent-kafka >=2.9.0",
     "pyhandle >=1.4.1",
 ]
 

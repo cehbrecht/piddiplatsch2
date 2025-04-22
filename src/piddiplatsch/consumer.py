@@ -1,6 +1,6 @@
 import logging
 import json
-from kafka import KafkaConsumer
+from confluent_kafka import Consumer as ConfluentConsumer, KafkaException
 from piddiplatsch.handle_client import HandleClient
 
 # Handle Service Configuration (same as in handle_client.py)
@@ -16,36 +16,54 @@ def build_client():
         server_url=HANDLE_SERVER_URL,
         prefix=HANDLE_PREFIX,
         username=USERNAME,
-        password=PASSWORD
+        password=PASSWORD,
     )
 
 
 class Consumer:
-    def __init__(self, topic: str, kafka_server: str):
+    def __init__(
+        self, topic: str, kafka_server: str, group_id: str = "piddiplatsch-consumer-1"
+    ):
         """Initialize the Kafka Consumer."""
         self.topic = topic
         self.kafka_server = kafka_server
+        self.group_id = group_id
+        self.consumer = ConfluentConsumer(
+            {
+                "bootstrap.servers": self.kafka_server,
+                "group.id": self.group_id,
+                "auto.offset.reset": "earliest",
+                "enable.auto.commit": True,
+            }
+        )
+        self.consumer.subscribe([self.topic])
 
     def consume(self):
         """Consume messages from Kafka."""
-        consumer = KafkaConsumer(
-            self.topic,
-            bootstrap_servers=self.kafka_server,
-            auto_offset_reset="earliest",
-            enable_auto_commit=True,
-            value_deserializer=lambda x: json.loads(x.decode("utf-8")),
-        )
-        for message in consumer:
-            yield message
+        try:
+            while True:
+                msg = self.consumer.poll(timeout=1.0)
+                print(f"consumed message: {msg}")
+                if msg is None:
+                    continue
+                if msg.error():
+                    raise KafkaException(msg.error())
+
+                # Get the message key
+                key = msg.key().decode("utf-8")
+                print(f"got a message: {key}")
+
+                # Parse the JSON payload
+                value = json.loads(msg.value().decode("utf-8"))
+                yield value
+        finally:
+            self.consumer.close()
 
 
-def process_message(message):
+def process_message(message_data):
     """Process a CMIP7 record message."""
-    logging.info(f"Processing message: {message}")
-    
-    # Access the actual message value, which is already deserialized
-    message_data = message.value
-    
+    logging.info(f"Processing message: {message_data}")
+
     action = message_data.get("action")
     record = message_data.get("record")
 
@@ -55,7 +73,6 @@ def process_message(message):
         update_pid(record)
     elif action == "delete":
         delete_pid(record.get("pid"))
-
 
 
 def add_pid(record):
