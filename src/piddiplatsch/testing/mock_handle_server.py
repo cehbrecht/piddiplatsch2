@@ -1,21 +1,22 @@
 from flask import Flask, request, jsonify
-
 import logging
 
 app = Flask(__name__)
 
-# Enable logging
+# Configure logging
 logging.basicConfig(level=logging.DEBUG)
+logger = app.logger
 
-handles = {}  # In-memory handle store
+# In-memory handle store
+handles = {}
 
-# Dummy admin user credentials
+# Constants
 HANDLE_PREFIX = "21.T11148"
 DUMMY_USERNAME_HANDLE = f"{HANDLE_PREFIX}/testuser"
 DUMMY_USERNAME = f"300:{DUMMY_USERNAME_HANDLE}"
 DUMMY_PASSWORD = "testpass"
 
-# Admin handle record template
+# Admin handle record
 ADMIN_HANDLE_RECORD = {
     "handle": DUMMY_USERNAME_HANDLE,
     "values": [
@@ -34,56 +35,59 @@ ADMIN_HANDLE_RECORD = {
     ],
 }
 
-# add admin user record
+# Preload admin user handle
 handles[DUMMY_USERNAME_HANDLE] = ADMIN_HANDLE_RECORD
 
 
 @app.route("/api/handles/<prefix>/<suffix>", methods=["GET"])
 def get_handle(prefix, suffix):
     handle = f"{prefix}/{suffix}"
+    logger.debug(f"GET request for handle: {handle}")
 
-    app.logger.debug(f"Received GET for: {handle}")
-
-    if handle in handles:
-        app.logger.debug(f"get_handle: handle={handle} found")
-        # Add responseCode to the response
-        response = dict(handles[handle])  # Copy the stored record
-        response["handle"] = handle  # Add the required key
-        response["responseCode"] = 1  # Optional, useful for debugging
-
-        return jsonify(response), 200  # Return with the added responseCode
+    record = handles.get(handle)
+    if record:
+        logger.debug(f"Handle found: {handle}")
+        return jsonify({
+            **record,
+            "handle": handle,
+            "responseCode": 1
+        }), 200
     else:
-        app.logger.debug(f"get_handle: handle={handle} not found")
-        return (
-            jsonify({"message": f"Handle {handle} not found", "responseCode": 100}),
-            200,
-        )
+        logger.debug(f"Handle not found: {handle}")
+        return jsonify({
+            "message": f"Handle {handle} not found",
+            "responseCode": 100
+        }), 200
 
 
 @app.route("/api/handles/<prefix>/<suffix>", methods=["PUT"])
 def put_handle(prefix, suffix):
     handle = f"{prefix}/{suffix}"
-    app.logger.debug(f"Received PUT for: {handle}")
-
     overwrite = request.args.get("overwrite", "false").lower() == "true"
 
+    logger.debug(f"PUT request for handle: {handle}, overwrite={overwrite}")
+
     if handle in handles and not overwrite:
-        app.logger.debug("handle already exist")
+        logger.debug(f"Handle already exists: {handle}")
         return jsonify({"message": f"Handle {handle} already exists"}), 409
 
-    data = request.get_json()
+    try:
+        data = request.get_json(force=True)
+        if not isinstance(data, dict) or "values" not in data:
+            raise ValueError("Invalid handle record format")
+    except Exception as e:
+        logger.error(f"Invalid request body: {e}")
+        return jsonify({"message": f"Invalid request body: {e}"}), 400
+
+    data["handle"] = handle  # Ensure handle is set correctly
     handles[handle] = data
-    app.logger.debug(f"register handle {handle}, data={data}")
-    return (
-        jsonify(
-            {
-                "responseCode": 1,
-                "handle": handle,
-                "message": f"Handle {handle} registered",
-            }
-        ),
-        201,
-    )
+
+    logger.debug(f"Handle registered: {handle} with data: {data}")
+    return jsonify({
+        "responseCode": 1,
+        "handle": handle,
+        "message": f"Handle {handle} registered"
+    }), 200
 
 
 if __name__ == "__main__":

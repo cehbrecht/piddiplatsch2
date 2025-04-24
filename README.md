@@ -89,7 +89,17 @@ Register dummy handle:
 ```sh
 curl -X PUT "http://localhost:5000/api/handles/21.T11148/test_1001?overwrite=true" \
   -H "Content-Type: application/json" \
-  -d '{"location": "http://dummy.org/test_1001"}'
+  -d '{
+    "values": [
+      {
+        "index": 1,
+        "type": "URL",
+        "data": {
+          "value": "https://example.org/location/1001"
+        }
+      }
+    ]
+  }'
 ```
 
 Get dummy handle:
