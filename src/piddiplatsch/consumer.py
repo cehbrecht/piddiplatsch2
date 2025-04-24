@@ -65,21 +65,24 @@ def process_message(key, value):
     """Process a CMIP7 record message."""
     print(f"Processing message: {key}")
 
-    pid = make_pid(key)
+    pid = make_pid(key, value)
 
-    location_url = value["data"]["payload"]["item"]["links"][0]["href"]
-    record = {"location_url": location_url}
-    create_or_update_pid(pid, record)
+    location = value["data"]["payload"]["item"]["links"][0]["href"]
+    record = {"location": location}
+    create_or_update_record(pid, record)
 
 
-def make_pid(key):
-    id = str(uuid.uuid5(uuid.NAMESPACE_DNS, key))
+def make_pid(key, value):
+    try:
+        id = value["data"]["payload"]["item"]["id"]
+    except Exception:
+        id = str(uuid.uuid5(uuid.NAMESPACE_DNS, key))
     pid = f"{HANDLE_PREFIX}/{id}"
     return pid
 
 
-def create_or_update_pid(pid, record):
-    """Adds a PID to the Handle Service."""
+def create_or_update_record(pid, record):
+    """Adds a PID with a record to the Handle Service."""
     print(f"add pid = {pid}, record = {record}")
     handle_client = build_client()
 
