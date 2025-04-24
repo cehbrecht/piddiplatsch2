@@ -1,6 +1,4 @@
-from flask import Flask, request, jsonify, make_response
-from functools import wraps
-import base64
+from flask import Flask, request, jsonify
 
 import logging
 
@@ -40,27 +38,6 @@ ADMIN_HANDLE_RECORD = {
 handles[DUMMY_USERNAME_HANDLE] = ADMIN_HANDLE_RECORD
 
 
-def check_auth(auth_header):
-    return True
-
-    # if not auth_header or not auth_header.startswith("Basic "):
-    #     return False
-    # encoded = auth_header.split(" ")[1]
-    # decoded = base64.b64decode(encoded).decode()
-    # return decoded == f"{DUMMY_USERNAME}:{DUMMY_PASSWORD}"
-
-
-def require_auth(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        auth_header = request.headers.get("Authorization")
-        if not check_auth(auth_header):
-            return make_response(jsonify({"message": "Unauthorized"}), 401)
-        return f(*args, **kwargs)
-
-    return decorated
-
-
 @app.route("/api/handles/<prefix>/<suffix>", methods=["GET"])
 def get_handle(prefix, suffix):
     handle = f"{prefix}/{suffix}"
@@ -84,7 +61,6 @@ def get_handle(prefix, suffix):
 
 
 @app.route("/api/handles/<prefix>/<suffix>", methods=["PUT"])
-# @require_auth
 def put_handle(prefix, suffix):
     handle = f"{prefix}/{suffix}"
     app.logger.debug(f"Received PUT for: {handle}")
