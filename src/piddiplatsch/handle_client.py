@@ -39,7 +39,7 @@ class HandleClient:
 
         try:
             # Register the handle and overwrite flag
-            self.client.register_handle(handle=handle, location='https://example.org/location/1001', overwrite=True)
+            self.client.register_handle(handle=handle, location=record["URL"], overwrite=True, **record)
             logging.info(f"Added handle: {handle}")
         except pyhandle.handleexceptions.HandleAlreadyExistsException:
             logging.info(f"Handle already exists: {handle}")

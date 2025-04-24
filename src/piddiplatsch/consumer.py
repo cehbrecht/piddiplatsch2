@@ -81,8 +81,11 @@ def build_pid(key, value):
 
 
 def build_record(value):
-    location = value["data"]["payload"]["item"]["links"][0]["href"]
-    record = {"location": location}
+    url = value["data"]["payload"]["item"]["links"][0]["href"]
+    record = {
+        "URL": url,
+        "CHECKSUM": None,
+    }
     return record
 
 
