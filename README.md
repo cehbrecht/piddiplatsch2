@@ -58,7 +58,7 @@ piddiplatsch init
 
 Send a message:
 ```sh
-piddiplatsch send -m '{"greetings": "hey"}'
+piddiplatsch send -m '{"data": {"payload": {"item": {"id": "CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710",}}}}'
 ```
 
 Consume messages:
@@ -68,9 +68,9 @@ piddiplatsch consume
 
 ## Example with PIDs
 
-Add a PID record:
+Add a PID record (json file):
 ```sh
-piddiplatsch send -m '{"action": "add", "record": {"pid": "1234", "name": "tas-2025-04-16.nc"}}'
+piddiplatsch send -p tests/testdata/CMIP6/CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710.json
 ```
 
 ## Use mock handle service
