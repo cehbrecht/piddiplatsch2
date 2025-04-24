@@ -10,20 +10,24 @@ class HandleClient:
         self.server_url = server_url
         self.prefix = prefix
         self.verify_https = verify_https
-        self.client = pyhandle.handleclient.PyHandleClient("rest")
-        self.client.instantiate_with_username_and_password(
+        client = pyhandle.handleclient.PyHandleClient("rest")
+        client.instantiate_with_username_and_password(
             handle_server_url=server_url,
             username=f"300:{prefix}/{username}",
             password=password,
             HTTPS_verify=verify_https,
         )
 
+        # set rest client
+        self.client = client.handle_client
+
         # Patch internal connector for testing purposes
-        connector = self.client.handle_client._RESTHandleClient__handlesystemconnector
+        connector = self.client._RESTHandleClient__handlesystemconnector
         connector._HandleSystemConnector__has_write_access = True
         connector._HandleSystemConnector__handle_server_url = server_url
         connector._HandleSystemConnector__HTTPS_verify = verify_https
         connector._HandleSystemConnector__authentication_method = 'user_pw'
+        connector._HandleSystemConnector__basic_authentication_string = "_noauth_"
 
     def build_handle(self, pid):
         """Build a full handle by combining the prefix and the PID."""

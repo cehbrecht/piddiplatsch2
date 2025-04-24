@@ -37,6 +37,11 @@ Install required packages with:
 pip install -e ".[dev]"
 ```
 
+or with make:
+```sh
+make develop 
+```
+
 ## Run kafka
 
 Start Kafka with:
@@ -50,11 +55,6 @@ docker-compose down -v
 ```
 
 ## Use piddiplatsch client
-
-Create topic CMIP7:
-```sh
-piddiplatsch init
-```
 
 Send a message:
 ```sh
