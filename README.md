@@ -82,9 +82,13 @@ python src/piddiplatsch/testing/mock_handle_server.py
 
 Register dummy handle:
 ```sh
-curl -X PUT "http://localhost:5000/api/handles/21.T11148/1234?overwrite=true" \
+curl -X PUT "http://localhost:5000/api/handles/21.T11148/test_1001?overwrite=true" \
   -H "Content-Type: application/json" \
-  -d '{"location": "http://dummy.org/test"}'
+  -d '{"location": "http://dummy.org/test_1001"}'
+
+Get dummy handle:
+```sh
+curl -X GET "http://localhost:5000/api/handles/21.T11148/test_1001"
 ```
 
 
