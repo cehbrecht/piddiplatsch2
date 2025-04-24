@@ -63,16 +63,14 @@ class Consumer:
 
 def process_message(key, value):
     """Process a CMIP7 record message."""
-    print(f"Processing message: {key}")
+    logging.info(f"Processing message: {key}")
 
-    pid = make_pid(key, value)
-
-    location = value["data"]["payload"]["item"]["links"][0]["href"]
-    record = {"location": location}
-    create_or_update_record(pid, record)
+    pid = build_pid(key, value)
+    record = build_record(value)
+    add_item(pid, record)
 
 
-def make_pid(key, value):
+def build_pid(key, value):
     try:
         id = value["data"]["payload"]["item"]["id"]
     except Exception:
@@ -81,13 +79,19 @@ def make_pid(key, value):
     return pid
 
 
-def create_or_update_record(pid, record):
-    """Adds a PID with a record to the Handle Service."""
-    print(f"add pid = {pid}, record = {record}")
+def build_record(value):
+    location = value["data"]["payload"]["item"]["links"][0]["href"]
+    record = {"location": location}
+    return record
+
+
+def add_item(pid, record):
+    """Adds an item with pid and record to the Handle Service."""
+    logging.info(f"add pid = {pid}, record = {record}")
     handle_client = build_client()
 
     try:
-        handle_client.add_pid(record)
-        logging.info(f"Added PID {pid} for record: {record}")
+        handle_client.add_item(pid, record)
+        logging.info(f"Added PID {pid}")
     except Exception as e:
         logging.error(f"Failed to add PID {pid}: {e}")
