@@ -10,11 +10,9 @@ from piddiplatsch.consumer import Consumer, process_message
 DEFAULT_KAFKA_SERVER = "localhost:39092"
 DEFAULT_TOPIC = "CMIP7"
 
-# CLI context
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
-# Utilities
 def get_producer(kafka_server):
     return Producer({"bootstrap.servers": kafka_server})
 
@@ -23,18 +21,22 @@ def get_admin_client(kafka_server):
     return AdminClient({"bootstrap.servers": kafka_server})
 
 
-def create_topic(kafka_server, topic):
+def ensure_topic_exists(kafka_server, topic):
     admin_client = get_admin_client(kafka_server)
-    new_topic = NewTopic(topic, num_partitions=1, replication_factor=1)
-    fs = admin_client.create_topics([new_topic])
-    try:
-        fs[topic].result()
-        click.echo(f"✅ Created Kafka topic: {topic}")
-    except Exception as e:
-        click.echo(f"⚠️  Error creating topic: {e}")
+    metadata = admin_client.list_topics(timeout=5)
+    if topic not in metadata.topics:
+        click.echo(f"ℹ️ Topic '{topic}' does not exist. Creating it...")
+        new_topic = NewTopic(topic, num_partitions=1, replication_factor=1)
+        fs = admin_client.create_topics([new_topic])
+        try:
+            fs[topic].result()
+            click.echo(f"✅ Created Kafka topic: {topic}")
+        except Exception as e:
+            click.echo(f"⚠️  Failed to create topic '{topic}': {e}")
 
 
 def produce_message(kafka_server, topic, key, value):
+    ensure_topic_exists(kafka_server, topic)
     producer = get_producer(kafka_server)
 
     def delivery_report(err, msg):
@@ -53,13 +55,13 @@ def produce_message(kafka_server, topic, key, value):
 
 
 def start_kafka_consumer(topic, kafka_server):
+    ensure_topic_exists(kafka_server, topic)
     logging.info(f"Starting Kafka consumer for topic: {topic}")
     consumer = Consumer(topic, kafka_server)
     for key, value in consumer.consume():
         process_message(key, value)
 
 
-# CLI definitions
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option()
 @click.pass_context
@@ -78,16 +80,6 @@ def cli(ctx):
 def consume(topic, kafka_server):
     """Start the Kafka consumer."""
     start_kafka_consumer(topic, kafka_server)
-
-
-@cli.command()
-@click.option("-t", "--topic", default=DEFAULT_TOPIC, help="Kafka topic to create.")
-@click.option(
-    "-s", "--kafka-server", default=DEFAULT_KAFKA_SERVER, help="Kafka server URL."
-)
-def init(topic, kafka_server):
-    """Create the Kafka topic if it doesn't exist."""
-    create_topic(kafka_server, topic)
 
 
 @cli.command()
