@@ -7,21 +7,59 @@ from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient, NewTopic
 from piddiplatsch.consumer import Consumer, process_message
 
-# Default Kafka server configuration
 DEFAULT_KAFKA_SERVER = "localhost:39092"
+DEFAULT_TOPIC = "CMIP7"
+
+# CLI context
+CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
-def start_consumer(topic, kafka_server):
-    logging.info(f"Starting Kafka consumer for topic: {topic}...")
+# Utilities
+def get_producer(kafka_server):
+    return Producer({"bootstrap.servers": kafka_server})
+
+
+def get_admin_client(kafka_server):
+    return AdminClient({"bootstrap.servers": kafka_server})
+
+
+def create_topic(kafka_server, topic):
+    admin_client = get_admin_client(kafka_server)
+    new_topic = NewTopic(topic, num_partitions=1, replication_factor=1)
+    fs = admin_client.create_topics([new_topic])
+    try:
+        fs[topic].result()
+        click.echo(f"✅ Created Kafka topic: {topic}")
+    except Exception as e:
+        click.echo(f"⚠️  Error creating topic: {e}")
+
+
+def produce_message(kafka_server, topic, key, value):
+    producer = get_producer(kafka_server)
+
+    def delivery_report(err, msg):
+        if err:
+            click.echo(f"❌ Delivery failed: {err}")
+        else:
+            click.echo(f"📤 Message delivered to {msg.topic()} [{msg.partition()}]")
+
+    producer.produce(
+        topic,
+        key=key.encode("utf-8"),
+        value=value.encode("utf-8"),
+        callback=delivery_report,
+    )
+    producer.flush()
+
+
+def start_kafka_consumer(topic, kafka_server):
+    logging.info(f"Starting Kafka consumer for topic: {topic}")
     consumer = Consumer(topic, kafka_server)
     for key, value in consumer.consume():
         process_message(key, value)
 
 
-CONTEXT_OBJ = dict()
-CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"], obj=CONTEXT_OBJ)
-
-
+# CLI definitions
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option()
 @click.pass_context
@@ -31,100 +69,49 @@ def cli(ctx):
 
 
 @cli.command()
-@click.pass_context
 @click.option(
-    "--topic",
-    "-t",
-    default="CMIP7",
-    help="Kafka topic to consume messages from (default: CMIP7)",
+    "-t", "--topic", default=DEFAULT_TOPIC, help="Kafka topic to consume from."
 )
 @click.option(
-    "--kafka-server",
-    "-s",
-    default=DEFAULT_KAFKA_SERVER,
-    help="Kafka server (default: localhost:39092)",
+    "-s", "--kafka-server", default=DEFAULT_KAFKA_SERVER, help="Kafka server URL."
 )
-def consume(ctx, topic, kafka_server):
+def consume(topic, kafka_server):
     """Start the Kafka consumer."""
-    start_consumer(topic, kafka_server)
+    start_kafka_consumer(topic, kafka_server)
 
 
 @cli.command()
-@click.pass_context
+@click.option("-t", "--topic", default=DEFAULT_TOPIC, help="Kafka topic to create.")
 @click.option(
-    "--topic", "-t", default="CMIP7", help="Kafka topic to create (default: CMIP7)"
+    "-s", "--kafka-server", default=DEFAULT_KAFKA_SERVER, help="Kafka server URL."
 )
-@click.option(
-    "--kafka-server",
-    "-s",
-    default=DEFAULT_KAFKA_SERVER,
-    help="Kafka server (default: localhost:39092)",
-)
-def init(ctx, topic, kafka_server):
+def init(topic, kafka_server):
     """Create the Kafka topic if it doesn't exist."""
-    admin_client = AdminClient({"bootstrap.servers": kafka_server})
-    new_topic = NewTopic(topic, num_partitions=1, replication_factor=1)
-    fs = admin_client.create_topics([new_topic])
-
-    try:
-        fs[topic].result()
-        click.echo(f"Created Kafka topic: {topic}")
-    except Exception as e:
-        click.echo(f"Error creating topic: {e}")
+    create_topic(kafka_server, topic)
 
 
 @cli.command()
-@click.pass_context
+@click.option("-m", "--message", help="Message (JSON string) to send.")
+@click.option("-p", "--path", help="Path to JSON file to send.")
+@click.option("-t", "--topic", default=DEFAULT_TOPIC, help="Kafka topic to send to.")
 @click.option(
-    "--message",
-    "-m",
-    required=False,
-    help="A message (json string) to send to Kafka topic.",
+    "-s", "--kafka-server", default=DEFAULT_KAFKA_SERVER, help="Kafka server URL."
 )
-@click.option(
-    "--path", "-p", required=False, help="A JSON file to send to Kafka topic."
-)
-@click.option(
-    "--topic",
-    "-t",
-    default="CMIP7",
-    help="Kafka topic to send messages to (default: CMIP7)",
-)
-@click.option(
-    "--kafka-server",
-    "-s",
-    default=DEFAULT_KAFKA_SERVER,
-    help="Kafka server (default: localhost:39092)",
-)
-def send(ctx, message, path, topic, kafka_server):
+def send(message, path, topic, kafka_server):
     """Send a message to the Kafka topic."""
-    producer = Producer({"bootstrap.servers": kafka_server})
-
-    if path is not None:
+    if path:
         with open(path, "r") as f:
             data = json.load(f)
             key = os.path.splitext(os.path.basename(path))[0]
             value = json.dumps(data)
-    elif message is not None:
+    elif message:
         key = str(uuid.uuid5(uuid.NAMESPACE_DNS, message))
         value = message
     else:
-        click.echo(f"Please provide a message.")
+        click.echo("❌ Please provide a message or a path to a JSON file.")
+        return
 
-    def delivery_report(err, msg):
-        if err is not None:
-            click.echo(f"Delivery failed: {err}")
-        else:
-            click.echo(f"Message delivered to {msg.topic()} [{msg.partition()}]")
-
-    # Send the message (assuming it's a stringified JSON or simple string)
-    producer.produce(
-        topic,
-        key=key.encode("utf-8"),
-        value=value.encode("utf-8"),
-        callback=delivery_report,
-    )
-    producer.flush()
+    produce_message(kafka_server, topic, key, value)
 
 
 if __name__ == "__main__":
