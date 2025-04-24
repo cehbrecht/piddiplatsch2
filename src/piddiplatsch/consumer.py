@@ -10,6 +10,9 @@ HANDLE_PREFIX = "21.T11148"
 USERNAME = "testuser"
 PASSWORD = "testpass"
 
+# Enable logging
+logging.basicConfig(level=logging.DEBUG)
+
 
 def build_client():
     """Create and return a HandleClient instance."""
@@ -44,7 +47,6 @@ class Consumer:
         try:
             while True:
                 msg = self.consumer.poll(timeout=1.0)
-                print(f"consumed message: {msg}")
                 if msg is None:
                     continue
                 if msg.error():
@@ -52,7 +54,7 @@ class Consumer:
 
                 # Get the message key
                 key = msg.key().decode("utf-8")
-                print(f"got a message: {key}")
+                logging.debug(f"Got a message: {key}")
 
                 # Parse the JSON payload
                 value = json.loads(msg.value().decode("utf-8"))
@@ -62,7 +64,7 @@ class Consumer:
 
 
 def process_message(key, value):
-    """Process a CMIP7 record message."""
+    """Process a message."""
     logging.info(f"Processing message: {key}")
 
     pid = build_pid(key, value)
@@ -72,10 +74,9 @@ def process_message(key, value):
 
 def build_pid(key, value):
     try:
-        id = value["data"]["payload"]["item"]["id"]
+        pid = value["data"]["payload"]["item"]["id"]
     except Exception:
-        id = str(uuid.uuid5(uuid.NAMESPACE_DNS, key))
-    pid = f"{HANDLE_PREFIX}/{id}"
+        pid = str(uuid.uuid5(uuid.NAMESPACE_DNS, key))
     return pid
 
 
@@ -87,11 +88,11 @@ def build_record(value):
 
 def add_item(pid, record):
     """Adds an item with pid and record to the Handle Service."""
-    logging.info(f"add pid = {pid}, record = {record}")
+    logging.info(f"add item: pid = {pid}, record = {record}")
     handle_client = build_client()
 
     try:
         handle_client.add_item(pid, record)
-        logging.info(f"Added PID {pid}")
+        logging.info(f"Added item: pid = {pid}")
     except Exception as e:
-        logging.error(f"Failed to add PID {pid}: {e}")
+        logging.error(f"Failed to add item with pid = {pid}: {e}")

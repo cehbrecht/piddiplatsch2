@@ -1,6 +1,9 @@
 import logging
 import pyhandle
 
+# Enable logging
+logging.basicConfig(level=logging.DEBUG)
+
 
 class HandleClient:
     def __init__(self, server_url, prefix, username, password, verify_https=False):
