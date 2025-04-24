@@ -23,6 +23,7 @@ class HandleClient:
         connector._HandleSystemConnector__has_write_access = True
         connector._HandleSystemConnector__handle_server_url = server_url
         connector._HandleSystemConnector__HTTPS_verify = verify_https
+        connector._HandleSystemConnector__authentication_method = 'user_pw'
 
     def build_handle(self, pid):
         """Build a full handle by combining the prefix and the PID."""
