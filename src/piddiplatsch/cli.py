@@ -2,6 +2,7 @@ import click
 import os
 import logging
 import json
+import uuid
 from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient, NewTopic
 from piddiplatsch.consumer import Consumer, process_message
@@ -74,7 +75,15 @@ def init(ctx, topic, kafka_server):
 
 @cli.command()
 @click.pass_context
-@click.option("--path", "-p", required=True, help="JSON file to send to Kafka topic")
+@click.option(
+    "--message",
+    "-m",
+    required=False,
+    help="A message (json string) to send to Kafka topic.",
+)
+@click.option(
+    "--path", "-p", required=False, help="A JSON file to send to Kafka topic."
+)
 @click.option(
     "--topic",
     "-t",
@@ -87,15 +96,20 @@ def init(ctx, topic, kafka_server):
     default=DEFAULT_KAFKA_SERVER,
     help="Kafka server (default: localhost:39092)",
 )
-def send(ctx, path, topic, kafka_server):
+def send(ctx, message, path, topic, kafka_server):
     """Send a message to the Kafka topic."""
     producer = Producer({"bootstrap.servers": kafka_server})
 
-    with open(path, "r") as f:
-        data = json.load(f)
-
-    key = os.path.splitext(os.path.basename(path))[0]
-    value = json.dumps(data)
+    if path is not None:
+        with open(path, "r") as f:
+            data = json.load(f)
+            key = os.path.splitext(os.path.basename(path))[0]
+            value = json.dumps(data)
+    elif message is not None:
+        key = str(uuid.uuid5(uuid.NAMESPACE_DNS, message))
+        value = message
+    else:
+        click.echo(f"Please provide a message.")
 
     def delivery_report(err, msg):
         if err is not None:

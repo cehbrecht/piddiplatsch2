@@ -49,24 +49,6 @@ Stop Kafka with:
 docker-compose down -v
 ```
 
-## Use kafka client
-
-Run the `kafka.sh` script :
-
-```sh
-# create topic cmip7
-./scripts/kafka.sh create CMIP7
-
-# list all topics
-./scripts/kafka.sh list
-
-# send message to topic cmip7
-./scripts/kafka.sh send CMIP7 hi
-
-# consume all messages from topic cmip7
-./scripts/kafka.sh consume CMIP7  
-```
-
 ## Use piddiplatsch client
 
 Create topic CMIP7:
