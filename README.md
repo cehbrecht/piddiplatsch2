@@ -80,11 +80,17 @@ Start mock handle service:
 python src/piddiplatsch/testing/mock_handle_server.py
 ```
 
+Check admin user:
+```sh
+curl -X GET "http://localhost:5000/api/handles/21.T11148/testuser"
+```
+
 Register dummy handle:
 ```sh
 curl -X PUT "http://localhost:5000/api/handles/21.T11148/test_1001?overwrite=true" \
   -H "Content-Type: application/json" \
   -d '{"location": "http://dummy.org/test_1001"}'
+```
 
 Get dummy handle:
 ```sh

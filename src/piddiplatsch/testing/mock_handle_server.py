@@ -36,6 +36,9 @@ ADMIN_HANDLE_RECORD = {
     ],
 }
 
+# add admin user record
+handles[DUMMY_USERNAME_HANDLE] = ADMIN_HANDLE_RECORD
+
 
 def check_auth(auth_header):
     return True
@@ -64,11 +67,6 @@ def get_handle(prefix, suffix):
 
     app.logger.debug(f"Received GET for: {handle}")
 
-    if handle == DUMMY_USERNAME_HANDLE:
-        response = dict(ADMIN_HANDLE_RECORD)  # Make a copy
-        response["responseCode"] = 1  # Add the required field
-        return jsonify(response), 200
-
     if handle in handles:
         app.logger.debug(f"get_handle: handle={handle} found")
         # Add responseCode to the response
@@ -86,7 +84,7 @@ def get_handle(prefix, suffix):
 
 
 @app.route("/api/handles/<prefix>/<suffix>", methods=["PUT"])
-@require_auth
+# @require_auth
 def put_handle(prefix, suffix):
     handle = f"{prefix}/{suffix}"
     app.logger.debug(f"Received PUT for: {handle}")
