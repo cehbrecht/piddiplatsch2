@@ -35,9 +35,13 @@ def example_message():
     }
 
 
+import requests
+
+
 def send_and_consume_message(runner, message, topic, kafka_server):
     # Get location
     location = message["data"]["payload"]["item"]["links"][0]["href"]
+    pid = message["data"]["payload"]["item"]["id"]
 
     # Send the message
     result_send = runner.invoke(
@@ -45,7 +49,7 @@ def send_and_consume_message(runner, message, topic, kafka_server):
         [
             "send",
             "--message",
-            message,
+            json.dumps(message),  # ensure it's a string
             "--topic",
             topic,
             "--kafka-server",
@@ -55,20 +59,26 @@ def send_and_consume_message(runner, message, topic, kafka_server):
     assert result_send.exit_code == 0
     assert "📤 Message delivered" in result_send.output
 
-    # Allow Kafka to propagate message
-    time.sleep(2)
+    time.sleep(2)  # Allow Kafka to propagate
 
-    # Start the consumer (consume only one message and exit)
     from piddiplatsch.consumer import Consumer, process_message
 
     consumer = Consumer(topic, kafka_server)
 
-    # Grab one message from the topic
     for key, value in consumer.consume():
         assert key
         assert value["data"]["payload"]["item"]["links"][0]["href"] == location
         process_message(key, value)
         break
+
+    # Verify the handle was registered in the mock handle server
+    mock_handle_url = config.get("handle", "server_url").rstrip("/")
+    handle_prefix = config.get("handle", "prefix")
+    full_handle = f"{handle_prefix}/{pid}"
+
+    response = requests.get(f"{mock_handle_url}/api/handles/{full_handle}")
+    assert response.status_code == 200, f"Handle not found: {full_handle}"
+    assert response.json()["handle"] == full_handle
 
 
 @pytest.mark.online
