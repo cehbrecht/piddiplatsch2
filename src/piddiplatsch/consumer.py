@@ -3,15 +3,16 @@ import json
 import uuid
 from confluent_kafka import Consumer as ConfluentConsumer, KafkaException
 from piddiplatsch.handle_client import HandleClient
+from piddiplatsch.config import config
 
-# Handle Service Configuration (same as in handle_client.py)
-HANDLE_SERVER_URL = "http://localhost:5000"  # Mock server for testing
-HANDLE_PREFIX = "21.T11148"
-USERNAME = "testuser"
-PASSWORD = "testpass"
+# Load Handle Service configuration from the config
+HANDLE_SERVER_URL = config.get("handle", "server_url")
+HANDLE_PREFIX = config.get("handle", "prefix")
+USERNAME = config.get("handle", "username")
+PASSWORD = config.get("handle", "password")
 
-# Enable logging
-logging.basicConfig(level=logging.DEBUG)
+# Configure logging (console or file with optional colors)
+config.configure_logging()
 
 
 def build_client():
@@ -26,7 +27,7 @@ def build_client():
 
 class Consumer:
     def __init__(
-        self, topic: str, kafka_server: str, group_id: str = "piddiplatsch-consumer-4"
+        self, topic: str, kafka_server: str, group_id: str = "piddiplatsch-consumer"
     ):
         """Initialize the Kafka Consumer."""
         self.topic = topic
@@ -52,11 +53,9 @@ class Consumer:
                 if msg.error():
                     raise KafkaException(msg.error())
 
-                # Get the message key
                 key = msg.key().decode("utf-8")
                 logging.debug(f"Got a message: {key}")
 
-                # Parse the JSON payload
                 value = json.loads(msg.value().decode("utf-8"))
                 yield key, value
         finally:

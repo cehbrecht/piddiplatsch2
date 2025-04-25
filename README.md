@@ -9,6 +9,7 @@ Docs:
 
 * https://kafka.apache.org/
 * https://pypi.org/project/confluent-kafka/
+* https://realpython.com/python-toml/
 
 Examples:
 * https://github.com/katyagorshkova/kafka-kraft
@@ -56,9 +57,9 @@ docker-compose down -v
 
 ## Use piddiplatsch client
 
-Send a message:
+Add a PID record (json file):
 ```sh
-piddiplatsch send -m '{"data": {"payload": {"item": {"id": "CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710",}}}}'
+piddiplatsch send -p tests/testdata/CMIP6/CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710.json
 ```
 
 Consume messages:
@@ -66,11 +67,9 @@ Consume messages:
 piddiplatsch consume
 ```
 
-## Example with PIDs
-
-Add a PID record (json file):
+You can also use the debug mode and a logfile:
 ```sh
-piddiplatsch send -p tests/testdata/CMIP6/CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710.json
+piddiplatsch --debug --logfile consume.log consume
 ```
 
 ## Use mock handle service

@@ -16,6 +16,8 @@ dependencies = [
     "flask",
     "confluent-kafka >=2.9.0",
     "pyhandle >=1.4.1",
+    "colorlog",
+    "toml",
 ]
 
 [project.optional-dependencies]
