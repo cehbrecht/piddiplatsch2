@@ -64,10 +64,53 @@ def start_kafka_consumer(topic, kafka_server):
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option()
+@click.option("--debug", is_flag=True, help="Enable debug logging.")
+@click.option("--logfile", type=click.Path(), help="Optional log file path.")
 @click.pass_context
-def cli(ctx):
+def cli(ctx, debug, logfile):
     """CLI to interact with Kafka and Handle Service."""
     ctx.ensure_object(dict)
+
+    log_level = logging.DEBUG if debug else logging.INFO
+    log_format = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+
+    handlers = []
+
+    # Console handler with optional color
+    try:
+        from colorlog import ColoredFormatter
+
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(
+            ColoredFormatter(
+                "%(log_color)s%(asctime)s - %(levelname)-8s - %(name)s - %(message)s",
+                log_colors={
+                    "DEBUG": "cyan",
+                    "INFO": "green",
+                    "WARNING": "yellow",
+                    "ERROR": "red",
+                    "CRITICAL": "bold_red",
+                },
+            )
+        )
+        handlers.append(console_handler)
+    except ImportError:
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(logging.Formatter(log_format))
+        handlers.append(console_handler)
+
+    # Optional file handler (no color)
+    if logfile:
+        file_handler = logging.FileHandler(logfile)
+        file_handler.setFormatter(logging.Formatter(log_format))
+        handlers.append(file_handler)
+
+    logging.basicConfig(level=log_level, handlers=handlers)
+
+    if debug:
+        logging.debug("Debug logging is enabled.")
+        if logfile:
+            logging.debug(f"Logging to file: {logfile}")
 
 
 @cli.command()

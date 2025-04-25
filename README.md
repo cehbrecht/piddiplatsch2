@@ -56,21 +56,14 @@ docker-compose down -v
 
 ## Use piddiplatsch client
 
-Send a message:
+Add a PID record (json file):
 ```sh
-piddiplatsch send -m '{"data": {"payload": {"item": {"id": "CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710",}}}}'
+piddiplatsch send -p tests/testdata/CMIP6/CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710.json
 ```
 
 Consume messages:
 ```sh
 piddiplatsch consume
-```
-
-## Example with PIDs
-
-Add a PID record (json file):
-```sh
-piddiplatsch send -p tests/testdata/CMIP6/CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710.json
 ```
 
 ## Use mock handle service
