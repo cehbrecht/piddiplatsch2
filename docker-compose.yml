@@ -9,6 +9,8 @@ services:
       - ./scripts/create_cluster_id.sh:/tmp/create_cluster_id.sh
       - ./clusterID:/tmp/clusterID
     command: "bash -c '/tmp/create_cluster_id.sh'"
+    networks:
+      - kafka-net
 
   kafka1:
     image: confluentinc/cp-kafka:7.3.3
@@ -35,6 +37,8 @@ services:
       - ./scripts/update_run.sh:/tmp/update_run.sh
       - ./clusterID:/tmp/clusterID
     command: "bash -c '/tmp/update_run.sh && /etc/confluent/docker/run'"
+    networks:
+      - kafka-net
 
   kafka2:
     image: confluentinc/cp-kafka:7.3.3
@@ -61,6 +65,8 @@ services:
       - ./scripts/update_run.sh:/tmp/update_run.sh
       - ./clusterID:/tmp/clusterID
     command: "bash -c '/tmp/update_run.sh && /etc/confluent/docker/run'"
+    networks:
+      - kafka-net
 
   kafka3:
     image: confluentinc/cp-kafka:7.3.3
@@ -87,7 +93,24 @@ services:
       - ./scripts/update_run.sh:/tmp/update_run.sh
       - ./clusterID:/tmp/clusterID
     command: "bash -c '/tmp/update_run.sh && /etc/confluent/docker/run'"
+    networks:
+      - kafka-net
+
+  mock-handle:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    hostname: handle1
+    container_name: handle1
+    ports:
+      - "5000:5000"
+    networks:
+      - kafka-net
 volumes:
   kafka1-data:
   kafka2-data:
   kafka3-data:
+
+networks:
+  kafka-net:
+    driver: bridge
