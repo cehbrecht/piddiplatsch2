@@ -9,6 +9,7 @@ Docs:
 
 * https://kafka.apache.org/
 * https://pypi.org/project/confluent-kafka/
+* https://realpython.com/python-toml/
 
 Examples:
 * https://github.com/katyagorshkova/kafka-kraft

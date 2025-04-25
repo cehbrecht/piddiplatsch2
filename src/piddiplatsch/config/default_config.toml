@@ -1,0 +1,9 @@
+[kafka]
+server = "localhost:39092"
+topic = "CMIP7"
+
+[handle]
+server_url = "http://localhost:5000"
+prefix = "21.T11148"
+username = "testuser"
+password = "testpass"

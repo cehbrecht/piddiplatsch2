@@ -6,10 +6,7 @@ import uuid
 from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient, NewTopic
 from piddiplatsch.consumer import Consumer, process_message
-from piddiplatsch.config import setup_logging
-
-DEFAULT_KAFKA_SERVER = "localhost:39092"
-DEFAULT_TOPIC = "CMIP7"
+from piddiplatsch.config.config import config
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -66,20 +63,26 @@ def start_kafka_consumer(topic, kafka_server):
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option()
 @click.option("--debug", is_flag=True, help="Enable debug logging.")
-@click.option("--logfile", type=click.Path(), help="Optional log file path.")
+@click.option("--logfile", type=click.Path(), help="Write logs to this file.")
 @click.pass_context
 def cli(ctx, debug, logfile):
     """CLI to interact with Kafka and Handle Service."""
+    config.configure_logging(debug=debug, logfile=logfile)
     ctx.ensure_object(dict)
-    setup_logging(debug, logfile)
 
 
 @cli.command()
 @click.option(
-    "-t", "--topic", default=DEFAULT_TOPIC, help="Kafka topic to consume from."
+    "-t",
+    "--topic",
+    default=config.get("kafka", "topic"),
+    help="Kafka topic to consume from.",
 )
 @click.option(
-    "-s", "--kafka-server", default=DEFAULT_KAFKA_SERVER, help="Kafka server URL."
+    "-s",
+    "--kafka-server",
+    default=config.get("kafka", "server"),
+    help="Kafka server URL.",
 )
 def consume(topic, kafka_server):
     """Start the Kafka consumer."""
@@ -89,9 +92,17 @@ def consume(topic, kafka_server):
 @cli.command()
 @click.option("-m", "--message", help="Message (JSON string) to send.")
 @click.option("-p", "--path", help="Path to JSON file to send.")
-@click.option("-t", "--topic", default=DEFAULT_TOPIC, help="Kafka topic to send to.")
 @click.option(
-    "-s", "--kafka-server", default=DEFAULT_KAFKA_SERVER, help="Kafka server URL."
+    "-t",
+    "--topic",
+    default=config.get("kafka", "topic"),
+    help="Kafka topic to send to.",
+)
+@click.option(
+    "-s",
+    "--kafka-server",
+    default=config.get("kafka", "server"),
+    help="Kafka server URL.",
 )
 def send(message, path, topic, kafka_server):
     """Send a message to the Kafka topic."""
