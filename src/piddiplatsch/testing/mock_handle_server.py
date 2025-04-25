@@ -1,23 +1,22 @@
-from flask import Flask, request, jsonify, make_response
-from functools import wraps
-import base64
-
+from flask import Flask, request, jsonify
 import logging
 
 app = Flask(__name__)
 
-# Enable logging
+# Configure logging
 logging.basicConfig(level=logging.DEBUG)
+logger = app.logger
 
-handles = {}  # In-memory handle store
+# In-memory handle store
+handles = {}
 
-# Dummy admin user credentials
+# Constants
 HANDLE_PREFIX = "21.T11148"
 DUMMY_USERNAME_HANDLE = f"{HANDLE_PREFIX}/testuser"
 DUMMY_USERNAME = f"300:{DUMMY_USERNAME_HANDLE}"
 DUMMY_PASSWORD = "testpass"
 
-# Admin handle record template
+# Admin handle record
 ADMIN_HANDLE_RECORD = {
     "handle": DUMMY_USERNAME_HANDLE,
     "values": [
@@ -29,80 +28,67 @@ ADMIN_HANDLE_RECORD = {
                 "value": {
                     "index": "200",
                     "handle": f"0.NA/{HANDLE_PREFIX}",
-                    "permissions": "011111110011"
-                }
-            }
+                    "permissions": "011111110011",
+                },
+            },
         }
-    ]
+    ],
 }
 
-def check_auth(auth_header):
-    return True
+# Preload admin user handle
+handles[DUMMY_USERNAME_HANDLE] = ADMIN_HANDLE_RECORD
 
-    # if not auth_header or not auth_header.startswith("Basic "):
-    #     return False
-    # encoded = auth_header.split(" ")[1]
-    # decoded = base64.b64decode(encoded).decode()
-    # return decoded == f"{DUMMY_USERNAME}:{DUMMY_PASSWORD}"
-
-def require_auth(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        auth_header = request.headers.get("Authorization")
-        if not check_auth(auth_header):
-            return make_response(jsonify({"message": "Unauthorized"}), 401)
-        return f(*args, **kwargs)
-    return decorated
 
 @app.route("/api/handles/<prefix>/<suffix>", methods=["GET"])
 def get_handle(prefix, suffix):
     handle = f"{prefix}/{suffix}"
+    logger.debug(f"GET request for handle: {handle}")
 
-    app.logger.debug(f"get_handle: handle={handle}")
-
-    if handle == DUMMY_USERNAME_HANDLE:
-        response = dict(ADMIN_HANDLE_RECORD)  # Make a copy
-        response["responseCode"] = 1          # Add the required field
-        return jsonify(response), 200
-
-    if handle in handles:
-        app.logger.debug(f"get_handle: handle={handle} found")
-        # Add responseCode to the response
-        response = dict(handles[handle])  # Copy the stored record
-        response["handle"] = handle       # Add the required key
-        response["responseCode"] = 1      # Optional, useful for debugging
-        
-        return jsonify(response), 200  # Return with the added responseCode
-        # return jsonify(handles[handle]), 200
+    record = handles.get(handle)
+    if record:
+        logger.debug(f"Handle found: {handle}")
+        return jsonify({
+            **record,
+            "handle": handle,
+            "responseCode": 1
+        }), 200
     else:
-        app.logger.debug(f"get_handle: handle={handle} not found")
-        return jsonify({"message": f"Handle {handle} not found", "responseCode": 100}), 404
+        logger.debug(f"Handle not found: {handle}")
+        return jsonify({
+            "message": f"Handle {handle} not found",
+            "responseCode": 100
+        }), 200
+
 
 @app.route("/api/handles/<prefix>/<suffix>", methods=["PUT"])
-@require_auth
 def put_handle(prefix, suffix):
     handle = f"{prefix}/{suffix}"
-    app.logger.debug(f"Received PUT for: {handle}")
-    
     overwrite = request.args.get("overwrite", "false").lower() == "true"
 
+    logger.debug(f"PUT request for handle: {handle}, overwrite={overwrite}")
+
     if handle in handles and not overwrite:
-        app.logger.debug("handle already exist")
+        logger.debug(f"Handle already exists: {handle}")
         return jsonify({"message": f"Handle {handle} already exists"}), 409
 
-    data = request.get_json()
-    handles[handle] = data
-    app.logger.debug(f"register handle {handle}, data={data}")
-    return jsonify({"responseCode": 1, "handle": handle, "message": f"Handle {handle} registered"}), 201
+    try:
+        data = request.get_json(force=True)
+        if not isinstance(data, dict) or "values" not in data:
+            raise ValueError("Invalid handle record format")
+    except Exception as e:
+        logger.error(f"Invalid request body: {e}")
+        return jsonify({"message": f"Invalid request body: {e}"}), 400
 
-@app.route("/api/handles/<prefix>/<suffix>", methods=["DELETE"])
-@require_auth
-def delete_handle(prefix, suffix):
-    handle = f"{prefix}/{suffix}"
-    if handle in handles:
-        del handles[handle]
-        return jsonify({"message": f"Handle {handle} deleted"}), 200
-    return jsonify({"message": f"Handle {handle} not found"}), 404
+    data["handle"] = handle  # Ensure handle is set correctly
+    handles[handle] = data
+
+    logger.debug(f"Handle registered: {handle} with data: {data}")
+    return jsonify({
+        "responseCode": 1,
+        "handle": handle,
+        "message": f"Handle {handle} registered"
+    }), 200
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

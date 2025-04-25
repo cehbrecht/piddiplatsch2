@@ -37,6 +37,11 @@ Install required packages with:
 pip install -e ".[dev]"
 ```
 
+or with make:
+```sh
+make develop 
+```
+
 ## Run kafka
 
 Start Kafka with:
@@ -49,34 +54,11 @@ Stop Kafka with:
 docker-compose down -v
 ```
 
-## Use kafka client
-
-Run the `kafka.sh` script :
-
-```sh
-# create topic cmip7
-./scripts/kafka.sh create CMIP7
-
-# list all topics
-./scripts/kafka.sh list
-
-# send message to topic cmip7
-./scripts/kafka.sh send CMIP7 hi
-
-# consume all messages from topic cmip7
-./scripts/kafka.sh consume CMIP7  
-```
-
 ## Use piddiplatsch client
-
-Create topic CMIP7:
-```sh
-piddiplatsch init
-```
 
 Send a message:
 ```sh
-piddiplatsch send -m '{"greetings": "hey"}'
+piddiplatsch send -m '{"data": {"payload": {"item": {"id": "CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710",}}}}'
 ```
 
 Consume messages:
@@ -86,9 +68,9 @@ piddiplatsch consume
 
 ## Example with PIDs
 
-Add a PID record:
+Add a PID record (json file):
 ```sh
-piddiplatsch send -m '{"action": "add", "record": {"pid": "1234", "name": "tas-2025-04-16.nc"}}'
+piddiplatsch send -p tests/testdata/CMIP6/CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710.json
 ```
 
 ## Use mock handle service
@@ -98,11 +80,31 @@ Start mock handle service:
 python src/piddiplatsch/testing/mock_handle_server.py
 ```
 
+Check admin user:
+```sh
+curl -X GET "http://localhost:5000/api/handles/21.T11148/testuser"
+```
+
 Register dummy handle:
 ```sh
-curl -X PUT "http://localhost:5000/api/handles/21.T11148/1234?overwrite=true" \
+curl -X PUT "http://localhost:5000/api/handles/21.T11148/test_1001?overwrite=true" \
   -H "Content-Type: application/json" \
-  -d '{"location": "http://dummy.org/test"}'
+  -d '{
+    "values": [
+      {
+        "index": 1,
+        "type": "URL",
+        "data": {
+          "value": "https://example.org/location/1001"
+        }
+      }
+    ]
+  }'
+```
+
+Get dummy handle:
+```sh
+curl -X GET "http://localhost:5000/api/handles/21.T11148/test_1001"
 ```
 
 
