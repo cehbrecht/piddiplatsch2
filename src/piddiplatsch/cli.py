@@ -6,7 +6,7 @@ import uuid
 from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient, NewTopic
 from piddiplatsch.consumer import Consumer, process_message
-from piddiplatsch.config.config import config
+from piddiplatsch.config import config
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 

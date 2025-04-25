@@ -8,6 +8,7 @@ from rich.logging import RichHandler
 
 DEFAULT_CONFIG_PATH = Path(__file__).parent / "default_config.toml"
 
+
 class Config:
     def __init__(self):
         self.config_data = self._load_default_config()
@@ -31,9 +32,15 @@ class Config:
 
         logging.basicConfig(
             level=log_level,
-            format="%(message)s" if not logfile else "%(asctime)s - %(levelname)s - %(message)s",
+            format=(
+                "%(message)s"
+                if not logfile
+                else "%(asctime)s - %(levelname)s - %(message)s"
+            ),
             datefmt="[%X]",
             handlers=handlers,
         )
 
+
+# singleton instance
 config = Config()

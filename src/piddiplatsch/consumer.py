@@ -3,7 +3,7 @@ import json
 import uuid
 from confluent_kafka import Consumer as ConfluentConsumer, KafkaException
 from piddiplatsch.handle_client import HandleClient
-from piddiplatsch.config.config import config
+from piddiplatsch.config import config
 
 # Load Handle Service configuration from the config
 HANDLE_SERVER_URL = config.get("handle", "server_url")
