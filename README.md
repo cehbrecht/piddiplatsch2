@@ -66,6 +66,11 @@ Consume messages:
 piddiplatsch consume
 ```
 
+You can also use the debug mode and a logfile:
+```sh
+piddiplatsch --debug --logfile consume.log consume
+```
+
 ## Use mock handle service
 
 Start mock handle service:
