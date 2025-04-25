@@ -1,8 +1,8 @@
 import logging
 import pyhandle
 
-# Enable logging
-# logging.basicConfig(level=logging.DEBUG)
+# Use logger for this module
+logger = logging.getLogger(__name__)
 
 
 class HandleClient:
@@ -42,9 +42,9 @@ class HandleClient:
             self.client.register_handle(
                 handle=handle, location=record["URL"], overwrite=True, **record
             )
-            logging.info(f"Added handle: {handle}")
+            logger.info(f"Added handle: {handle}")
         except pyhandle.handleexceptions.HandleAlreadyExistsException:
-            logging.info(f"Handle already exists: {handle}")
+            logger.info(f"Handle already exists: {handle}")
         except Exception as e:
-            logging.error(f"Failed to register handle {handle}: {e}")
+            logger.error(f"Failed to register handle {handle}: {e}")
             raise
