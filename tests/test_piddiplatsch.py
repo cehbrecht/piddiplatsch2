@@ -26,6 +26,7 @@ def example_message():
     }
 
 
+@pytest.mark.online
 def test_send_and_consume_message(runner, example_message):
     topic = config.get("kafka", "topic")
     kafka_server = config.get("kafka", "server")
