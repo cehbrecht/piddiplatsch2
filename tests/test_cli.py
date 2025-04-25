@@ -1,10 +1,19 @@
 import json
 import time
 import uuid
+import os
 import pytest
 from click.testing import CliRunner
 from piddiplatsch.cli import cli
 from piddiplatsch.config import config
+
+
+@pytest.fixture(scope="module")
+def kafka_settings():
+    return {
+        "topic": config.get("kafka", "topic"),
+        "kafka_server": config.get("kafka", "server"),
+    }
 
 
 @pytest.fixture
@@ -26,15 +35,11 @@ def example_message():
     }
 
 
-@pytest.mark.online
-def test_send_and_consume_message(runner, example_message):
-    topic = config.get("kafka", "topic")
-    kafka_server = config.get("kafka", "server")
-
+def send_and_consume_message(runner, message, topic, kafka_server):
     # Write message to temp file
     with runner.isolated_filesystem():
         with open("message.json", "w") as f:
-            json.dump(example_message, f)
+            json.dump(message, f)
 
         # Send the message
         result_send = runner.invoke(
@@ -69,6 +74,33 @@ def test_send_and_consume_message(runner, example_message):
             )
             process_message(key, value)
             break
+
+
+@pytest.mark.online
+def test_send_and_consume_message(runner, example_message, kafka_settings):
+    send_and_consume_message(
+        runner, example_message, kafka_settings["topic"], kafka_settings["kafka_server"]
+    )
+
+
+@pytest.mark.online
+def test_send_valid_path(runner, testdata_path, kafka_settings):
+    # Path to the JSON file in tests/testdata
+    json_path = os.path.join(
+        testdata_path,
+        "CMIP6",
+        "CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710.json",
+    )
+
+    # Ensure the file exists before continuing
+    assert os.path.exists(json_path), f"Missing file: {json_path}"
+
+    with open(json_path, "r") as file:
+        message = json.load(file)
+
+    send_and_consume_message(
+        runner, message, kafka_settings["topic"], kafka_settings["kafka_server"]
+    )
 
 
 def test_send_invalid_path(runner):
