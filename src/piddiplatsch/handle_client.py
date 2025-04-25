@@ -2,7 +2,7 @@ import logging
 import pyhandle
 
 # Enable logging
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 
 
 class HandleClient:
@@ -26,7 +26,7 @@ class HandleClient:
         connector._HandleSystemConnector__has_write_access = True
         connector._HandleSystemConnector__handle_server_url = server_url
         connector._HandleSystemConnector__HTTPS_verify = verify_https
-        connector._HandleSystemConnector__authentication_method = 'user_pw'
+        connector._HandleSystemConnector__authentication_method = "user_pw"
         connector._HandleSystemConnector__basic_authentication_string = "_noauth_"
 
     def build_handle(self, pid):
@@ -39,7 +39,9 @@ class HandleClient:
 
         try:
             # Register the handle and overwrite flag
-            self.client.register_handle(handle=handle, location=record["URL"], overwrite=True, **record)
+            self.client.register_handle(
+                handle=handle, location=record["URL"], overwrite=True, **record
+            )
             logging.info(f"Added handle: {handle}")
         except pyhandle.handleexceptions.HandleAlreadyExistsException:
             logging.info(f"Handle already exists: {handle}")

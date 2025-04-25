@@ -10,8 +10,8 @@ HANDLE_PREFIX = "21.T11148"
 USERNAME = "testuser"
 PASSWORD = "testpass"
 
-# Enable logging
-logging.basicConfig(level=logging.DEBUG)
+# Use logger for this module
+logger = logging.getLogger(__name__)
 
 
 def build_client():
@@ -54,7 +54,7 @@ class Consumer:
 
                 # Get the message key
                 key = msg.key().decode("utf-8")
-                logging.debug(f"Got a message: {key}")
+                logger.debug(f"Got a message: {key}")
 
                 # Parse the JSON payload
                 value = json.loads(msg.value().decode("utf-8"))
@@ -65,7 +65,7 @@ class Consumer:
 
 def process_message(key, value):
     """Process a message."""
-    logging.info(f"Processing message: {key}")
+    logger.info(f"Processing message: {key}")
 
     pid = build_pid(key, value)
     record = build_record(value)
@@ -91,11 +91,11 @@ def build_record(value):
 
 def add_item(pid, record):
     """Adds an item with pid and record to the Handle Service."""
-    logging.info(f"add item: pid = {pid}, record = {record}")
+    logger.info(f"Adding item: pid = {pid}, record = {record}")
     handle_client = build_client()
 
     try:
         handle_client.add_item(pid, record)
-        logging.info(f"Added item: pid = {pid}")
+        logger.info(f"Added item: pid = {pid}")
     except Exception as e:
-        logging.error(f"Failed to add item with pid = {pid}: {e}")
+        logger.error(f"Failed to add item with pid = {pid}: {e}")

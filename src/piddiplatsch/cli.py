@@ -6,6 +6,7 @@ import uuid
 from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient, NewTopic
 from piddiplatsch.consumer import Consumer, process_message
+from piddiplatsch.config import setup_logging
 
 DEFAULT_KAFKA_SERVER = "localhost:39092"
 DEFAULT_TOPIC = "CMIP7"
@@ -70,47 +71,7 @@ def start_kafka_consumer(topic, kafka_server):
 def cli(ctx, debug, logfile):
     """CLI to interact with Kafka and Handle Service."""
     ctx.ensure_object(dict)
-
-    log_level = logging.DEBUG if debug else logging.INFO
-    log_format = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
-
-    handlers = []
-
-    # Console handler with optional color
-    try:
-        from colorlog import ColoredFormatter
-
-        console_handler = logging.StreamHandler()
-        console_handler.setFormatter(
-            ColoredFormatter(
-                "%(log_color)s%(asctime)s - %(levelname)-8s - %(name)s - %(message)s",
-                log_colors={
-                    "DEBUG": "cyan",
-                    "INFO": "green",
-                    "WARNING": "yellow",
-                    "ERROR": "red",
-                    "CRITICAL": "bold_red",
-                },
-            )
-        )
-        handlers.append(console_handler)
-    except ImportError:
-        console_handler = logging.StreamHandler()
-        console_handler.setFormatter(logging.Formatter(log_format))
-        handlers.append(console_handler)
-
-    # Optional file handler (no color)
-    if logfile:
-        file_handler = logging.FileHandler(logfile)
-        file_handler.setFormatter(logging.Formatter(log_format))
-        handlers.append(file_handler)
-
-    logging.basicConfig(level=log_level, handlers=handlers)
-
-    if debug:
-        logging.debug("Debug logging is enabled.")
-        if logfile:
-            logging.debug(f"Logging to file: {logfile}")
+    setup_logging(debug, logfile)
 
 
 @cli.command()
