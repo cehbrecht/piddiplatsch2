@@ -18,6 +18,7 @@ dependencies = [
     "pyhandle >=1.4.1",
     "colorlog",
     "toml",
+    "requests",
 ]
 
 [project.optional-dependencies]
@@ -126,4 +127,13 @@ check-typed-exception = true
 
 [tool.ruff.lint.mccabe]
 max-complexity = 15
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra"
+testpaths = ["tests"]
+markers = [
+    "online: mark test that requires running Kafka and handle server"
+]
+
 

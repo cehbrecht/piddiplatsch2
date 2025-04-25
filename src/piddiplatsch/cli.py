@@ -116,10 +116,18 @@ def consume(topic, kafka_server):
 def send(message, path, topic, kafka_server):
     """Send a message to the Kafka topic."""
     if path:
-        with open(path, "r") as f:
-            data = json.load(f)
-            key = os.path.splitext(os.path.basename(path))[0]
-            value = json.dumps(data)
+        try:
+            with open(path, "r") as f:
+                data = json.load(f)
+        except FileNotFoundError:
+            click.echo(f"❌ File not found: {path}")
+            return
+        except json.JSONDecodeError as e:
+            click.echo(f"❌ Invalid JSON: {e}")
+            return
+
+        key = os.path.splitext(os.path.basename(path))[0]
+        value = json.dumps(data)
     elif message:
         key = str(uuid.uuid5(uuid.NAMESPACE_DNS, message))
         value = message

@@ -39,6 +39,15 @@ ADMIN_HANDLE_RECORD = {
 handles[DUMMY_USERNAME_HANDLE] = ADMIN_HANDLE_RECORD
 
 
+# Expose reset function for test cleanup
+def _reset_handles():
+    global handles
+    handles = {}
+
+    # Restore admin record
+    handles[DUMMY_USERNAME_HANDLE] = ADMIN_HANDLE_RECORD
+
+
 @app.route("/api/handles/<prefix>/<suffix>", methods=["GET"])
 def get_handle(prefix, suffix):
     handle = f"{prefix}/{suffix}"
@@ -47,17 +56,13 @@ def get_handle(prefix, suffix):
     record = handles.get(handle)
     if record:
         logger.debug(f"Handle found: {handle}")
-        return jsonify({
-            **record,
-            "handle": handle,
-            "responseCode": 1
-        }), 200
+        return jsonify({**record, "handle": handle, "responseCode": 1}), 200
     else:
         logger.debug(f"Handle not found: {handle}")
-        return jsonify({
-            "message": f"Handle {handle} not found",
-            "responseCode": 100
-        }), 200
+        return (
+            jsonify({"message": f"Handle {handle} not found", "responseCode": 100}),
+            200,
+        )
 
 
 @app.route("/api/handles/<prefix>/<suffix>", methods=["PUT"])
@@ -83,11 +88,16 @@ def put_handle(prefix, suffix):
     handles[handle] = data
 
     logger.debug(f"Handle registered: {handle} with data: {data}")
-    return jsonify({
-        "responseCode": 1,
-        "handle": handle,
-        "message": f"Handle {handle} registered"
-    }), 200
+    return (
+        jsonify(
+            {
+                "responseCode": 1,
+                "handle": handle,
+                "message": f"Handle {handle} registered",
+            }
+        ),
+        200,
+    )
 
 
 if __name__ == "__main__":
