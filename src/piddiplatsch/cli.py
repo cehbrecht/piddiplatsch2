@@ -60,15 +60,24 @@ def start_kafka_consumer(topic, kafka_server):
         process_message(key, value)
 
 
-@click.group(context_settings=CONTEXT_SETTINGS)
+@click.group()
 @click.version_option()
+@click.option(
+    "--config",
+    "config_file",
+    type=click.Path(),
+    help="Path to custom config TOML file.",
+)
 @click.option("--debug", is_flag=True, help="Enable debug logging.")
-@click.option("--logfile", type=click.Path(), help="Write logs to this file.")
+@click.option(
+    "--logfile", type=click.Path(), help="Write logs to file instead of console."
+)
 @click.pass_context
-def cli(ctx, debug, logfile):
+def cli(ctx, config_file, debug, logfile):
     """CLI to interact with Kafka and Handle Service."""
-    config.configure_logging(debug=debug, logfile=logfile)
     ctx.ensure_object(dict)
+    config.load_user_config(config_file)
+    config.configure_logging(debug=debug, logfile=logfile)
 
 
 @cli.command()
