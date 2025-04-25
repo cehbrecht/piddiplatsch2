@@ -36,55 +36,53 @@ def example_message():
 
 
 def send_and_consume_message(runner, message, topic, kafka_server):
-    # Write message to temp file
-    with runner.isolated_filesystem():
-        with open("message.json", "w") as f:
-            json.dump(message, f)
+    # Get location
+    location = message["data"]["payload"]["item"]["links"][0]["href"]
 
-        # Send the message
-        result_send = runner.invoke(
-            cli,
-            [
-                "send",
-                "--path",
-                "message.json",
-                "--topic",
-                topic,
-                "--kafka-server",
-                kafka_server,
-            ],
-        )
-        assert result_send.exit_code == 0
-        assert "📤 Message delivered" in result_send.output
+    # Send the message
+    result_send = runner.invoke(
+        cli,
+        [
+            "send",
+            "--message",
+            message,
+            "--topic",
+            topic,
+            "--kafka-server",
+            kafka_server,
+        ],
+    )
+    assert result_send.exit_code == 0
+    assert "📤 Message delivered" in result_send.output
 
-        # Allow Kafka to propagate message
-        time.sleep(2)
+    # Allow Kafka to propagate message
+    time.sleep(2)
 
-        # Start the consumer (consume only one message and exit)
-        from piddiplatsch.consumer import Consumer, process_message
+    # Start the consumer (consume only one message and exit)
+    from piddiplatsch.consumer import Consumer, process_message
 
-        consumer = Consumer(topic, kafka_server)
+    consumer = Consumer(topic, kafka_server)
 
-        # Grab one message from the topic
-        for key, value in consumer.consume():
-            assert key
-            assert (
-                value["data"]["payload"]["item"]["links"][0]["href"]
-                == "http://example.com/data.nc"
-            )
-            process_message(key, value)
-            break
+    # Grab one message from the topic
+    for key, value in consumer.consume():
+        assert key
+        assert value["data"]["payload"]["item"]["links"][0]["href"] == location
+        process_message(key, value)
+        break
 
 
 @pytest.mark.online
 def test_send_and_consume_message(runner, example_message, kafka_settings):
     send_and_consume_message(
-        runner, example_message, kafka_settings["topic"], kafka_settings["kafka_server"]
+        runner,
+        example_message,
+        kafka_settings["topic"],
+        kafka_settings["kafka_server"],
     )
 
 
 @pytest.mark.online
-def test_send_valid_path(runner, testdata_path, kafka_settings):
+def test_send_valid_cmip6_mpi(runner, testdata_path, kafka_settings):
     # Path to the JSON file in tests/testdata
     json_path = os.path.join(
         testdata_path,
