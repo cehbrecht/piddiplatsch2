@@ -110,3 +110,11 @@ release: dist ## package and upload a release
 
 upstream: develop ## install the GitHub-based development branches of dependencies in editable mode to the active Python's site-packages
 	python -m pip install --no-user --requirement requirements_upstream.txt
+
+## Docker container targets
+
+start: ## builds and starts docker containers
+	docker-compose up --build -d
+
+stop: ## stops docker containers
+	docker-compose down -v

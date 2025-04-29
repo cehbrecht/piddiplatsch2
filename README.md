@@ -36,11 +36,10 @@ conda activate piddiplatsch2
 Install required packages with:
 ```sh
 pip install -e ".[dev]"
-```
 
-or with make:
-```sh
-make develop 
+OR
+
+make develop
 ```
 
 ## Run kafka
@@ -48,11 +47,19 @@ make develop
 Start Kafka with:
 ```sh
 docker-compose up --build -d
+
+OR
+
+make start
 ```
 
 Stop Kafka with:
 ```sh
 docker-compose down -v
+
+OR
+
+make stop
 ```
 
 ## Use piddiplatsch client
@@ -72,12 +79,9 @@ You can also use the debug mode and a logfile:
 piddiplatsch --debug --logfile consume.log consume
 ```
 
-## Use mock handle service
+## Check mock handle service
 
-Start mock handle service:
-```sh
-python src/piddiplatsch/testing/mock_handle_server.py
-```
+The mock handle service is started with together with the docker conatiners for kafka (`make start`).
 
 Check admin user:
 ```sh
