@@ -81,17 +81,13 @@ lint: ## check style with ruff
 
 test: ## run tests quickly with the default Python (skip slow and online tests)
 	@echo "Running tests (skip slow and online tests) ..."
-	@bash -c 'pytest -v -m "not slow and not online" -n auto tests/'
+	@bash -c 'pytest -v -m "not slow and not online" tests/'
 
 test-smoke: ## run smoke tests only and in parallel
-	@echo "Running smoke tests (only smoke tests) ..."
-	@bash -c 'pytest -v -m "smoke" -n auto tests/'
+	@echo "Running smoke tests (only online tests) ..."
+	@bash -c 'pytest -v -m "online" tests/'
 
 smoke: test-smoke
-
-test-all: ## run all tests quickly with the default Python
-	@echo "Running all tests (including slow and online tests) ..."
-	@bash -c 'pytest -v -m "not smoke" -n auto tests/'
 
 coverage: ## check code coverage quickly with the default Python
 	@bash -c 'coverage run --source piddiplatsch -m pytest'
@@ -110,3 +106,11 @@ release: dist ## package and upload a release
 
 upstream: develop ## install the GitHub-based development branches of dependencies in editable mode to the active Python's site-packages
 	python -m pip install --no-user --requirement requirements_upstream.txt
+
+## Docker container targets
+
+start: ## builds and starts docker containers
+	docker-compose up --build -d
+
+stop: ## stops docker containers
+	docker-compose down -v
