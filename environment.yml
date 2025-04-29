@@ -6,3 +6,5 @@ dependencies:
   - python>=3.8
   - flask
   - python-confluent-kafka>=2.9
+  # dev
+  - pytest

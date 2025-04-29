@@ -110,4 +110,14 @@ Get dummy handle:
 curl -X GET "http://localhost:5000/api/handles/21.T11148/test_1001"
 ```
 
+## Run tests
 
+Run normal tests:
+```
+make test
+```
+
+Run smoke/online tests:
+```
+make smoke
+```
