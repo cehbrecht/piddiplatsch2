@@ -1,5 +1,6 @@
 import logging
 import pyhandle
+from piddiplatsch.config import config
 
 # Use logger for this module
 logger = logging.getLogger(__name__)
@@ -28,6 +29,16 @@ class HandleClient:
         connector._HandleSystemConnector__HTTPS_verify = verify_https
         connector._HandleSystemConnector__authentication_method = "user_pw"
         connector._HandleSystemConnector__basic_authentication_string = "_noauth_"
+
+    @classmethod
+    def from_config(cls):
+        """Create and return a HandleClient instance using configured credentials."""
+        return cls(
+            server_url=config.get("handle", "server_url"),
+            prefix=config.get("handle", "prefix"),
+            username=config.get("handle", "username"),
+            password=config.get("handle", "password"),
+        )
 
     def build_handle(self, pid):
         """Build a full handle by combining the prefix and the PID."""

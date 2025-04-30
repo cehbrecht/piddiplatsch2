@@ -2,9 +2,11 @@ import json
 import time
 import uuid
 import os
+import requests
 import pytest
 from piddiplatsch.cli import cli
 from piddiplatsch.config import config
+from piddiplatsch.consumer import ConsumerPipeline
 
 
 @pytest.fixture(scope="module")
@@ -27,9 +29,6 @@ def example_message():
             }
         }
     }
-
-
-import requests
 
 
 def send_and_consume_message(runner, message, topic, kafka_server):
@@ -55,17 +54,12 @@ def send_and_consume_message(runner, message, topic, kafka_server):
 
     time.sleep(2)  # Allow Kafka to propagate
 
-    from piddiplatsch.consumer import Consumer, build_client, load_processor
+    pipeline = ConsumerPipeline(topic, kafka_server)
 
-    consumer = Consumer(topic, kafka_server)
-    handle_client = build_client()
-    processor = load_processor()
-
-    for key, value in consumer.consume():
-        assert key
-        assert value["data"]["payload"]["item"]["links"][0]["href"] == location
-        processor.process(key, value, handle_client)
-        break
+    key, value = next(pipeline.consumer.consume())
+    assert key
+    assert value["data"]["payload"]["item"]["links"][0]["href"] == location
+    pipeline.process_message(key, value)
 
     # Verify the handle was registered in the mock handle server
     mock_handle_url = config.get("handle", "server_url").rstrip("/")

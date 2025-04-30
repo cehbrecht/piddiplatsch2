@@ -1,5 +1,7 @@
 import logging
 import json
+import signal
+import sys
 from confluent_kafka import Consumer as ConfluentConsumer, KafkaException
 from piddiplatsch.handle_client import HandleClient
 from piddiplatsch.config import config
@@ -7,16 +9,6 @@ from piddiplatsch.plugin import load_processor
 
 # Set up logging
 config.configure_logging()
-
-
-def build_client():
-    """Create and return a HandleClient instance using configured credentials."""
-    return HandleClient(
-        server_url=config.get("handle", "server_url"),
-        prefix=config.get("handle", "prefix"),
-        username=config.get("handle", "username"),
-        password=config.get("handle", "password"),
-    )
 
 
 class Consumer:
@@ -58,16 +50,49 @@ class Consumer:
             self.consumer.close()
 
 
-def start_consumer(topic: str, kafka_server: str):
-    """Start the Kafka consumer loop using a plugin-based processor."""
-    handle_client = build_client()
-    processor = load_processor()
+class ConsumerPipeline:
+    """Encapsulates the Kafka consumer, processor, and handle client."""
 
-    consumer = Consumer(topic, kafka_server)
-    for key, value in consumer.consume():
+    def __init__(self, topic: str, kafka_server: str):
+        self.consumer = Consumer(topic, kafka_server)
+        self.handle_client = HandleClient.from_config()
+        self.processor = load_processor()
+
+    def run(self):
+        """Consume and process messages indefinitely."""
+        logging.info("Starting consumer pipeline...")
+        for key, value in self.consumer.consume():
+            self.process_message(key, value)
+
+    def process_message(self, key: str, value: dict):
+        """Process a single message."""
         try:
             logging.info(f"Processing message: {key}")
-            processor.process(key, value, handle_client)
+            self.processor.process(key, value, self.handle_client)
         except Exception as e:
             logging.error(f"Error processing message {key}: {e}")
             raise
+
+    def stop(self):
+        """Gracefully stop the consumer."""
+        logging.info("Stopping consumer...")
+        # Any other cleanup logic can be added here if needed.
+
+
+def start_consumer(topic: str, kafka_server: str):
+    pipeline = ConsumerPipeline(topic, kafka_server)
+
+    # Handle graceful shutdown
+    def sigint_handler(signal, frame):
+        logging.info("Received SIGINT. Gracefully shutting down.")
+        pipeline.stop()
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, sigint_handler)  # Handle Ctrl+C (SIGINT)
+
+    try:
+        pipeline.run()
+    except KeyboardInterrupt:
+        logging.info("Consumer interrupted.")
+        pipeline.stop()
+        sys.exit(0)
