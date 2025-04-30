@@ -2,19 +2,11 @@ import click
 import os
 import logging
 import json
-from piddiplatsch.consumer import Consumer, process_message
+from piddiplatsch.consumer import start_consumer
 from piddiplatsch.config import config
 from piddiplatsch import client
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
-
-
-def start_kafka_consumer(topic, kafka_server):
-    client.ensure_topic_exists(kafka_server, topic)
-    logging.info(f"Starting Kafka consumer for topic: {topic}")
-    consumer = Consumer(topic, kafka_server)
-    for key, value in consumer.consume():
-        process_message(key, value)
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
@@ -52,7 +44,7 @@ def cli(ctx, config_file, debug, logfile):
 )
 def consume(topic, kafka_server):
     """Start the Kafka consumer."""
-    start_kafka_consumer(topic, kafka_server)
+    start_consumer(topic, kafka_server)
 
 
 @cli.command()
