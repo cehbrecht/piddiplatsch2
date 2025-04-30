@@ -38,8 +38,6 @@ def send_and_consume_message(runner, message, topic, kafka_server):
     location = message["data"]["payload"]["item"]["links"][0]["href"]
     pid = message["data"]["payload"]["item"]["id"]
 
-    print(location)
-
     # Send the message
     result_send = runner.invoke(
         cli,
@@ -62,7 +60,7 @@ def send_and_consume_message(runner, message, topic, kafka_server):
 
     key, value = next(pipeline.consumer.consume())
     assert key
-    assert value["data"]["payload"]["item"]["links"][0]["href"] == location
+    assert value
     pipeline.process_message(key, value)
 
     # Verify the handle was registered in the mock handle server
@@ -72,7 +70,13 @@ def send_and_consume_message(runner, message, topic, kafka_server):
 
     response = requests.get(f"{mock_handle_url}/api/handles/{full_handle}")
     assert response.status_code == 200, f"Handle not found: {full_handle}"
-    assert response.json()["handle"] == full_handle
+    data = response.json()
+    assert data["handle"] == full_handle
+    # unpack handle values
+    values = {}
+    for value in data["values"]:
+        values[value["type"]] = value["data"]
+    assert values["URL"] == location
 
 
 @pytest.mark.online
