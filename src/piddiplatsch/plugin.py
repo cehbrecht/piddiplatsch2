@@ -1,5 +1,5 @@
 import pluggy
-from piddiplatsch import config
+from piddiplatsch.config import config
 
 hookspec = pluggy.HookspecMarker("piddiplatsch")
 hookimpl = pluggy.HookimplMarker("piddiplatsch")
@@ -16,25 +16,20 @@ class MessageProcessorSpec:
 
 
 def load_processor():
-    """Load and return the plugin hook caller for the configured processor."""
-    print("load_processor")
-    plugin_name = config.get("plugins", "processor", fallback=None)
-    if not plugin_name:
-        raise RuntimeError("No processor plugin configured under [plugins].processor")
-
-    try:
-        module = __import__(plugin_name, fromlist=["plugin"])
-    except ImportError as e:
-        raise RuntimeError(f"Could not import plugin '{plugin_name}': {e}")
-
     pm = pluggy.PluginManager("piddiplatsch")
     pm.add_hookspecs(MessageProcessorSpec)
-    pm.register(module)
 
-    processors = pm.get_plugins()
-    if len(processors) != 1:
-        raise RuntimeError(
-            f"Expected exactly one processor plugin, found {len(processors)}"
-        )
+    # Dynamically import the configured plugin
+    processor_path = config.get("processor", "module")
+    module = __import__(processor_path, fromlist=[""])
+    processor = getattr(module, "processor")
 
-    return pm.hook
+    pm.register(processor)
+
+    # Ensure exactly one processor is registered
+    hook_caller = pm.hook
+    implementations = list(pm.get_plugins())
+    if len(implementations) != 1:
+        raise RuntimeError("Exactly one processor plugin must be configured.")
+
+    return processor  # ✅ return the actual processor instance, not `pm.hook`

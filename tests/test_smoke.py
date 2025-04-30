@@ -55,14 +55,16 @@ def send_and_consume_message(runner, message, topic, kafka_server):
 
     time.sleep(2)  # Allow Kafka to propagate
 
-    from piddiplatsch.consumer import Consumer, process_message
+    from piddiplatsch.consumer import Consumer, build_client, load_processor
 
     consumer = Consumer(topic, kafka_server)
+    handle_client = build_client()
+    processor = load_processor()
 
     for key, value in consumer.consume():
         assert key
         assert value["data"]["payload"]["item"]["links"][0]["href"] == location
-        process_message(key, value)
+        processor._plugin.process(key, value, handle_client)
         break
 
     # Verify the handle was registered in the mock handle server
