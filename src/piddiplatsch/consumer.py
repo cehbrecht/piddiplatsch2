@@ -1,34 +1,28 @@
 import logging
 import json
 from confluent_kafka import Consumer as ConfluentConsumer, KafkaException
-from piddiplatsch.plugin import pm
+from piddiplatsch.handle_client import HandleClient
 from piddiplatsch.config import config
+from piddiplatsch.plugin import load_processor
 
-# Configure logging (console or file with optional colors)
+# Set up logging
 config.configure_logging()
 
 
-def load_processor():
-    """Load the processor plugin specified in the config."""
-    processor_class = config.get("processor", "class")
-    if not processor_class:
-        logging.error("No processor class specified in the config.")
-        return None
-
-    # Dynamically load and register the processor plugin
-    plugin = pm.get_plugin(processor_class)
-    if not plugin:
-        logging.error(f"Processor plugin '{processor_class}' not found.")
-        return None
-
-    return plugin
+def build_client():
+    """Create and return a HandleClient instance using configured credentials."""
+    return HandleClient(
+        server_url=config.get("handle", "server_url"),
+        prefix=config.get("handle", "prefix"),
+        username=config.get("handle", "username"),
+        password=config.get("handle", "password"),
+    )
 
 
 class Consumer:
     def __init__(
         self, topic: str, kafka_server: str, group_id: str = "piddiplatsch-consumer"
     ):
-        """Initialize the Kafka Consumer."""
         self.topic = topic
         self.kafka_server = kafka_server
         self.group_id = group_id
@@ -43,7 +37,7 @@ class Consumer:
         self.consumer.subscribe([self.topic])
 
     def consume(self):
-        """Consume messages from Kafka."""
+        """Yield messages from Kafka."""
         try:
             while True:
                 msg = self.consumer.poll(timeout=1.0)
@@ -52,31 +46,31 @@ class Consumer:
                 if msg.error():
                     raise KafkaException(msg.error())
 
-                key = msg.key().decode("utf-8")
-                logging.debug(f"Got a message: {key}")
+                key = msg.key().decode("utf-8") if msg.key() else None
+                try:
+                    value = json.loads(msg.value().decode("utf-8"))
+                except json.JSONDecodeError as e:
+                    logging.error(f"Failed to decode message: {e}")
+                    continue
 
-                value = json.loads(msg.value().decode("utf-8"))
                 yield key, value
         finally:
             self.consumer.close()
 
 
-def start_consumer(topic, kafka_server):
-    """Start the Kafka consumer and process messages."""
-    logging.info(f"Starting Kafka consumer for topic: {topic}")
+def start_consumer(topic: str, kafka_server: str, handle_client=None):
+    """Start the Kafka consumer loop using a plugin-based processor."""
+    handle_client = handle_client or build_client()
+    processor = load_processor()
 
-    # Load the appropriate processor plugin from config
-    plugin = load_processor()
-    if plugin is None:
-        logging.error("No valid processor found. Exiting consumer.")
-        return
-
-    processor = plugin()
-
-    # Start the consumer and process messages
     consumer = Consumer(topic, kafka_server)
     for key, value in consumer.consume():
-        if processor.can_process(key, value):
-            processor.process(
-                key, value, handle_client
-            )  # Pass the handle_client to the process method
+        try:
+            if processor.can_process(key, value):
+                logging.info(f"Processing message: {key}")
+                processor.process(key, value, handle_client)
+            else:
+                logging.debug(f"Ignoring message: {key}")
+        except Exception as e:
+            logging.error(f"Error processing message {key}: {e}")
+            raise

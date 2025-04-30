@@ -8,5 +8,5 @@ prefix = "21.T11148"
 username = "testuser"
 password = "testpass"
 
-[processor]
-class = "piddiplatsch.processor.CMIP6StacProcessor"
+[plugins]
+processor = "piddiplatsch.processors.cmip6"
