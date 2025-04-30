@@ -16,34 +16,25 @@ class MessageProcessorSpec:
 
 
 def load_processor():
-    """Load and return the one configured message processor plugin."""
+    """Load and return the plugin hook caller for the configured processor."""
+    print("load_processor")
     plugin_name = config.get("plugins", "processor", fallback=None)
     if not plugin_name:
         raise RuntimeError("No processor plugin configured under [plugins].processor")
 
     try:
-        # Dynamically import the configured plugin
         module = __import__(plugin_name, fromlist=["plugin"])
     except ImportError as e:
         raise RuntimeError(f"Could not import plugin '{plugin_name}': {e}")
 
-    # Set up pluggy and register the plugin
     pm = pluggy.PluginManager("piddiplatsch")
     pm.add_hookspecs(MessageProcessorSpec)
     pm.register(module)
 
-    # Check if the plugin implements the required methods
-    hook_caller = pm.hook
-    if not hook_caller.can_process or not hook_caller.process:
-        raise RuntimeError(
-            f"Plugin '{plugin_name}' does not implement required methods."
-        )
-
-    # Ensure only one plugin is registered and usable
     processors = pm.get_plugins()
     if len(processors) != 1:
         raise RuntimeError(
             f"Expected exactly one processor plugin, found {len(processors)}"
         )
 
-    return module
+    return pm.hook

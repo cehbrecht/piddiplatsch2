@@ -58,9 +58,9 @@ class Consumer:
             self.consumer.close()
 
 
-def start_consumer(topic: str, kafka_server: str, handle_client=None):
+def start_consumer(topic: str, kafka_server: str):
     """Start the Kafka consumer loop using a plugin-based processor."""
-    handle_client = handle_client or build_client()
+    handle_client = build_client()
     processor = load_processor()
 
     consumer = Consumer(topic, kafka_server)
