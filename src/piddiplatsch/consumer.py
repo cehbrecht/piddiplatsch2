@@ -66,12 +66,8 @@ def start_consumer(topic: str, kafka_server: str):
     consumer = Consumer(topic, kafka_server)
     for key, value in consumer.consume():
         try:
-            if processor.can_process(key, value):
-                logging.info(f"Processing message: {key}")
-                processor._plugin.process(key, value, handle_client)
-
-            else:
-                logging.debug(f"Ignoring message: {key}")
+            logging.info(f"Processing message: {key}")
+            processor.process(key, value, handle_client)
         except Exception as e:
             logging.error(f"Error processing message {key}: {e}")
             raise

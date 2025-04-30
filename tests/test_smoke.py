@@ -64,7 +64,7 @@ def send_and_consume_message(runner, message, topic, kafka_server):
     for key, value in consumer.consume():
         assert key
         assert value["data"]["payload"]["item"]["links"][0]["href"] == location
-        processor._plugin.process(key, value, handle_client)
+        processor.process(key, value, handle_client)
         break
 
     # Verify the handle was registered in the mock handle server
@@ -75,16 +75,6 @@ def send_and_consume_message(runner, message, topic, kafka_server):
     response = requests.get(f"{mock_handle_url}/api/handles/{full_handle}")
     assert response.status_code == 200, f"Handle not found: {full_handle}"
     assert response.json()["handle"] == full_handle
-
-
-@pytest.mark.online
-def test_send_and_consume_message(runner, example_message, kafka_settings):
-    send_and_consume_message(
-        runner,
-        example_message,
-        kafka_settings["topic"],
-        kafka_settings["kafka_server"],
-    )
 
 
 @pytest.mark.online

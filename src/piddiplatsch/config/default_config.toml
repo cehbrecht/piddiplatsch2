@@ -7,6 +7,3 @@ server_url = "http://localhost:5000"
 prefix = "21.T11148"
 username = "testuser"
 password = "testpass"
-
-[plugins]
-processor = "piddiplatsch.processors.cmip6"
