@@ -1,5 +1,6 @@
 import pytest
 import os
+from click.testing import CliRunner
 
 
 @pytest.fixture
@@ -11,3 +12,8 @@ def testdata_path():
 def pytest_runtest_setup(item):
     if "online" in item.keywords and not item.config.getoption("-m"):
         pytest.skip("Skipping online test since '-m online' was not specified.")
+
+
+@pytest.fixture
+def runner():
+    return CliRunner()
