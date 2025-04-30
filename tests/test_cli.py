@@ -113,5 +113,5 @@ def test_send_valid_cmip6_mpi(runner, testdata_path, kafka_settings):
 
 def test_send_invalid_path(runner):
     result = runner.invoke(cli, ["send", "--path", "nonexistent.json"])
-    assert result.exit_code == 0  # It doesn't crash
-    assert "File not found" in result.output
+    assert result.exit_code == 1
+    assert "No such file or directory" in result.output
