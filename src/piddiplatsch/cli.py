@@ -30,7 +30,7 @@ def ensure_topic_exists(kafka_server, topic):
             fs[topic].result()
             click.echo(f"✅ Created Kafka topic: {topic}")
         except Exception as e:
-            click.echo(f"⚠️  Failed to create topic '{topic}': {e}")
+            click.echo(f"⚠️  Failed to create topic '{topic}': {e}", err=True)
 
 
 def produce_message(kafka_server, topic, key, value):
@@ -39,7 +39,7 @@ def produce_message(kafka_server, topic, key, value):
 
     def delivery_report(err, msg):
         if err:
-            click.echo(f"❌ Delivery failed: {err}")
+            click.echo(f"❌ Delivery failed: {err}", err=True)
         else:
             click.echo(f"📤 Message delivered to {msg.topic()} [{msg.partition()}]")
 
@@ -60,7 +60,7 @@ def start_kafka_consumer(topic, kafka_server):
         process_message(key, value)
 
 
-@click.group()
+@click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option()
 @click.option(
     "--config",
@@ -113,27 +113,44 @@ def consume(topic, kafka_server):
     default=config.get("kafka", "server"),
     help="Kafka server URL.",
 )
-def send(message, path, topic, kafka_server):
+@click.option(
+    "--verbose", is_flag=True, help="Show message key and value before sending."
+)
+@click.pass_context
+def send(ctx, message, path, topic, kafka_server, verbose):
     """Send a message to the Kafka topic."""
+    if message and path:
+        click.echo("❌ Provide only one of --message or --path.", err=True)
+        ctx.exit(1)
+
+    if not message and not path:
+        click.echo("❌ Please provide a message or a path to a JSON file.", err=True)
+        ctx.exit(1)
+
     if path:
         try:
             with open(path, "r") as f:
                 data = json.load(f)
+            key = os.path.splitext(os.path.basename(path))[0]
+            value = json.dumps(data)
         except FileNotFoundError:
-            click.echo(f"❌ File not found: {path}")
-            return
+            click.echo(f"❌ File not found: {path}", err=True)
+            ctx.exit(1)
         except json.JSONDecodeError as e:
-            click.echo(f"❌ Invalid JSON: {e}")
-            return
-
-        key = os.path.splitext(os.path.basename(path))[0]
-        value = json.dumps(data)
-    elif message:
-        key = str(uuid.uuid5(uuid.NAMESPACE_DNS, message))
-        value = message
+            click.echo(f"❌ Invalid JSON in file: {e}", err=True)
+            ctx.exit(1)
     else:
-        click.echo("❌ Please provide a message or a path to a JSON file.")
-        return
+        try:
+            data = json.loads(message)
+            value = json.dumps(data)
+        except json.JSONDecodeError as e:
+            click.echo(f"❌ Invalid JSON in --message: {e}", err=True)
+            ctx.exit(1)
+        key = str(uuid.uuid5(uuid.NAMESPACE_DNS, message))
+
+    if verbose:
+        click.echo(f"🔑 Key: {key}")
+        click.echo(f"📦 Value: {value}")
 
     produce_message(kafka_server, topic, key, value)
 
