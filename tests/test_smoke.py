@@ -2,6 +2,7 @@ import json
 import time
 import uuid
 import os
+import requests
 import pytest
 from piddiplatsch.cli import cli
 from piddiplatsch.config import config
@@ -29,7 +30,24 @@ def example_message():
     }
 
 
-import requests
+def consume_one(consumer, timeout=10):
+    """Poll up to `timeout` seconds for one Kafka message."""
+    import time
+
+    start = time.time()
+    while time.time() - start < timeout:
+        msg = consumer.consumer.poll(timeout=1.0)
+        if msg is None:
+            continue
+        if msg.error():
+            continue  # or raise if you want
+        try:
+            key = msg.key().decode("utf-8") if msg.key() else None
+            value = json.loads(msg.value().decode("utf-8"))
+            return key, value
+        except json.JSONDecodeError:
+            continue
+    raise TimeoutError("No message received from Kafka within timeout.")
 
 
 def send_and_consume_message(runner, message, topic, kafka_server):
@@ -55,17 +73,14 @@ def send_and_consume_message(runner, message, topic, kafka_server):
 
     time.sleep(2)  # Allow Kafka to propagate
 
-    from piddiplatsch.consumer import Consumer, build_client, load_processor
+    from piddiplatsch.consumer import Consumer, process_message
 
     consumer = Consumer(topic, kafka_server)
-    handle_client = build_client()
-    processor = load_processor()
 
-    for key, value in consumer.consume():
-        assert key
-        assert value["data"]["payload"]["item"]["links"][0]["href"] == location
-        processor.process(key, value, handle_client)
-        break
+    key, value = consume_one(consumer)
+    assert key
+    assert value["data"]["payload"]["item"]["links"][0]["href"] == location
+    process_message(key, value)
 
     # Verify the handle was registered in the mock handle server
     mock_handle_url = config.get("handle", "server_url").rstrip("/")

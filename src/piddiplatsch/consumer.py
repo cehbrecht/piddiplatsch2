@@ -60,14 +60,17 @@ class Consumer:
 
 def start_consumer(topic: str, kafka_server: str):
     """Start the Kafka consumer loop using a plugin-based processor."""
-    handle_client = build_client()
-    processor = load_processor()
-
     consumer = Consumer(topic, kafka_server)
     for key, value in consumer.consume():
-        try:
-            logging.info(f"Processing message: {key}")
-            processor.process(key, value, handle_client)
-        except Exception as e:
-            logging.error(f"Error processing message {key}: {e}")
-            raise
+        process_message(key, value)
+
+
+def process_message(key: str, value: str):
+    handle_client = build_client()
+    processor = load_processor()
+    try:
+        logging.info(f"Processing message: {key}")
+        processor.process(key, value, handle_client)
+    except Exception as e:
+        logging.error(f"Error processing message {key}: {e}")
+        raise
