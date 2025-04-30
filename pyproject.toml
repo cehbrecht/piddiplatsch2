@@ -19,6 +19,7 @@ dependencies = [
     "colorlog",
     "toml",
     "requests",
+    "pluggy",
 ]
 
 [project.optional-dependencies]

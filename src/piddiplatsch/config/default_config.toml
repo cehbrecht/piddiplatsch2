@@ -7,3 +7,6 @@ server_url = "http://localhost:5000"
 prefix = "21.T11148"
 username = "testuser"
 password = "testpass"
+
+[processor]
+class = "piddiplatsch.processor.CMIP6StacProcessor"
