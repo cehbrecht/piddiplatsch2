@@ -62,7 +62,7 @@ OR
 make stop
 ```
 
-## Use piddiplatsch client
+## Usage
 
 Add a PID record (json file):
 ```sh
@@ -77,6 +77,18 @@ piddiplatsch consume
 You can also use the debug mode and a logfile:
 ```sh
 piddiplatsch --debug --logfile consume.log consume
+```
+
+## Run tests
+
+Run normal tests:
+```
+make test
+```
+
+Run smoke/online tests:
+```
+make smoke
 ```
 
 ## Check mock handle service
@@ -108,16 +120,4 @@ curl -X PUT "http://localhost:5000/api/handles/21.T11148/test_1001?overwrite=tru
 Get dummy handle:
 ```sh
 curl -X GET "http://localhost:5000/api/handles/21.T11148/test_1001"
-```
-
-## Run tests
-
-Run normal tests:
-```
-make test
-```
-
-Run smoke/online tests:
-```
-make smoke
 ```
