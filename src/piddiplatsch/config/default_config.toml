@@ -1,6 +1,6 @@
 [kafka]
 server = "localhost:39092"
-topic = "CMIP7"
+topic = "CMIP6"
 
 [handle]
 server_url = "http://localhost:5000"

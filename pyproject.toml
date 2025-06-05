@@ -5,7 +5,7 @@ build-backend = "flit_core.buildapi"
 [project]
 name = "piddiplatsch"
 version = "0.1.0"
-description = "A Kafka consumer for CMIP7 records with Handle Service integration"
+description = "A Kafka consumer for CMIP6+ records with Handle Service integration"
 authors = [
     { name = "Carsten Ehbrecht", email = "ehbrecht@dkrz.de" }
 ]
