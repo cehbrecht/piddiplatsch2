@@ -1,36 +1,60 @@
 import pluggy
 import logging
 import uuid
+from jsonschema import validate, ValidationError
 
 hookimpl = pluggy.HookimplMarker("piddiplatsch")
 
-class CMIP6Processor:
+# Define the required fields from a CMIP6 STAC item
+CMIP6_ITEM_SCHEMA = {
+    "type": "object",
+    "required": ["id", "links", "properties", "assets"],
+    "properties": {
+        "id": {"type": "string"},
+        "links": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "object", "required": ["href"], "properties": {"href": {"type": "string"}}},
+        },
+        # "properties": {
+            # "type": "object",
+            # "required": ["version"],
+            # "properties": {"version": {"type": "string"}},
+        # },
+        "assets": {
+            "type": "object",
+            "required": ["reference_file"],
+            "properties": {
+                "reference_file": {
+                    "type": "object",
+                    "required": ["alternate:name"],
+                    "properties": {"alternate:name": {"type": "string"}},
+                }
+            },
+        },
+    },
+}
 
+
+class CMIP6Processor:
     @hookimpl
     def process(self, key, value, handle_client):
         logging.info(f"CMIP6 plugin processing key: {key}")
 
-        item = value["data"]["payload"]["item"]
-
         try:
-            pid = item["id"]
+            item = value["data"]["payload"]["item"]
         except KeyError:
-            pid = str(uuid.uuid5(uuid.NAMESPACE_DNS, key))
+            raise ValueError("Missing 'item' in Kafka message")
 
         try:
-            url = item["links"][0]["href"]
-        except (KeyError, IndexError):
-            raise ValueError("Missing URL in message")
+            validate(instance=item, schema=CMIP6_ITEM_SCHEMA)
+        except ValidationError as e:
+            raise ValueError(f"Invalid CMIP6 STAC item: {e.message}")
 
-        try:
-            version = item["properties"]["version"]
-        except (KeyError, IndexError):
-            raise ValueError("Missing VERSION in message")
-
-        try:
-            hosting_node = item["assets"]["reference_file"]["alternate:name"]
-        except (KeyError, IndexError):
-            raise ValueError("Missing HOSTING_NODE in message")
+        pid = item.get("id") or str(uuid.uuid5(uuid.NAMESPACE_DNS, key))
+        url = item["links"][0]["href"]
+        version = item["properties"]["version"]
+        hosting_node = item["assets"]["reference_file"]["alternate:name"]
 
         record = {
             "URL": url,
@@ -43,4 +67,5 @@ class CMIP6Processor:
             "UNPUBLISHED_REPLICAS": "",
             "UNPUBLISHED_HOSTS": "",
         }
+
         handle_client.add_item(pid, record)

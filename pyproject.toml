@@ -20,6 +20,7 @@ dependencies = [
     "toml",
     "requests",
     "pluggy",
+    "jsonschema",
 ]
 
 [project.optional-dependencies]
