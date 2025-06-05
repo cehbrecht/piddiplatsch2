@@ -62,12 +62,12 @@ OR
 make stop
 ```
 
-Create topic CMIP6:
-```sh
-./scripts/kafka.sh create CMIP6
-```
-
 ## Usage
+
+Optionally: you can create the kafka topic if it does not exist:
+```sh
+piddiplatsch init
+```
 
 Add a PID record (json file):
 ```sh
@@ -83,6 +83,8 @@ You can also use the debug mode and a logfile:
 ```sh
 piddiplatsch --debug --logfile consume.log consume
 ```
+
+
 
 ## Run tests
 
