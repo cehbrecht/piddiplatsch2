@@ -111,3 +111,7 @@ make stop
 ## Examples
 
 Have a look at the notebooks.
+
+## License
+
+This project is licensed under the Apache License version 2.
