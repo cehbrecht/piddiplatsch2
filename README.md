@@ -11,6 +11,16 @@ Piddiplatsch is a [Kafka](https://kafka.apache.org/) consumer for CMIP6+ records
 
 ## Installation
 
+Prerequisites:
+* Use conda/mamba from conda-forge
+* https://conda-forge.org/download/ 
+
+Clone the repository from GitHub:
+```sh
+git clone git@github.com:cehbrecht/piddiplatsch2.git
+cd piddiplatsch2
+```
+
 Create the conda environment:
 ```sh
 conda env create
@@ -26,7 +36,57 @@ OR
 make develop
 ```
 
-## Run Kafka for local testing
+## Configuration
+
+Optionally you can cusomize the default configration to edit the Kafka URL and topic:
+```sh
+cp src/config/default_config.toml my-config.toml
+
+vim custom-config.toml
+```
+
+You can use your customized config for piddiplatsch:
+```sh
+piddiplatsch --config custom-config.toml
+```
+
+## Usage
+
+> ⚠️ **Warning**: You need a running Kafka queue and Handle service. For local testing you can use the provided Docker containers (see below).
+
+> 💡 **Optional**: You can create the Kafka topic if it does not exist yet.
+```sh
+piddiplatsch init
+```
+
+Send a record (json file, STAC format) to the Kafka queue:
+```sh
+piddiplatsch send -p tests/testdata/CMIP6/CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710.json
+```
+
+Start the Kafka consumer to read messages from Kafka queue:
+```sh
+piddiplatsch consume
+```
+
+You can also use the debug mode and a logfile:
+```sh
+piddiplatsch --debug --logfile consume.log consume
+```
+
+## Run tests
+
+Run normal unit tests:
+```
+make test
+```
+
+Run smoke/online tests with an active Kafka queue and Handle service:
+```
+make smoke
+```
+
+## Docker: run Kafka for local testing
 
 Start Kafka with:
 ```sh
@@ -46,89 +106,8 @@ OR
 make stop
 ```
 
-## Usage
-
-Optionally: you can create the kafka topic if it does not exist:
-```sh
-piddiplatsch init
-```
-
-Add a PID record (json file) to the Kafka queue:
-```sh
-piddiplatsch send -p tests/testdata/CMIP6/CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710.json
-```
-
-Consume messages:
-```sh
-piddiplatsch consume
-```
-
-You can also use the debug mode and a logfile:
-```sh
-piddiplatsch --debug --logfile consume.log consume
-```
-
-
-## Run tests
-
-Run normal unit tests:
-```
-make test
-```
-
-Run smoke/online tests with an active Kafka queue and Handle service:
-```
-make smoke
-```
+> 💡 **Info**: Docker compose will also start the dummy Handle service for testing.
 
 ## Examples
 
 Have a look at the notebooks.
-
-## More Info
-
-### Kafka
-
-Docs:
-
-* https://kafka.apache.org/
-* https://pypi.org/project/confluent-kafka/
-* https://realpython.com/python-toml/
-
-Examples:
-* https://github.com/katyagorshkova/kafka-kraft
-
-### Handle Client
-
-https://pypi.org/project/pyhandle/
-
-### Check mock handle service
-
-The mock handle service is started with together with the docker conatiners for kafka (`make start`).
-
-Check admin user:
-```sh
-curl -X GET "http://localhost:5000/api/handles/21.T11148/testuser"
-```
-
-Register dummy handle:
-```sh
-curl -X PUT "http://localhost:5000/api/handles/21.T11148/test_1001?overwrite=true" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "values": [
-      {
-        "index": 1,
-        "type": "URL",
-        "data": {
-          "value": "https://example.org/location/1001"
-        }
-      }
-    ]
-  }'
-```
-
-Get dummy handle:
-```sh
-curl -X GET "http://localhost:5000/api/handles/21.T11148/test_1001"
-```
