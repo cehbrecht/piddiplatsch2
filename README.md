@@ -1,117 +1,139 @@
 # Piddiplatsch
 
-## Overview
-Piddiplatsch is a [Kafka](https://kafka.apache.org/) consumer for CMIP6+ records that integrates with a [Handle Service](https://pypi.org/project/pyhandle/) for persistent identifiers (PIDs).
+[![Build Status](https://github.com/cehbrecht/piddiplatsch2/actions/workflows/ci.yml/badge.svg)](https://github.com/cehbrecht/piddiplatsch2/actions)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![View Notebooks on nbviewer](https://img.shields.io/badge/nbviewer-view%20notebooks-orange)](https://nbviewer.org/github/cehbrecht/piddiplatsch2/tree/main/notebooks/)
 
+---
 
-## Features
+**Piddiplatsch** is a [Kafka](https://kafka.apache.org/) consumer for CMIP6+ records that integrates with a [Handle Service](https://pypi.org/project/pyhandle/) for persistent identifiers (PIDs).
+
+---
+
+## ✨ Features
+
 - Listens to a Kafka topic for CMIP6+ records
-- Adds, updates, and deletes PIDs in a Handle Service
-- Includes a mock Handle Server for testing
+- Adds, updates, and deletes PIDs via a Handle Service
+- Includes a mock Handle Server for local testing
+- CLI and plugin support
+- Example notebooks
 
-## Installation
+---
 
-Prerequisites:
-* Use conda/mamba from conda-forge
-* https://conda-forge.org/download/ 
+## ⚙️ Installation
 
-Clone the repository from GitHub:
-```sh
+**Prerequisites**:
+- [Miniconda or Mamba (via conda-forge)](https://conda-forge.org/download/)
+
+**Setup**:
+
+```bash
 git clone git@github.com:cehbrecht/piddiplatsch2.git
 cd piddiplatsch2
-```
 
-Create the conda environment:
-```sh
 conda env create
 conda activate piddiplatsch2
-```
 
-Install required packages with:
-```sh
+# Install dependencies
 pip install -e ".[dev]"
-
-OR
-
+# OR
 make develop
 ```
 
-## Configuration
+---
 
-Optionally you can cusomize the default configration to edit the Kafka URL and topic:
-```sh
+## 🛠️ Configuration
+
+You can customize Kafka or Handle settings:
+
+```bash
 cp src/config/default_config.toml my-config.toml
-
-vim custom-config.toml
+vim my-config.toml
 ```
 
-You can use your customized config for piddiplatsch:
-```sh
-piddiplatsch --config custom-config.toml
+Use your config file when running:
+
+```bash
+piddiplatsch --config my-config.toml
 ```
 
-## Usage
+---
 
-> ⚠️ **Warning**: You need a running Kafka queue and Handle service. For local testing you can use the provided Docker containers (see below).
+## 🚀 Usage
 
-> 💡 **Optional**: You can create the Kafka topic if it does not exist yet.
-```sh
+> ⚠️ **Kafka and Handle service must be running!**  
+> 💡 Use Docker setup below for local testing.
+
+### Initialize the Kafka topic:
+
+```bash
 piddiplatsch init
 ```
 
-Send a record (json file, STAC format) to the Kafka queue:
-```sh
-piddiplatsch send -p tests/testdata/CMIP6/CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710.json
+### Send a record (STAC JSON format):
+
+```bash
+piddiplatsch send -p tests/testdata/CMIP6/<your_file>.json
 ```
 
-Start the Kafka consumer to read messages from Kafka queue:
-```sh
+### Start the Kafka consumer:
+
+```bash
 piddiplatsch consume
 ```
 
-You can also use the debug mode and a logfile:
-```sh
+### With debug and log:
+
+```bash
 piddiplatsch --debug --logfile consume.log consume
 ```
 
-## Run tests
+---
 
-Run normal unit tests:
-```
+## ✅ Running Tests
+
+Run all unit tests:
+
+```bash
 make test
 ```
 
-Run smoke/online tests with an active Kafka queue and Handle service:
-```
+Run smoke tests (Kafka and Handle service must be up):
+
+```bash
 make smoke
 ```
 
-## Docker: run Kafka for local testing
+---
 
-Start Kafka with:
-```sh
+## 🐳 Local Kafka with Docker
+
+Start Kafka and mock Handle service:
+
+```bash
 docker-compose up --build -d
-
-OR
-
+# OR
 make start
 ```
 
-Stop Kafka with:
-```sh
+Stop all services:
+
+```bash
 docker-compose down -v
-
-OR
-
+# OR
 make stop
 ```
 
-> 💡 **Info**: Docker compose will also start the dummy Handle service for testing.
+---
 
-## Examples
+## 📓 Examples
 
-Have a look at the notebooks.
+Explore the example notebooks here:  
+🔗 [nbviewer.org/github/cehbrecht/piddiplatsch2/tree/main/notebooks/](https://nbviewer.org/github/cehbrecht/piddiplatsch2/tree/main/notebooks/)
 
-## License
+---
 
-This project is licensed under the Apache License version 2.
+## 📄 License
+
+Licensed under the [Apache License 2.0](LICENSE).
