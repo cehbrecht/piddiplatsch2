@@ -1,28 +1,12 @@
 # Piddiplatsch
 
 ## Overview
-Piddiplatsch is a Kafka consumer for CMIP6+ records that integrates with a Handle Service for persistent identifiers (PIDs).
-
-### Kafka
-
-Docs:
-
-* https://kafka.apache.org/
-* https://pypi.org/project/confluent-kafka/
-* https://realpython.com/python-toml/
-
-Examples:
-* https://github.com/katyagorshkova/kafka-kraft
-
-### Handle Client
-
-https://pypi.org/project/pyhandle/
+Piddiplatsch is a [Kafka](https://kafka.apache.org/) consumer for CMIP6+ records that integrates with a [Handle Service](https://pypi.org/project/pyhandle/) for persistent identifiers (PIDs).
 
 
 ## Features
 - Listens to a Kafka topic for CMIP6+ records
 - Adds, updates, and deletes PIDs in a Handle Service
-- Caches PID search results
 - Includes a mock Handle Server for testing
 
 ## Installation
@@ -42,7 +26,7 @@ OR
 make develop
 ```
 
-## Run kafka
+## Run Kafka for local testing
 
 Start Kafka with:
 ```sh
@@ -69,7 +53,7 @@ Optionally: you can create the kafka topic if it does not exist:
 piddiplatsch init
 ```
 
-Add a PID record (json file):
+Add a PID record (json file) to the Kafka queue:
 ```sh
 piddiplatsch send -p tests/testdata/CMIP6/CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710.json
 ```
@@ -85,20 +69,40 @@ piddiplatsch --debug --logfile consume.log consume
 ```
 
 
-
 ## Run tests
 
-Run normal tests:
+Run normal unit tests:
 ```
 make test
 ```
 
-Run smoke/online tests:
+Run smoke/online tests with an active Kafka queue and Handle service:
 ```
 make smoke
 ```
 
-## Check mock handle service
+## Examples
+
+Have a look at the notebooks.
+
+## More Info
+
+### Kafka
+
+Docs:
+
+* https://kafka.apache.org/
+* https://pypi.org/project/confluent-kafka/
+* https://realpython.com/python-toml/
+
+Examples:
+* https://github.com/katyagorshkova/kafka-kraft
+
+### Handle Client
+
+https://pypi.org/project/pyhandle/
+
+### Check mock handle service
 
 The mock handle service is started with together with the docker conatiners for kafka (`make start`).
 
