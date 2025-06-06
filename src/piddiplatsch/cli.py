@@ -28,6 +28,25 @@ def cli(ctx, config_file, debug, logfile):
     config.load_user_config(config_file)
     config.configure_logging(debug=debug, logfile=logfile)
 
+@cli.command()
+@click.option(
+    "-t",
+    "--topic",
+    default=config.get("kafka", "topic"),
+    help="Kafka topic to consume from.",
+)
+@click.option(
+    "-s",
+    "--kafka-server",
+    default=config.get("kafka", "server"),
+    help="Kafka server URL.",
+)
+@click.option("--partitions", default=1)
+@click.option("--replication-factor", default=1)
+def init(topic, kafka_server, partitions, replication_factor):
+    """Creates the kafka topic."""
+    client.ensure_topic_exists(kafka_server, topic, partitions, replication_factor)
+
 
 @cli.command()
 @click.option(

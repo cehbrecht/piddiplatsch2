@@ -4,6 +4,8 @@ import uuid
 from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient, NewTopic
 
+import logging
+
 
 def get_producer(kafka_server):
     return Producer({"bootstrap.servers": kafka_server})
@@ -13,16 +15,23 @@ def get_admin_client(kafka_server):
     return AdminClient({"bootstrap.servers": kafka_server})
 
 
-def ensure_topic_exists(kafka_server, topic):
+def ensure_topic_exists(kafka_server, topic, num_partitions=1, replication_factor=1):
     admin_client = get_admin_client(kafka_server)
     metadata = admin_client.list_topics(timeout=5)
-    if topic not in metadata.topics:
-        new_topic = NewTopic(topic, num_partitions=1, replication_factor=1)
-        fs = admin_client.create_topics([new_topic])
-        try:
-            fs[topic].result()
-        except Exception as e:
-            raise RuntimeError(f"Failed to create topic '{topic}': {e}")
+
+    if topic in metadata.topics:
+        logging.debug(f"Kafka topic '{topic}' already exists.")
+        return
+
+    new_topic = NewTopic(topic, num_partitions=num_partitions, replication_factor=replication_factor)
+    futures = admin_client.create_topics([new_topic])
+
+    try:
+        futures[topic].result()
+        logging.info(f"Kafka topic '{topic}' created.")
+    except Exception as e:
+        logging.error(f"Failed to create topic '{topic}': {e}")
+        raise
 
 
 def send_message(kafka_server, topic, key, value, on_delivery=None):
