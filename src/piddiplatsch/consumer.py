@@ -4,28 +4,19 @@ import signal
 import sys
 from confluent_kafka import Consumer as ConfluentConsumer, KafkaException
 from piddiplatsch.handle_client import HandleClient
-from piddiplatsch.config import config
+from piddiplatsch.config import config as piddi_config
 from piddiplatsch.plugin import load_processor
 
 # Set up logging
-config.configure_logging()
+piddi_config.configure_logging()
 
 
 class Consumer:
     def __init__(
-        self, topic: str, kafka_server: str, group_id: str = "piddiplatsch-consumer"
+        self, topic: str, kafka_cfg: dict
     ):
         self.topic = topic
-        self.kafka_server = kafka_server
-        self.group_id = group_id
-        self.consumer = ConfluentConsumer(
-            {
-                "bootstrap.servers": self.kafka_server,
-                "group.id": self.group_id,
-                "auto.offset.reset": "earliest",
-                "enable.auto.commit": True,
-            }
-        )
+        self.consumer = ConfluentConsumer(kafka_cfg)
         self.consumer.subscribe([self.topic])
 
     def consume(self):
@@ -53,8 +44,8 @@ class Consumer:
 class ConsumerPipeline:
     """Encapsulates the Kafka consumer, processor, and handle client."""
 
-    def __init__(self, topic: str, kafka_server: str):
-        self.consumer = Consumer(topic, kafka_server)
+    def __init__(self, topic: str, kafka_cfg: dict):
+        self.consumer = Consumer(topic, kafka_cfg)
         self.handle_client = HandleClient.from_config()
         self.processor = load_processor()
 
@@ -69,9 +60,10 @@ class ConsumerPipeline:
         try:
             logging.info(f"Processing message: {key}")
             self.processor.process(key, value, self.handle_client)
+            logging.info(f"Processing message ... done: {key}")
         except Exception as e:
-            logging.error(f"Error processing message {key}: {e}")
-            raise
+            logging.warning(f"Error processing message {key}: {e}")
+            # raise
 
     def stop(self):
         """Gracefully stop the consumer."""
@@ -79,8 +71,8 @@ class ConsumerPipeline:
         # Any other cleanup logic can be added here if needed.
 
 
-def start_consumer(topic: str, kafka_server: str):
-    pipeline = ConsumerPipeline(topic, kafka_server)
+def start_consumer(topic: str, kafka_cfg: dict):
+    pipeline = ConsumerPipeline(topic, kafka_cfg)
 
     # Handle graceful shutdown
     def sigint_handler(signal, frame):

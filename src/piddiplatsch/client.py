@@ -7,16 +7,16 @@ from confluent_kafka.admin import AdminClient, NewTopic
 import logging
 
 
-def get_producer(kafka_server):
-    return Producer({"bootstrap.servers": kafka_server})
+def get_producer(kafka_cfg):
+    return Producer(kafka_cfg)
 
 
-def get_admin_client(kafka_server):
-    return AdminClient({"bootstrap.servers": kafka_server})
+def get_admin_client(kafka_cfg):
+    return AdminClient(kafka_cfg)
 
 
-def ensure_topic_exists(kafka_server, topic, num_partitions=1, replication_factor=1):
-    admin_client = get_admin_client(kafka_server)
+def ensure_topic_exists(topic, kafka_cfg, num_partitions=1, replication_factor=1):
+    admin_client = get_admin_client(kafka_cfg)
     metadata = admin_client.list_topics(timeout=5)
 
     if topic in metadata.topics:
@@ -34,9 +34,9 @@ def ensure_topic_exists(kafka_server, topic, num_partitions=1, replication_facto
         raise
 
 
-def send_message(kafka_server, topic, key, value, on_delivery=None):
-    ensure_topic_exists(kafka_server, topic)
-    producer = get_producer(kafka_server)
+def send_message(topic, kafka_cfg, key, value, on_delivery=None):
+    ensure_topic_exists(topic, kafka_cfg)
+    producer = get_producer(kafka_cfg)
     producer.produce(
         topic,
         key=key.encode("utf-8"),

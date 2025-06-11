@@ -8,13 +8,13 @@ from piddiplatsch.cli import cli
 from piddiplatsch.config import config
 from piddiplatsch.consumer import ConsumerPipeline
 
+@pytest.fixture(scope="module")
+def topic():
+    return config.get("consumer", "topic")
 
 @pytest.fixture(scope="module")
-def kafka_settings():
-    return {
-        "topic": config.get("kafka", "topic"),
-        "kafka_server": config.get("kafka", "server"),
-    }
+def kafka_cfg():
+    return config.get("kafka")
 
 
 @pytest.fixture
@@ -23,7 +23,7 @@ def example_message():
         "data": {
             "payload": {
                 "item": {
-                    "id": f"cmip7-{uuid.uuid4()}",
+                    "id": f"cmip6-{uuid.uuid4()}",
                     "properties": {"version": "v20250430"},
                     "assets": {"reference_file": {"alternate:name": "example.com"}},
                     "links": [{"href": "http://example.com/data.nc"}],
@@ -33,7 +33,7 @@ def example_message():
     }
 
 
-def send_and_consume_message(runner, message, topic, kafka_server):
+def send_and_consume_message(runner, message, topic, kafka_cfg):
     # Get location
     location = message["data"]["payload"]["item"]["links"][0]["href"]
     pid = message["data"]["payload"]["item"]["id"]
@@ -47,20 +47,20 @@ def send_and_consume_message(runner, message, topic, kafka_server):
             json.dumps(message),  # ensure it's a string
             "--topic",
             topic,
-            "--kafka-server",
-            kafka_server,
         ],
     )
+
     assert result_send.exit_code == 0
     assert "📤 Message delivered" in result_send.output
 
     time.sleep(2)  # Allow Kafka to propagate
 
-    pipeline = ConsumerPipeline(topic, kafka_server)
+    pipeline = ConsumerPipeline(topic, kafka_cfg)
 
     key, value = next(pipeline.consumer.consume())
     assert key
     assert value
+
     pipeline.process_message(key, value)
 
     # Verify the handle was registered in the mock handle server
@@ -71,6 +71,7 @@ def send_and_consume_message(runner, message, topic, kafka_server):
     response = requests.get(f"{mock_handle_url}/api/handles/{full_handle}")
     assert response.status_code == 200, f"Handle not found: {full_handle}"
     data = response.json()
+    print(data)
     assert data["handle"] == full_handle
     # unpack handle values
     values = {}
@@ -80,15 +81,15 @@ def send_and_consume_message(runner, message, topic, kafka_server):
 
 
 @pytest.mark.online
-def test_send_valid_example_message(runner, example_message, kafka_settings):
+def test_send_valid_example_message(runner, example_message, topic, kafka_cfg):
 
     send_and_consume_message(
-        runner, example_message, kafka_settings["topic"], kafka_settings["kafka_server"]
+        runner, example_message, topic, kafka_cfg
     )
 
 
 @pytest.mark.online
-def test_send_valid_cmip6_mpi(runner, testdata_path, kafka_settings):
+def test_send_valid_cmip6_mpi(runner, testdata_path, topic, kafka_cfg):
     # Path to the JSON file in tests/testdata
     json_path = os.path.join(
         testdata_path,
@@ -103,5 +104,5 @@ def test_send_valid_cmip6_mpi(runner, testdata_path, kafka_settings):
         message = json.load(file)
 
     send_and_consume_message(
-        runner, message, kafka_settings["topic"], kafka_settings["kafka_server"]
+        runner, message, topic, kafka_cfg
     )

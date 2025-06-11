@@ -1,6 +1,4 @@
 import click
-import os
-import logging
 import json
 from piddiplatsch.consumer import start_consumer
 from piddiplatsch.config import config
@@ -12,6 +10,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option()
 @click.option(
+    "-c",
     "--config",
     "config_file",
     type=click.Path(),
@@ -28,65 +27,37 @@ def cli(ctx, config_file, debug, logfile):
     config.load_user_config(config_file)
     config.configure_logging(debug=debug, logfile=logfile)
 
+## init command
+
 @cli.command()
-@click.option(
-    "-t",
-    "--topic",
-    default=config.get("kafka", "topic"),
-    help="Kafka topic to consume from.",
-)
-@click.option(
-    "-s",
-    "--kafka-server",
-    default=config.get("kafka", "server"),
-    help="Kafka server URL.",
-)
-@click.option("--partitions", default=1)
-@click.option("--replication-factor", default=1)
-def init(topic, kafka_server, partitions, replication_factor):
+def init():
     """Creates the kafka topic."""
-    client.ensure_topic_exists(kafka_server, topic, partitions, replication_factor)
+    topic = config.get("consumer", "topic")
+    kafka_cfg = config.get("kafka")
+    client.ensure_topic_exists(topic, kafka_cfg)
 
+
+## consume command
 
 @cli.command()
-@click.option(
-    "-t",
-    "--topic",
-    default=config.get("kafka", "topic"),
-    help="Kafka topic to consume from.",
-)
-@click.option(
-    "-s",
-    "--kafka-server",
-    default=config.get("kafka", "server"),
-    help="Kafka server URL.",
-)
-def consume(topic, kafka_server):
+def consume():
     """Start the Kafka consumer."""
-    start_consumer(topic, kafka_server)
+    topic = config.get("consumer", "topic")
+    kafka_cfg = config.get("kafka")
+    start_consumer(topic, kafka_cfg)
 
+
+## send command
 
 @cli.command()
 @click.option("-m", "--message", help="Message (JSON string) to send.")
 @click.option("-p", "--path", help="Path to JSON file to send.")
 @click.option(
-    "-t",
-    "--topic",
-    default=config.get("kafka", "topic"),
-    help="Kafka topic to send to.",
-)
-@click.option(
-    "-s",
-    "--kafka-server",
-    default=config.get("kafka", "server"),
-    help="Kafka server URL.",
-)
-@click.option(
     "--verbose", is_flag=True, help="Show message key and value before sending."
 )
 @click.pass_context
-def send(ctx, message, path, topic, kafka_server, verbose):
-    """Send a message to the Kafka topic."""
+def send(ctx, message, path, verbose):
+    """Send a message to the Kafka queue."""
     if message and path:
         click.echo("❌ Provide only one of --message or --path.", err=True)
         ctx.exit(1)
@@ -115,7 +86,9 @@ def send(ctx, message, path, topic, kafka_server, verbose):
             click.echo(f"📤 Message delivered to {msg.topic()} [{msg.partition()}]")
 
     try:
-        client.send_message(kafka_server, topic, key, value, on_delivery=report)
+        topic = config.get("consumer", "topic")
+        kafka_cfg = config.get("kafka")
+        client.send_message(topic, kafka_cfg, key, value, on_delivery=report)
     except Exception as e:
         click.echo(f"❌ {e}", err=True)
         ctx.exit(1)

@@ -1,6 +1,11 @@
-[kafka]
-server = "localhost:39092"
+[consumer]
 topic = "CMIP6"
+
+[kafka]
+"bootstrap.servers" = "localhost:39092"
+"group.id" = "piddiplatsch-consumer"
+"auto.offset.reset" = "earliest"
+"enable.auto.commit" = true
 
 [handle]
 server_url = "http://localhost:5000"
