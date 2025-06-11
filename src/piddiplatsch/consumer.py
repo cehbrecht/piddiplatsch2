@@ -60,6 +60,7 @@ class ConsumerPipeline:
         try:
             logging.info(f"Processing message: {key}")
             self.processor.process(key, value, self.handle_client)
+            logging.info(f"Processing message ... done: {key}")
         except Exception as e:
             logging.error(f"Error processing message {key}: {e}")
             raise

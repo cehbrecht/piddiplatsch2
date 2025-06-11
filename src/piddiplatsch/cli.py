@@ -34,7 +34,7 @@ def cli(ctx, config_file, debug, logfile):
 @click.option(
     "-t",
     "--topic",
-    default=config.get("kafka", "topic"),
+    default=config.get("consumer", "topic"),
     help="Kafka topic to consume from.",
 )
 def init(topic):
@@ -66,7 +66,7 @@ def consume(topic):
 @click.option(
     "-t",
     "--topic",
-    default=config.get("kafka", "topic"),
+    default=config.get("consumer", "topic"),
     help="Kafka topic to send to.",
 )
 @click.option(

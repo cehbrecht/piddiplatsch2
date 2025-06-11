@@ -49,6 +49,7 @@ def send_and_consume_message(runner, message, topic, kafka_cfg):
             topic,
         ],
     )
+
     assert result_send.exit_code == 0
     assert "📤 Message delivered" in result_send.output
 
@@ -59,6 +60,7 @@ def send_and_consume_message(runner, message, topic, kafka_cfg):
     key, value = next(pipeline.consumer.consume())
     assert key
     assert value
+
     pipeline.process_message(key, value)
 
     # Verify the handle was registered in the mock handle server
@@ -69,6 +71,7 @@ def send_and_consume_message(runner, message, topic, kafka_cfg):
     response = requests.get(f"{mock_handle_url}/api/handles/{full_handle}")
     assert response.status_code == 200, f"Handle not found: {full_handle}"
     data = response.json()
+    print(data)
     assert data["handle"] == full_handle
     # unpack handle values
     values = {}
