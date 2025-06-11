@@ -62,8 +62,8 @@ class ConsumerPipeline:
             self.processor.process(key, value, self.handle_client)
             logging.info(f"Processing message ... done: {key}")
         except Exception as e:
-            logging.error(f"Error processing message {key}: {e}")
-            raise
+            logging.warning(f"Error processing message {key}: {e}")
+            # raise
 
     def stop(self):
         """Gracefully stop the consumer."""

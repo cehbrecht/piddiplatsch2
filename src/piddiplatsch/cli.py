@@ -1,6 +1,4 @@
 import click
-import os
-import logging
 import json
 from piddiplatsch.consumer import start_consumer
 from piddiplatsch.config import config
@@ -12,6 +10,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option()
 @click.option(
+    "-c",
     "--config",
     "config_file",
     type=click.Path(),
@@ -31,14 +30,9 @@ def cli(ctx, config_file, debug, logfile):
 ## init command
 
 @cli.command()
-@click.option(
-    "-t",
-    "--topic",
-    default=config.get("consumer", "topic"),
-    help="Kafka topic to consume from.",
-)
-def init(topic):
+def init():
     """Creates the kafka topic."""
+    topic = config.get("consumer", "topic")
     kafka_cfg = config.get("kafka")
     client.ensure_topic_exists(topic, kafka_cfg)
 
@@ -46,14 +40,9 @@ def init(topic):
 ## consume command
 
 @cli.command()
-@click.option(
-    "-t",
-    "--topic",
-    default=config.get("consumer", "topic"),
-    help="Kafka topic to consume from.",
-)
-def consume(topic):
+def consume():
     """Start the Kafka consumer."""
+    topic = config.get("consumer", "topic")
     kafka_cfg = config.get("kafka")
     start_consumer(topic, kafka_cfg)
 
@@ -64,17 +53,11 @@ def consume(topic):
 @click.option("-m", "--message", help="Message (JSON string) to send.")
 @click.option("-p", "--path", help="Path to JSON file to send.")
 @click.option(
-    "-t",
-    "--topic",
-    default=config.get("consumer", "topic"),
-    help="Kafka topic to send to.",
-)
-@click.option(
     "--verbose", is_flag=True, help="Show message key and value before sending."
 )
 @click.pass_context
-def send(ctx, message, path, topic, verbose):
-    """Send a message to the Kafka topic."""
+def send(ctx, message, path, verbose):
+    """Send a message to the Kafka queue."""
     if message and path:
         click.echo("❌ Provide only one of --message or --path.", err=True)
         ctx.exit(1)
@@ -103,6 +86,7 @@ def send(ctx, message, path, topic, verbose):
             click.echo(f"📤 Message delivered to {msg.topic()} [{msg.partition()}]")
 
     try:
+        topic = config.get("consumer", "topic")
         kafka_cfg = config.get("kafka")
         client.send_message(topic, kafka_cfg, key, value, on_delivery=report)
     except Exception as e:
