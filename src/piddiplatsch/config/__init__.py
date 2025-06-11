@@ -32,8 +32,13 @@ class Config:
             else:
                 base[key] = value
 
-    def get(self, section: str, key: str, fallback=None):
-        return self.config_data.get(section, {}).get(key, fallback)
+    def get(self, section: str, key: Optional[str] = None, fallback=None):
+        cfg = self.config_data.get(section, {})
+        if key:
+            value = cfg.get(key, fallback)
+        else:
+            value = cfg
+        return value
 
     def configure_logging(self, debug: bool = False, logfile: Optional[str] = None):
         log_level = logging.DEBUG if debug else logging.INFO

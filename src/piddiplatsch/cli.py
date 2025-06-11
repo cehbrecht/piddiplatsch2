@@ -28,6 +28,8 @@ def cli(ctx, config_file, debug, logfile):
     config.load_user_config(config_file)
     config.configure_logging(debug=debug, logfile=logfile)
 
+## init command
+
 @cli.command()
 @click.option(
     "-t",
@@ -35,36 +37,28 @@ def cli(ctx, config_file, debug, logfile):
     default=config.get("kafka", "topic"),
     help="Kafka topic to consume from.",
 )
-@click.option(
-    "-s",
-    "--kafka-server",
-    default=config.get("kafka", "server"),
-    help="Kafka server URL.",
-)
-@click.option("--partitions", default=1)
-@click.option("--replication-factor", default=1)
-def init(topic, kafka_server, partitions, replication_factor):
+def init(topic):
     """Creates the kafka topic."""
-    client.ensure_topic_exists(kafka_server, topic, partitions, replication_factor)
+    kafka_cfg = config.get("kafka")
+    client.ensure_topic_exists(topic, kafka_cfg)
 
+
+## consume command
 
 @cli.command()
 @click.option(
     "-t",
     "--topic",
-    default=config.get("kafka", "topic"),
+    default=config.get("consumer", "topic"),
     help="Kafka topic to consume from.",
 )
-@click.option(
-    "-s",
-    "--kafka-server",
-    default=config.get("kafka", "server"),
-    help="Kafka server URL.",
-)
-def consume(topic, kafka_server):
+def consume(topic):
     """Start the Kafka consumer."""
-    start_consumer(topic, kafka_server)
+    kafka_cfg = config.get("kafka")
+    start_consumer(topic, kafka_cfg)
 
+
+## send command
 
 @cli.command()
 @click.option("-m", "--message", help="Message (JSON string) to send.")
@@ -76,16 +70,10 @@ def consume(topic, kafka_server):
     help="Kafka topic to send to.",
 )
 @click.option(
-    "-s",
-    "--kafka-server",
-    default=config.get("kafka", "server"),
-    help="Kafka server URL.",
-)
-@click.option(
     "--verbose", is_flag=True, help="Show message key and value before sending."
 )
 @click.pass_context
-def send(ctx, message, path, topic, kafka_server, verbose):
+def send(ctx, message, path, topic, verbose):
     """Send a message to the Kafka topic."""
     if message and path:
         click.echo("❌ Provide only one of --message or --path.", err=True)
@@ -115,7 +103,8 @@ def send(ctx, message, path, topic, kafka_server, verbose):
             click.echo(f"📤 Message delivered to {msg.topic()} [{msg.partition()}]")
 
     try:
-        client.send_message(kafka_server, topic, key, value, on_delivery=report)
+        kafka_cfg = config.get("kafka")
+        client.send_message(topic, kafka_cfg, key, value, on_delivery=report)
     except Exception as e:
         click.echo(f"❌ {e}", err=True)
         ctx.exit(1)
