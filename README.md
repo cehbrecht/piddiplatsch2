@@ -134,6 +134,31 @@ Explore the example notebooks here:
 
 ---
 
+## ✅ TODO
+
+- [ ] **Kafka integration**  
+  Add config and tests for running against a real Kafka instance.
+
+- [ ] **Handle Service integration**  
+  Add config and tests for connecting to a real Handle Service.
+
+- [ ] **Dataset file registration**  
+  Optionally include dataset files in Handle Service registration.
+
+- [ ] **Batch Handle registration**  
+  Support committing one dataset and its associated files in a single batch request.
+
+- [ ] **Schema review**  
+  Check and update STAC and Handle Service schemas for compatibility.
+
+- [ ] **STAC version lookup example**  
+  Add an example demonstrating how to retrieve dataset versions via the STAC catalog.
+
+- [ ] **Plugin improvements**  
+  Enhance plugin system to better support multiple processing use-cases.
+
+---
+
 ## 📄 License
 
 Licensed under the [Apache License 2.0](LICENSE).
