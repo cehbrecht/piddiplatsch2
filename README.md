@@ -157,6 +157,9 @@ Explore the example notebooks here:
 - [ ] **Plugin improvements**  
   Enhance plugin system to better support multiple processing use-cases.
 
+- [ ] **Performance tests with locust.io**  
+  Add [locust.io](https://locust.io/) tests to check performance.
+
 ---
 
 ## 📄 License
