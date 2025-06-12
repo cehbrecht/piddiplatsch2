@@ -14,20 +14,27 @@ CMIP6_ITEM_SCHEMA = {
                 }
             },
         },
-        # "properties": {
-        #     "type": "object",
-        #     "required": ["version"],
-        #     "properties": {
-        #         "version": {"type": "string"},
-        #     },
-        # },
+        "properties": {
+            "type": "object",
+            # "required": ["version"],
+            "properties": {
+                "version": {"type": ["string", "null"]},
+            },
+        },
         "assets": {
             "type": "object",
-            "required": ["reference_file"],
+            # "required": ["reference_file"],
             "properties": {
                 "reference_file": {
                     "type": "object",
-                    "required": ["alternate:name"],
+                    # "required": ["alternate:name"],
+                    "properties": {
+                        "alternate:name": {"type": "string"},
+                    },
+                },
+                "data0001": {
+                    "type": "object",
+                    # "required": ["alternate:name"],
                     "properties": {
                         "alternate:name": {"type": "string"},
                     },

@@ -34,9 +34,10 @@ class CMIP6Processor:
 
         try:
             url = item["links"][0]["href"]
-            # version = item["properties"]["version"]
-            version = "unknown"
-            hosting_node = item["assets"]["reference_file"]["alternate:name"]
+            version = item["properties"].get("version", "unknown")
+            ref_node = item["assets"].get("reference_file", {}).get("alternate:name")
+            data_node = item["assets"].get("data0001", {}).get("alternate:name")
+            hosting_node = ref_node or data_node or "unknown"
         except (IndexError, KeyError) as e:
             logger.error("Error extracting fields from item: %s", e)
             raise ValueError("Missing required fields in item") from e
