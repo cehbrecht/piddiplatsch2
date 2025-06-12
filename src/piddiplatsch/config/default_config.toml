@@ -1,3 +1,6 @@
+[plugin]
+processor = "cmip6"
+
 [consumer]
 topic = "CMIP6"
 

@@ -139,3 +139,6 @@ markers = [
 ]
 
 
+# pluggy plugins
+[project.entry-points.piddiplatsch]
+cmip6 = "piddiplatsch.plugins.cmip6_processor:CMIP6Processor"

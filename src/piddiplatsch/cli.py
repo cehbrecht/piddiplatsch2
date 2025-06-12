@@ -44,7 +44,8 @@ def consume():
     """Start the Kafka consumer."""
     topic = config.get("consumer", "topic")
     kafka_cfg = config.get("kafka")
-    start_consumer(topic, kafka_cfg)
+    processor= config.get("plugin", "processor")
+    start_consumer(topic, kafka_cfg, processor)
 
 
 ## send command
