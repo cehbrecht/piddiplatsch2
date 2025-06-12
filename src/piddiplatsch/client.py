@@ -7,12 +7,19 @@ from confluent_kafka.admin import AdminClient, NewTopic
 import logging
 
 
+def client_cfg(kafka_cfg):
+    cfg = {
+        "bootstrap.servers": kafka_cfg["bootstrap.servers"]
+    }
+    return cfg
+
+
 def get_producer(kafka_cfg):
-    return Producer(kafka_cfg)
+    return Producer(client_cfg(kafka_cfg))
 
 
 def get_admin_client(kafka_cfg):
-    return AdminClient(kafka_cfg)
+    return AdminClient(client_cfg(kafka_cfg))
 
 
 def ensure_topic_exists(topic, kafka_cfg, num_partitions=1, replication_factor=1):

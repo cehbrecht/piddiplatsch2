@@ -16,6 +16,10 @@ def topic():
 def kafka_cfg():
     return config.get("kafka")
 
+@pytest.fixture(scope="module")
+def processor():
+    return config.get("plugin", "processor")
+
 
 @pytest.fixture
 def example_message():
@@ -33,7 +37,7 @@ def example_message():
     }
 
 
-def send_and_consume_message(runner, message, topic, kafka_cfg):
+def send_and_consume_message(runner, message, topic, kafka_cfg, processor):
     # Get location
     location = message["data"]["payload"]["item"]["links"][0]["href"]
     pid = message["data"]["payload"]["item"]["id"]
@@ -45,8 +49,6 @@ def send_and_consume_message(runner, message, topic, kafka_cfg):
             "send",
             "--message",
             json.dumps(message),  # ensure it's a string
-            "--topic",
-            topic,
         ],
     )
 
@@ -55,7 +57,7 @@ def send_and_consume_message(runner, message, topic, kafka_cfg):
 
     time.sleep(2)  # Allow Kafka to propagate
 
-    pipeline = ConsumerPipeline(topic, kafka_cfg)
+    pipeline = ConsumerPipeline(topic, kafka_cfg, processor)
 
     key, value = next(pipeline.consumer.consume())
     assert key
@@ -81,15 +83,15 @@ def send_and_consume_message(runner, message, topic, kafka_cfg):
 
 
 @pytest.mark.online
-def test_send_valid_example_message(runner, example_message, topic, kafka_cfg):
+def test_send_valid_example_message(runner, example_message, topic, kafka_cfg, processor):
 
     send_and_consume_message(
-        runner, example_message, topic, kafka_cfg
+        runner, example_message, topic, kafka_cfg, processor
     )
 
 
 @pytest.mark.online
-def test_send_valid_cmip6_mpi(runner, testdata_path, topic, kafka_cfg):
+def test_send_valid_cmip6_mpi(runner, testdata_path, topic, kafka_cfg, processor):
     # Path to the JSON file in tests/testdata
     json_path = os.path.join(
         testdata_path,
@@ -104,5 +106,5 @@ def test_send_valid_cmip6_mpi(runner, testdata_path, topic, kafka_cfg):
         message = json.load(file)
 
     send_and_consume_message(
-        runner, message, topic, kafka_cfg
+        runner, message, topic, kafka_cfg, processor
     )

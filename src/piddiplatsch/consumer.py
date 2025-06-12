@@ -5,16 +5,14 @@ import sys
 from confluent_kafka import Consumer as ConfluentConsumer, KafkaException
 from piddiplatsch.handle_client import HandleClient
 from piddiplatsch.config import config as piddi_config
-from piddiplatsch.plugin import load_processor
+from piddiplatsch.plugin_loader import load_single_plugin
 
 # Set up logging
 piddi_config.configure_logging()
 
 
 class Consumer:
-    def __init__(
-        self, topic: str, kafka_cfg: dict
-    ):
+    def __init__(self, topic: str, kafka_cfg: dict):
         self.topic = topic
         self.consumer = ConfluentConsumer(kafka_cfg)
         self.consumer.subscribe([self.topic])
@@ -44,10 +42,10 @@ class Consumer:
 class ConsumerPipeline:
     """Encapsulates the Kafka consumer, processor, and handle client."""
 
-    def __init__(self, topic: str, kafka_cfg: dict):
+    def __init__(self, topic: str, kafka_cfg: dict, processor: str):
         self.consumer = Consumer(topic, kafka_cfg)
         self.handle_client = HandleClient.from_config()
-        self.processor = load_processor()
+        self.processor = load_single_plugin(processor)
 
     def run(self):
         """Consume and process messages indefinitely."""
@@ -62,7 +60,7 @@ class ConsumerPipeline:
             self.processor.process(key, value, self.handle_client)
             logging.info(f"Processing message ... done: {key}")
         except Exception as e:
-            logging.warning(f"Error processing message {key}: {e}")
+            logging.error(f"Error processing message {key}: {e}")
             # raise
 
     def stop(self):
@@ -71,8 +69,8 @@ class ConsumerPipeline:
         # Any other cleanup logic can be added here if needed.
 
 
-def start_consumer(topic: str, kafka_cfg: dict):
-    pipeline = ConsumerPipeline(topic, kafka_cfg)
+def start_consumer(topic: str, kafka_cfg: dict, processor: str):
+    pipeline = ConsumerPipeline(topic, kafka_cfg, processor)
 
     # Handle graceful shutdown
     def sigint_handler(signal, frame):
