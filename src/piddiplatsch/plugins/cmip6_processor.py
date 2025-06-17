@@ -32,12 +32,13 @@ class CMIP6Processor:
             )
             raise ValueError(f"Invalid CMIP6 STAC item: {e.message}") from e
 
-        pid = item.get("id") or str(uuid.uuid5(uuid.NAMESPACE_DNS, key))
-
         try:
+            id = item.get("id")
+            pid = uuid.uuid3(uuid.NAMESPACE_URL, id)
             url = item["links"][0]["href"]
-            dataset_id = item.get("id")
-            version = item["properties"].get("version", "unknown")
+            parts = id.rsplit(".", 1)
+            dataset_id = parts[0]
+            version = parts[1] if len(parts) > 1 else None
             ref_node = item["assets"].get("reference_file", {}).get("alternate:name")
             data_node = item["assets"].get("data0001", {}).get("alternate:name")
             hosting_node = ref_node or data_node or "unknown"
