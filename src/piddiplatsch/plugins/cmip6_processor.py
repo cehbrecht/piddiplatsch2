@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Any, Dict
 from jsonschema import validate, ValidationError
-from .schema import CMIP6_ITEM_SCHEMA as SCHEMA
+from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
 
 hookimpl = pluggy.HookimplMarker("piddiplatsch")
 
