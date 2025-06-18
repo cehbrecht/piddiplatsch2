@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Any, Dict
 from jsonschema import validate, ValidationError
-from .schema import CMIP6_ITEM_SCHEMA as SCHEMA
+from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
 
 hookimpl = pluggy.HookimplMarker("piddiplatsch")
 
@@ -27,27 +27,32 @@ class CMIP6Processor:
         try:
             validate(instance=item, schema=SCHEMA)
         except ValidationError as e:
-            logger.error("Schema validation failed at %s: %s", list(e.absolute_path), e.message)
+            logger.error(
+                "Schema validation failed at %s: %s", list(e.absolute_path), e.message
+            )
             raise ValueError(f"Invalid CMIP6 STAC item: {e.message}") from e
 
-        pid = item.get("id") or str(uuid.uuid5(uuid.NAMESPACE_DNS, key))
-
         try:
+            id = item.get("id")
+            pid = uuid.uuid3(uuid.NAMESPACE_URL, id)
             url = item["links"][0]["href"]
-            # version = item["properties"]["version"]
-            version = "unknown"
-            hosting_node = item["assets"]["reference_file"]["alternate:name"]
+            parts = id.rsplit(".", 1)
+            dataset_id = parts[0]
+            version = parts[1] if len(parts) > 1 else None
+            ref_node = item["assets"].get("reference_file", {}).get("alternate:name")
+            data_node = item["assets"].get("data0001", {}).get("alternate:name")
+            hosting_node = ref_node or data_node or "unknown"
         except (IndexError, KeyError) as e:
             logger.error("Error extracting fields from item: %s", e)
             raise ValueError("Missing required fields in item") from e
 
         record = {
-            "URL": url,
-            "CHECKSUM": None,
+            "PID": pid,
+            "URL": url,  # might not be used
             "AGGREGATION_LEVEL": "Dataset",
-            "DATASET_ID": pid,
-            "DATASET_VERSION": version,
-            "HOSTING_NODE": hosting_node,
+            "DATASET_ID": dataset_id,  # id without version
+            "DATASET_VERSION": version,  # version without v. YYYYMMDD
+            "HOSTING_NODE": hosting_node,  # should be data_node? list ... published_on ...
             "REPLICA_NODE": "",
             "UNPUBLISHED_REPLICAS": "",
             "UNPUBLISHED_HOSTS": "",
