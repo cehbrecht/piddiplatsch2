@@ -3,7 +3,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from pydantic import ValidationError
-from piddiplatsch.models import CMIP6HandleRecordModel
+from piddiplatsch.handle.models import CMIP6HandleRecordModel
 
 logger = logging.getLogger(__name__)
 

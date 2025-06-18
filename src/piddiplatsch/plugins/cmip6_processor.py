@@ -4,6 +4,7 @@ import uuid
 from typing import Any, Dict
 from jsonschema import validate, ValidationError
 from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
+from piddiplatsch.handle.record import CMIP6HandleRecord
 
 hookimpl = pluggy.HookimplMarker("piddiplatsch")
 
@@ -32,31 +33,7 @@ class CMIP6Processor:
             )
             raise ValueError(f"Invalid CMIP6 STAC item: {e.message}") from e
 
-        try:
-            id = item.get("id")
-            pid = uuid.uuid3(uuid.NAMESPACE_URL, id)
-            url = item["links"][0]["href"]
-            parts = id.rsplit(".", 1)
-            dataset_id = parts[0]
-            version = parts[1] if len(parts) > 1 else None
-            ref_node = item["assets"].get("reference_file", {}).get("alternate:name")
-            data_node = item["assets"].get("data0001", {}).get("alternate:name")
-            hosting_node = ref_node or data_node or "unknown"
-        except (IndexError, KeyError) as e:
-            logger.error("Error extracting fields from item: %s", e)
-            raise ValueError("Missing required fields in item") from e
+        record = CMIP6HandleRecord(item, strict=False)
 
-        record = {
-            "PID": pid,
-            "URL": url,  # might not be used
-            "AGGREGATION_LEVEL": "Dataset",
-            "DATASET_ID": dataset_id,  # id without version
-            "DATASET_VERSION": version,  # version without v. YYYYMMDD
-            "HOSTING_NODE": hosting_node,  # should be data_node? list ... published_on ...
-            "REPLICA_NODE": "",
-            "UNPUBLISHED_REPLICAS": "",
-            "UNPUBLISHED_HOSTS": "",
-        }
-
-        logger.debug("Generated record for PID %s: %s", pid, record)
-        handle_client.add_item(pid, record)
+        logger.debug("Generated record for PID %s: %s", record.pid, record.as_record())
+        handle_client.add_item(record.pid, record.as_record())
