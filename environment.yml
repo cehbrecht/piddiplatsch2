@@ -7,5 +7,6 @@ dependencies:
   - flask
   - python-confluent-kafka>=2.9
   - jsonschema
+  - pydantic>=2.11
   # dev
   - pytest
