@@ -4,7 +4,7 @@ import uuid
 from typing import Any, Dict
 from jsonschema import validate, ValidationError
 from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
-from piddiplatsch.handle.record import CMIP6HandleRecord
+from piddiplatsch.records.cmip6_record import CMIP6HandleRecord
 
 hookimpl = pluggy.HookimplMarker("piddiplatsch")
 

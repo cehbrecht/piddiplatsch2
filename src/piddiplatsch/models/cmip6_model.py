@@ -32,11 +32,11 @@ class CMIP6HandleModel(BaseModel):
             raise ValueError("HOSTING_NODE with host is required.")
         return self
 
-    def model_dump_handle(self) -> List[dict]:
+    def model_dump_handle(self) -> list[dict]:
         """Return pyhandle-compatible list of typed record entries with repeated types."""
 
         index = 1
-        output: List[dict] = []
+        output: list[dict] = []
 
         def add_entry(type_str: str, value: str):
             nonlocal index
@@ -83,3 +83,11 @@ class CMIP6HandleModel(BaseModel):
             add_entry("UNPUBLISHED_HOSTS", host)
 
         return output
+
+    def as_record(self) -> dict:
+        """Return model as dict for inspection or testing."""
+        return self.model_dump()
+
+    def as_json(self) -> str:
+        """Return model serialized as JSON string."""
+        return self.model_dump_json()
