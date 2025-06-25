@@ -1,129 +1,135 @@
-import uuid
-import warnings
-from datetime import datetime
-from typing import Any, Optional
+import logging
+from typing import Any, Dict
+from uuid import uuid3, NAMESPACE_URL
 
-from pydantic import BaseModel, Field, model_validator
+from jsonschema import validate, ValidationError
 
+from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
+from piddiplatsch.models import CMIP6HandleModel, HostingNode
 
-class HostingNode(BaseModel):
-    host: str
-    published_on: Optional[datetime] = None
-
-
-class CMIP6HandleModel(BaseModel):
-    PID: uuid.UUID
-    URL: str
-    AGGREGATION_LEVEL: str = "Dataset"
-    DATASET_ID: str
-    DATASET_VERSION: Optional[str] = None
-    HOSTING_NODE: HostingNode
-    REPLICA_NODE: list[str] = Field(default_factory=list)
-    UNPUBLISHED_REPLICAS: list[str] = Field(default_factory=list)
-    UNPUBLISHED_HOSTS: list[str] = Field(default_factory=list)
-
-    @model_validator(mode="after")
-    def check_required_fields(self) -> "CMIP6HandleModel":
-        if not self.PID:
-            raise ValueError("PID is required")
-        if not self.URL:
-            raise ValueError("URL is required")
-        if not self.HOSTING_NODE or not self.HOSTING_NODE.host:
-            raise ValueError("HOSTING_NODE with host is required")
-        return self
-
-    def to_handle_record(self) -> list[dict[str, Any]]:
-        """Convert the model to a Handle-compatible JSON record."""
-        record = []
-        index = 1
-
-        def add_field(field_type: str, value: Any):
-            nonlocal index
-            record.append({
-                "index": index,
-                "type": field_type,
-                "data": {"format": "string", "value": str(value)}
-            })
-            index += 1
-
-        add_field("PID", self.PID)
-        add_field("URL", self.URL)
-        add_field("AGGREGATION_LEVEL", self.AGGREGATION_LEVEL)
-        add_field("DATASET_ID", self.DATASET_ID)
-        if self.DATASET_VERSION:
-            add_field("DATASET_VERSION", self.DATASET_VERSION)
-        if self.HOSTING_NODE.host:
-            add_field("HOSTING_NODE", self.HOSTING_NODE.host)
-        if self.HOSTING_NODE.published_on:
-            add_field("PUBLISHED_ON", self.HOSTING_NODE.published_on.isoformat())
-
-        for host in self.REPLICA_NODE:
-            add_field("REPLICA_NODE", host)
-        for host in self.UNPUBLISHED_REPLICAS:
-            add_field("UNPUBLISHED_REPLICAS", host)
-        for host in self.UNPUBLISHED_HOSTS:
-            add_field("UNPUBLISHED_HOSTS", host)
-
-        return record
+logger = logging.getLogger(__name__)
 
 
-class CMIP6HandleBuilder:
-    """Builds a validated CMIP6HandleModel from a STAC item."""
+class CMIP6Record:
+    """Wraps a validated CMIP6 STAC item and prepares Handle records."""
 
-    def __init__(self, item: dict[str, Any]):
+    def __init__(self, item: Dict[str, Any]):
         self.item = item
 
-    def build(self) -> CMIP6HandleModel:
-        id_str = self.item.get("id")
-        if not id_str:
-            raise ValueError("Item 'id' is missing")
-
-        pid = uuid.uuid3(uuid.NAMESPACE_URL, id_str)
-        url = self._extract_url(self.item)
-        dataset_id, version = self._split_id(id_str)
-        hosting_node = self._extract_hosting_node(self.item)
-
-        return CMIP6HandleModel(
-            PID=pid,
-            URL=url,
-            DATASET_ID=dataset_id,
-            DATASET_VERSION=version,
-            HOSTING_NODE=hosting_node,
-        )
-
-    @staticmethod
-    def _split_id(full_id: str) -> tuple[str, Optional[str]]:
-        parts = full_id.rsplit(".", 1)
-        if len(parts) == 2:
-            return parts[0], parts[1]
-        return full_id, None
-
-    @staticmethod
-    def _extract_url(item: dict[str, Any]) -> str:
+        # Validate the STAC item against schema
         try:
-            return item["links"][0]["href"]
+            validate(instance=self.item, schema=SCHEMA)
+        except ValidationError as e:
+            logger.error(
+                "Schema validation failed at %s: %s", list(e.absolute_path), e.message
+            )
+            raise ValueError(f"Invalid CMIP6 STAC item: {e.message}") from e
+
+        # Extract fields
+        self._pid = None
+        self._url = None
+        self._dataset_id = None
+        self._dataset_version = None
+        self._hosting_node = None
+        self._replica_nodes = []
+        self._unpublished_replicas = []
+        self._unpublished_hosts = []
+
+        self._extract_fields()
+
+    def _extract_fields(self):
+        # ID and PID
+        try:
+            id_str = self.item["id"]
+        except KeyError as e:
+            logger.error("Missing 'id' in item: %s", e)
+            raise ValueError("Missing required 'id' field") from e
+
+        self._pid = uuid3(NAMESPACE_URL, id_str)
+
+        # URL from first link href
+        try:
+            self._url = self.item["links"][0]["href"]
         except (KeyError, IndexError) as e:
-            raise ValueError("Missing 'links[0].href' in item") from e
+            logger.error("Missing 'links[0].href' in item: %s", e)
+            raise ValueError("Missing required 'links[0].href' field") from e
+
+        # Dataset ID and version
+        parts = id_str.rsplit(".", 1)
+        self._dataset_id = parts[0]
+        self._dataset_version = parts[1] if len(parts) > 1 else None
+
+        # Hosting node from assets
+        ref_node = self.item.get("assets", {}).get("reference_file", {}).get("alternate:name")
+        data_node = self.item.get("assets", {}).get("data0001", {}).get("alternate:name")
+        host = ref_node or data_node or "unknown"
+
+        # published_on for hosting_node - from custom field published_on in assets? or external XML metadata?
+        # For now, let's try published_on from item["assets"][key]["published_on"], fallback None
+        pub_on = None
+        for key in ["reference_file", "data0001"]:
+            published = self.item.get("assets", {}).get(key, {}).get("published_on")
+            if published:
+                pub_on = published
+                break
+
+        self._hosting_node = HostingNode(host=host, published_on=self._parse_datetime(pub_on))
+
+        # Replica nodes from item["locations"]["location"], if present
+        self._replica_nodes = []
+        locations = self.item.get("locations")
+        if locations:
+            locs = locations.get("location", [])
+            if isinstance(locs, dict):
+                # single location dict -> wrap in list
+                locs = [locs]
+            for loc in locs:
+                h = loc.get("host")
+                p = self._parse_datetime(loc.get("publishedOn"))
+                if h:
+                    self._replica_nodes.append(HostingNode(host=h, published_on=p))
+
+        # Unpublished replicas and hosts, optional fields (empty lists if none)
+        self._unpublished_replicas = self.item.get("unpublished_replicas", [])
+        self._unpublished_hosts = self.item.get("unpublished_hosts", [])
 
     @staticmethod
-    def _extract_hosting_node(item: dict[str, Any]) -> HostingNode:
-        locations = item.get("locations", [])
-        for loc in locations:
-            if "host" in loc:
-                try:
-                    return HostingNode(
-                        host=loc["host"],
-                        published_on=loc.get("publishedOn"),
-                    )
-                except Exception as e:
-                    warnings.warn(f"Invalid hosting node metadata: {e}", stacklevel=2)
+    def _parse_datetime(value) -> Any:
+        if not value:
+            return None
+        # ISO 8601 parse
+        from dateutil.parser import isoparse
 
-        # Fallback logic
-        assets = item.get("assets", {})
-        fallback_host = (
-            assets.get("reference_file", {}).get("alternate:name")
-            or assets.get("data0001", {}).get("alternate:name")
-            or "unknown"
+        try:
+            return isoparse(value)
+        except Exception:
+            logger.warning(f"Failed to parse datetime: {value}")
+            return None
+
+    @property
+    def pid(self):
+        return self._pid
+
+    @property
+    def url(self):
+        return self._url
+
+    @property
+    def hosting_node(self):
+        return self._hosting_node
+
+    @property
+    def replica_nodes(self):
+        return self._replica_nodes
+
+    def as_handle_model(self) -> CMIP6HandleModel:
+        return CMIP6HandleModel(
+            PID=self.pid,
+            URL=self.url,
+            DATASET_ID=self._dataset_id,
+            DATASET_VERSION=self._dataset_version,
+            HOSTING_NODE=self.hosting_node,
+            REPLICA_NODES=self.replica_nodes,
+            UNPUBLISHED_REPLICAS=self._unpublished_replicas,
+            UNPUBLISHED_HOSTS=self._unpublished_hosts,
         )
-        warnings.warn("Using fallback for HOSTING_NODE", stacklevel=2)
-        return HostingNode(host=fallback_host)
