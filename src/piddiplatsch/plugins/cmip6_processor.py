@@ -4,7 +4,7 @@ import uuid
 from typing import Any, Dict
 from jsonschema import validate, ValidationError
 from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
-from piddiplatsch.records.cmip6_record import CMIP6HandleRecord
+from piddiplatsch.records.cmip6_record import CMIP6Record
 
 hookimpl = pluggy.HookimplMarker("piddiplatsch")
 
@@ -33,7 +33,7 @@ class CMIP6Processor:
             )
             raise ValueError(f"Invalid CMIP6 STAC item: {e.message}") from e
 
-        record = CMIP6HandleRecord(item, strict=False)
+        record = CMIP6Record(item, strict=False)
 
         logger.debug("Generated record for PID %s: %s", record.pid, record.as_record())
         handle_client.add_item(record.pid, record.as_record())
