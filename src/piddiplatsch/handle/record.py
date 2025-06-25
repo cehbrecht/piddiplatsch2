@@ -114,3 +114,38 @@ class CMIP6HandleRecord:
 
     def as_json(self) -> str:
         return self._model.model_dump_json(indent=2, by_alias=True)
+    
+    def to_handle_record(self) -> list[dict]:
+        """Convert internal model to pyhandle-compatible record list."""
+        fields = []
+        index = 1  # pyhandle requires an index for each field
+
+        def add_field(field_type: str, value: str):
+            nonlocal index
+            fields.append({
+                "index": index,
+                "type": field_type,
+                "data": {"format": "string", "value": value}
+            })
+            index += 1
+
+        m = self._model
+
+        add_field("PID", str(m.PID))
+        add_field("URL", str(m.URL))
+        add_field("AGGREGATION_LEVEL", m.AGGREGATION_LEVEL)
+        add_field("DATASET_ID", m.DATASET_ID)
+
+        if m.DATASET_VERSION:
+            add_field("DATASET_VERSION", m.DATASET_VERSION)
+        if m.HOSTING_NODE:
+            add_field("HOSTING_NODE", m.HOSTING_NODE)
+        for node in m.REPLICA_NODE:
+            add_field("REPLICA_NODE", node)
+        for node in m.UNPUBLISHED_REPLICAS:
+            add_field("UNPUBLISHED_REPLICAS", node)
+        for host in m.UNPUBLISHED_HOSTS:
+            add_field("UNPUBLISHED_HOSTS", host)
+
+        return fields
+
