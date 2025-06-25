@@ -1,124 +1,66 @@
-import logging
 import uuid
-from typing import Any, Dict, List, Optional
-
-from pydantic import ValidationError
-from piddiplatsch.handle.models import CMIP6HandleRecordModel
-
-logger = logging.getLogger(__name__)
+import warnings
+from typing import Any
+from pydantic import BaseModel, Field, ValidationError, RootModel
+from pydantic_core import PydanticCustomError
 
 
-class HandleRecordError(ValueError):
-    pass
+class CMIP6HandleModel(BaseModel):
+    PID: uuid.UUID
+    URL: str
+    AGGREGATION_LEVEL: str = "Dataset"
+    DATASET_ID: str
+    DATASET_VERSION: str | None = None
+    HOSTING_NODE: str = "unknown"
+    REPLICA_NODE: list[str] = Field(default_factory=list)
+    UNPUBLISHED_REPLICAS: list[str] = Field(default_factory=list)
+    UNPUBLISHED_HOSTS: list[str] = Field(default_factory=list)
 
 
 class CMIP6HandleRecord:
-    def __init__(self, item: Dict[str, Any], *, strict: bool = False):
-        self._strict = strict
+    def __init__(self, item: dict[str, Any]):
         try:
-            identifier = item["id"]
-            pid = uuid.uuid3(uuid.NAMESPACE_URL, identifier)
-            dataset_id, version = self._split_id(identifier)
-            url = self._extract_url(item)
-            hosting_node = self._extract_hosting_node(item)
-            replicas = self._extract_replicas(item)
+            id_ = item["id"]
+            dataset_id, version = CMIP6HandleRecord._split_id(id_)
+            pid = uuid.uuid3(uuid.NAMESPACE_URL, id_)
+            url = CMIP6HandleRecord._extract_url(item)
+            hosting_node = CMIP6HandleRecord._extract_hosting_node(item)
 
-            self._model = CMIP6HandleRecordModel(
-                pid=pid,
-                url=url,
-                dataset_id=dataset_id,
-                dataset_version=version,
-                hosting_node=hosting_node,
-                replica_node=replicas,
+            self._model = CMIP6HandleModel(
+                PID=pid,
+                URL=url,
+                DATASET_ID=dataset_id,
+                DATASET_VERSION=version,
+                HOSTING_NODE=hosting_node,
             )
-
-        except (KeyError, IndexError, TypeError) as e:
-            logger.error("Missing or invalid field in item: %s", e)
-            raise HandleRecordError(f"Invalid input structure: {e}") from e
+        except KeyError as e:
+            raise ValueError(f"Missing required item field: {e}") from e
         except ValidationError as e:
-            if strict:
-                raise HandleRecordError(f"Validation failed: {e}") from e
-            logger.warning("Validation warning: %s", e)
-            self._model = self._fallback_model(
-                pid=pid,
-                url=url,
-                dataset_id=dataset_id,
-                version=version,
-                hosting_node=hosting_node,
-                replicas=replicas,
-            )
+            raise ValueError(f"Invalid handle record: {e}") from e
 
-    @staticmethod
-    def _split_id(identifier: str) -> tuple[str, Optional[str]]:
-        parts = identifier.rsplit(".", 1)
-        return parts[0], parts[1] if len(parts) > 1 else None
-
-    @staticmethod
-    def _extract_url(item: Dict[str, Any]) -> str:
-        for link in item.get("links", []):
-            if "href" in link:
-                return link["href"]
-        raise ValueError("No 'href' link found")
-
-    @staticmethod
-    def _extract_hosting_node(item: Dict[str, Any]) -> str:
-        assets = item.get("assets", {})
-        for key in ["reference_file", "data0001"]:
-            name = assets.get(key, {}).get("alternate:name")
-            if name:
-                return name
-        for asset in assets.values():
-            if "alternate:name" in asset:
-                return asset["alternate:name"]
-        logger.warning("Hosting node not found, defaulting to 'unknown'")
-        return "unknown"
-
-    @staticmethod
-    def _extract_replicas(item: Dict[str, Any]) -> List[str]:
-        names = []
-        for asset in item.get("assets", {}).values():
-            name = asset.get("alternate:name")
-            if name and name not in names:
-                names.append(name)
-        return names
-
-    def _fallback_model(
-        self,
-        *,
-        pid: uuid.UUID,
-        url: str,
-        dataset_id: str,
-        version: Optional[str],
-        hosting_node: str,
-        replicas: List[str],
-    ) -> CMIP6HandleRecordModel:
-        """Builds a model bypassing strict validation for non-essential fields."""
-        return CMIP6HandleRecordModel.model_construct(
-            PID=pid,
-            URL=url,
-            AGGREGATION_LEVEL="Dataset",
-            DATASET_ID=dataset_id,
-            DATASET_VERSION=version,
-            HOSTING_NODE=hosting_node,
-            REPLICA_NODE=replicas,
-            UNPUBLISHED_REPLICAS=[],
-            UNPUBLISHED_HOSTS=[],
-        )
-
+    # --- Read-only accessors
     @property
     def pid(self) -> uuid.UUID:
         return self._model.PID
 
-    def as_record(self) -> Dict[str, Any]:
-        return self._model.model_dump(by_alias=True)
+    @property
+    def url(self) -> str:
+        return self._model.URL
+
+    @property
+    def hostname(self) -> str:
+        return self._model.HOSTING_NODE
+
+    def as_record(self) -> dict[str, Any]:
+        return self._model.model_dump()
 
     def as_json(self) -> str:
-        return self._model.model_dump_json(indent=2, by_alias=True)
-    
+        return self._model.model_dump_json(indent=2)
+
     def to_handle_record(self) -> list[dict]:
-        """Convert internal model to pyhandle-compatible record list."""
+        """Convert to pyhandle-compatible format."""
         fields = []
-        index = 1  # pyhandle requires an index for each field
+        index = 1
 
         def add_field(field_type: str, value: str):
             nonlocal index
@@ -130,9 +72,8 @@ class CMIP6HandleRecord:
             index += 1
 
         m = self._model
-
         add_field("PID", str(m.PID))
-        add_field("URL", str(m.URL))
+        add_field("URL", m.URL)
         add_field("AGGREGATION_LEVEL", m.AGGREGATION_LEVEL)
         add_field("DATASET_ID", m.DATASET_ID)
 
@@ -140,12 +81,42 @@ class CMIP6HandleRecord:
             add_field("DATASET_VERSION", m.DATASET_VERSION)
         if m.HOSTING_NODE:
             add_field("HOSTING_NODE", m.HOSTING_NODE)
-        for node in m.REPLICA_NODE:
-            add_field("REPLICA_NODE", node)
-        for node in m.UNPUBLISHED_REPLICAS:
-            add_field("UNPUBLISHED_REPLICAS", node)
-        for host in m.UNPUBLISHED_HOSTS:
-            add_field("UNPUBLISHED_HOSTS", host)
+
+        for v in m.REPLICA_NODE:
+            add_field("REPLICA_NODE", v)
+        for v in m.UNPUBLISHED_REPLICAS:
+            add_field("UNPUBLISHED_REPLICAS", v)
+        for v in m.UNPUBLISHED_HOSTS:
+            add_field("UNPUBLISHED_HOSTS", v)
 
         return fields
 
+    # --- Static helpers
+    @staticmethod
+    def _split_id(id_: str) -> tuple[str, str | None]:
+        parts = id_.rsplit(".", 1)
+        if len(parts) == 2:
+            return parts[0], parts[1]
+        return id_, None
+
+    @staticmethod
+    def _extract_url(item: dict[str, Any]) -> str:
+        try:
+            return item["links"][0]["href"]
+        except (KeyError, IndexError) as e:
+            raise ValueError("Missing 'links[0].href' in item") from e
+
+    @staticmethod
+    def _extract_hosting_node(item: dict[str, Any]) -> str:
+        assets = item.get("assets", {})
+        ref_node = assets.get("reference_file", {}).get("alternate:name")
+        data_node = assets.get("data0001", {}).get("alternate:name")
+
+        if ref_node:
+            return ref_node
+        elif data_node:
+            warnings.warn("Using fallback data0001 as hosting node", stacklevel=2)
+            return data_node
+        else:
+            warnings.warn("No hosting node found, using 'unknown'", stacklevel=2)
+            return "unknown"
