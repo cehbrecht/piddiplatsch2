@@ -1,1 +1,1 @@
-from .cmip6_dataset_record import CMIP6DatasetRecord as CMIP6DatasetRecord
+from .cmip6_item_record import CMIP6ItemRecord as CMIP6ItemRecord

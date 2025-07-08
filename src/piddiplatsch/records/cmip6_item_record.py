@@ -12,7 +12,7 @@ from piddiplatsch.models import CMIP6HandleModel, HostingNode
 logger = logging.getLogger(__name__)
 
 
-class CMIP6DatasetRecord:
+class CMIP6ItemRecord:
     """Wraps a validated CMIP6 STAC item and prepares Handle records."""
 
     def __init__(self, item: Dict[str, Any], strict: bool):
@@ -94,7 +94,7 @@ class CMIP6DatasetRecord:
                 break
 
         return HostingNode(
-            host=host, published_on=CMIP6DatasetRecord._parse_datetime(pub_on)
+            host=host, published_on=CMIP6ItemRecord._parse_datetime(pub_on)
         )
 
     @staticmethod
@@ -107,7 +107,7 @@ class CMIP6DatasetRecord:
                 locs = [locs]
             for loc in locs:
                 h = loc.get("host")
-                p = CMIP6DatasetRecord._parse_datetime(loc.get("publishedOn"))
+                p = CMIP6ItemRecord._parse_datetime(loc.get("publishedOn"))
                 if h:
                     nodes.append(HostingNode(host=h, published_on=p))
         return nodes
