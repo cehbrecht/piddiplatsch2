@@ -7,12 +7,12 @@ from jsonschema import validate, ValidationError
 from dateutil.parser import isoparse
 
 from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
-from piddiplatsch.models import CMIP6HandleModel, HostingNode
+from piddiplatsch.models import CMIP6ItemModel, HostingNode
 
 logger = logging.getLogger(__name__)
 
 
-class CMIP6Record:
+class CMIP6ItemRecord:
     """Wraps a validated CMIP6 STAC item and prepares Handle records."""
 
     def __init__(self, item: Dict[str, Any], strict: bool):
@@ -93,7 +93,9 @@ class CMIP6Record:
                 pub_on = published
                 break
 
-        return HostingNode(host=host, published_on=CMIP6Record._parse_datetime(pub_on))
+        return HostingNode(
+            host=host, published_on=CMIP6ItemRecord._parse_datetime(pub_on)
+        )
 
     @staticmethod
     def _extract_replica_nodes(item: Dict[str, Any]) -> List[HostingNode]:
@@ -105,7 +107,7 @@ class CMIP6Record:
                 locs = [locs]
             for loc in locs:
                 h = loc.get("host")
-                p = CMIP6Record._parse_datetime(loc.get("publishedOn"))
+                p = CMIP6ItemRecord._parse_datetime(loc.get("publishedOn"))
                 if h:
                     nodes.append(HostingNode(host=h, published_on=p))
         return nodes
@@ -146,8 +148,8 @@ class CMIP6Record:
     def unpublished_hosts(self) -> List[str]:
         return self._unpublished_hosts
 
-    def as_handle_model(self) -> CMIP6HandleModel:
-        return CMIP6HandleModel(
+    def as_handle_model(self) -> CMIP6ItemModel:
+        return CMIP6ItemModel(
             PID=self.pid,
             URL=self.url,
             DATASET_ID=self._dataset_id,

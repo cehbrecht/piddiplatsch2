@@ -4,7 +4,8 @@ import uuid
 from typing import Any, Dict
 from jsonschema import validate, ValidationError
 from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
-from piddiplatsch.records.cmip6_record import CMIP6Record
+from piddiplatsch.records import CMIP6ItemRecord, CMIP6AssetRecord
+from piddiplatsch.records.utils import extract_asset_records
 
 hookimpl = pluggy.HookimplMarker("piddiplatsch")
 
@@ -33,7 +34,20 @@ class CMIP6Processor:
             )
             raise ValueError(f"Invalid CMIP6 STAC item: {e.message}") from e
 
-        record = CMIP6Record(item, strict=False)
+        record = CMIP6ItemRecord(item, strict=False)
 
-        logger.debug("Generated record for PID %s: %s", record.pid, record.as_record())
+        logger.debug(
+            "Register item record for PID %s: %s", record.pid, record.as_record()
+        )
         handle_client.add_item(record.pid, record.as_record())
+
+        # Iterate over file assets and register them as well
+        asset_records = extract_asset_records(
+            item, exclude_keys=["reference_file", "thumbnail", "quicklook"]
+        )
+
+        for record in asset_records:
+            logger.debug(
+                "Register assert record for PID %s: %s", record.pid, record.as_record()
+            )
+            handle_client.add_item(record.pid, record.as_record())
