@@ -7,7 +7,7 @@ from jsonschema import validate, ValidationError
 from dateutil.parser import isoparse
 
 from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
-from piddiplatsch.models import CMIP6HandleModel, HostingNode
+from piddiplatsch.models import CMIP6ItemModel, HostingNode
 
 logger = logging.getLogger(__name__)
 
@@ -148,8 +148,8 @@ class CMIP6ItemRecord:
     def unpublished_hosts(self) -> List[str]:
         return self._unpublished_hosts
 
-    def as_handle_model(self) -> CMIP6HandleModel:
-        return CMIP6HandleModel(
+    def as_handle_model(self) -> CMIP6ItemModel:
+        return CMIP6ItemModel(
             PID=self.pid,
             URL=self.url,
             DATASET_ID=self._dataset_id,

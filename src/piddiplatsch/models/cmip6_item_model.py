@@ -12,7 +12,7 @@ class HostingNode(BaseModel):
     published_on: Optional[datetime] = None
 
 
-class CMIP6HandleModel(BaseModel):
+class CMIP6ItemModel(BaseModel):
     # PID: UUID
     URL: str
     AGGREGATION_LEVEL: str = "Dataset"
@@ -24,7 +24,7 @@ class CMIP6HandleModel(BaseModel):
     UNPUBLISHED_HOSTS: List[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
-    def validate_required(self) -> CMIP6HandleModel:
+    def validate_required(self) -> CMIP6ItemModel:
         # if not self.PID:
         #    raise ValueError("PID is required.")
         if not self.URL:

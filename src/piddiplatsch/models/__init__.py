@@ -1,2 +1,2 @@
-from .cmip6_model import CMIP6HandleModel as CMIP6HandleModel
-from .cmip6_model import HostingNode as HostingNode
+from .cmip6_item_model import CMIP6ItemModel as CMIP6ItemModel
+from .cmip6_item_model import HostingNode as HostingNode
