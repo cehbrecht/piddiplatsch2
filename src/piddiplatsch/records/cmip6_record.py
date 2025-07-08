@@ -15,8 +15,9 @@ logger = logging.getLogger(__name__)
 class CMIP6Record:
     """Wraps a validated CMIP6 STAC item and prepares Handle records."""
 
-    def __init__(self, item: Dict[str, Any]):
+    def __init__(self, item: Dict[str, Any], strict: bool):
         self.item = item
+        self.strict = strict
 
         # Validate the STAC item against schema
         try:
@@ -29,11 +30,17 @@ class CMIP6Record:
 
         self._pid = self._extract_pid(self.item)
         self._url = self._extract_url(self.item)
-        self._dataset_id, self._dataset_version = self._extract_dataset_version(self.item)
+        self._dataset_id, self._dataset_version = self._extract_dataset_version(
+            self.item
+        )
         self._hosting_node = self._extract_hosting_node(self.item)
         self._replica_nodes = self._extract_replica_nodes(self.item)
-        self._unpublished_replicas = self._extract_unpublished(self.item, "unpublished_replicas")
-        self._unpublished_hosts = self._extract_unpublished(self.item, "unpublished_hosts")
+        self._unpublished_replicas = self._extract_unpublished(
+            self.item, "unpublished_replicas"
+        )
+        self._unpublished_hosts = self._extract_unpublished(
+            self.item, "unpublished_hosts"
+        )
 
     @staticmethod
     def _extract_pid(item: Dict[str, Any]) -> Any:
@@ -73,7 +80,9 @@ class CMIP6Record:
 
     @staticmethod
     def _extract_hosting_node(item: Dict[str, Any]) -> HostingNode:
-        ref_node = item.get("assets", {}).get("reference_file", {}).get("alternate:name")
+        ref_node = (
+            item.get("assets", {}).get("reference_file", {}).get("alternate:name")
+        )
         data_node = item.get("assets", {}).get("data0001", {}).get("alternate:name")
         host = ref_node or data_node or "unknown"
 
@@ -107,7 +116,9 @@ class CMIP6Record:
         if val is None:
             return []
         if not isinstance(val, list):
-            logger.warning(f"Expected list for '{key}', got {type(val)}. Coercing to list.")
+            logger.warning(
+                f"Expected list for '{key}', got {type(val)}. Coercing to list."
+            )
             return [str(val)]
         return val
 

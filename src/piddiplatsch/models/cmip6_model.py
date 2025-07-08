@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Optional, List
-from uuid import UUID
+
+# from uuid import UUID
 from datetime import datetime
 
 from pydantic import BaseModel, Field, model_validator
@@ -12,7 +13,7 @@ class HostingNode(BaseModel):
 
 
 class CMIP6HandleModel(BaseModel):
-    PID: UUID
+    # PID: UUID
     URL: str
     AGGREGATION_LEVEL: str = "Dataset"
     DATASET_ID: str
@@ -24,8 +25,8 @@ class CMIP6HandleModel(BaseModel):
 
     @model_validator(mode="after")
     def validate_required(self) -> CMIP6HandleModel:
-        if not self.PID:
-            raise ValueError("PID is required.")
+        # if not self.PID:
+        #    raise ValueError("PID is required.")
         if not self.URL:
             raise ValueError("URL is required.")
         if not self.HOSTING_NODE or not self.HOSTING_NODE.host:
@@ -40,18 +41,17 @@ class CMIP6HandleModel(BaseModel):
 
         def add_entry(type_str: str, value: str):
             nonlocal index
-            output.append({
-                "index": index,
-                "type": type_str,
-                "data": {
-                    "format": "string",
-                    "value": value
+            output.append(
+                {
+                    "index": index,
+                    "type": type_str,
+                    "data": {"format": "string", "value": value},
                 }
-            })
+            )
             index += 1
 
         # Required fields
-        add_entry("PID", str(self.PID))
+        # add_entry("PID", str(self.PID))
         add_entry("URL", self.URL)
         add_entry("AGGREGATION_LEVEL", self.AGGREGATION_LEVEL)
         add_entry("DATASET_ID", self.DATASET_ID)
