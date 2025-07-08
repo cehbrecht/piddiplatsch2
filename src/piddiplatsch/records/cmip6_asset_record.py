@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional
 from uuid import uuid3, NAMESPACE_URL
 from pathlib import PurePosixPath
 
-from piddiplatsch.models import CMIP6AssetHandleModel
+from piddiplatsch.models import CMIP6AssetModel
 
 logger = logging.getLogger(__name__)
 
@@ -80,9 +80,9 @@ class CMIP6AssetRecord:
     def size(self) -> Optional[int]:
         return self._size
 
-    def as_handle_model(self) -> CMIP6AssetHandleModel:
-        return CMIP6AssetHandleModel(
-            PID=self.pid,
+    def as_handle_model(self) -> CMIP6AssetModel:
+        return CMIP6AssetModel(
+            # PID=self.pid,
             URL=self.url,
             AGGREGATION_LEVEL="File",
             FILENAME=self.filename,
