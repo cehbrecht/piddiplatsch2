@@ -103,7 +103,7 @@ services:
     hostname: handle1
     container_name: handle1
     ports:
-      - "5000:5000"
+      - "8000:8000"
     networks:
       - kafka-net
 volumes:

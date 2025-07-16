@@ -11,7 +11,7 @@ topic = "CMIP6"
 "enable.auto.commit" = true
 
 [handle]
-server_url = "http://localhost:5000"
-prefix = "21.T14995"
+server_url = "http://localhost:8000"
+prefix = "21.TEST"
 username = "testuser"
 password = "testpass"

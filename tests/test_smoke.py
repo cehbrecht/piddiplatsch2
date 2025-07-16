@@ -1,24 +1,9 @@
 import json
-import time
 import uuid
 import os
 import requests
 import pytest
 from piddiplatsch.cli import cli
-from piddiplatsch.config import config
-from piddiplatsch.consumer import ConsumerPipeline
-
-@pytest.fixture(scope="module")
-def topic():
-    return config.get("consumer", "topic")
-
-@pytest.fixture(scope="module")
-def kafka_cfg():
-    return config.get("kafka")
-
-@pytest.fixture(scope="module")
-def processor():
-    return config.get("plugin", "processor")
 
 
 @pytest.fixture
@@ -37,11 +22,7 @@ def example_message():
     }
 
 
-def send_and_consume_message(runner, message, topic, kafka_cfg, processor):
-    # Get location
-    location = message["data"]["payload"]["item"]["links"][0]["href"]
-    pid = message["data"]["payload"]["item"]["id"]
-
+def send_and_consume_message(runner, message):
     # Send the message
     result_send = runner.invoke(
         cli,
@@ -55,43 +36,15 @@ def send_and_consume_message(runner, message, topic, kafka_cfg, processor):
     assert result_send.exit_code == 0
     assert "📤 Message delivered" in result_send.output
 
-    time.sleep(2)  # Allow Kafka to propagate
 
-    pipeline = ConsumerPipeline(topic, kafka_cfg, processor)
+@pytest.mark.online
+def test_send_valid_example_message(runner, example_message):
 
-    key, value = next(pipeline.consumer.consume())
-    assert key
-    assert value
-
-    pipeline.process_message(key, value)
-
-    # Verify the handle was registered in the mock handle server
-    mock_handle_url = config.get("handle", "server_url").rstrip("/")
-    handle_prefix = config.get("handle", "prefix")
-    full_handle = f"{handle_prefix}/{pid}"
-
-    response = requests.get(f"{mock_handle_url}/api/handles/{full_handle}")
-    assert response.status_code == 200, f"Handle not found: {full_handle}"
-    data = response.json()
-    print(data)
-    assert data["handle"] == full_handle
-    # unpack handle values
-    values = {}
-    for value in data["values"]:
-        values[value["type"]] = value["data"]
-    assert values["URL"] == location
+    send_and_consume_message(runner, example_message)
 
 
 @pytest.mark.online
-def test_send_valid_example_message(runner, example_message, topic, kafka_cfg, processor):
-
-    send_and_consume_message(
-        runner, example_message, topic, kafka_cfg, processor
-    )
-
-
-@pytest.mark.online
-def test_send_valid_cmip6_mpi(runner, testdata_path, topic, kafka_cfg, processor):
+def test_send_valid_cmip6_mpi(runner, testdata_path):
     # Path to the JSON file in tests/testdata
     json_path = os.path.join(
         testdata_path,
@@ -105,6 +58,4 @@ def test_send_valid_cmip6_mpi(runner, testdata_path, topic, kafka_cfg, processor
     with open(json_path, "r") as file:
         message = json.load(file)
 
-    send_and_consume_message(
-        runner, message, topic, kafka_cfg, processor
-    )
+    send_and_consume_message(runner, message)

@@ -11,7 +11,7 @@ logger = app.logger
 handles = {}
 
 # Constants
-HANDLE_PREFIX = "21.T14995"
+HANDLE_PREFIX = "21.TEST"
 DUMMY_USERNAME_HANDLE = f"{HANDLE_PREFIX}/testuser"
 DUMMY_USERNAME = f"300:{DUMMY_USERNAME_HANDLE}"
 DUMMY_PASSWORD = "testpass"
@@ -101,4 +101,4 @@ def put_handle(prefix, suffix):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=8000, debug=True)
