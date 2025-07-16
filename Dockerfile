@@ -7,6 +7,6 @@ COPY . .
 
 RUN pip install --no-cache-dir . flask
 
-EXPOSE 5000
+EXPOSE 8000
 
 CMD ["python", "src/piddiplatsch/testing/mock_handle_server.py"]
