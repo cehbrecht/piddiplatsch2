@@ -2,9 +2,6 @@ import logging
 import pyhandle
 from piddiplatsch.config import config
 
-# Use logger for this module
-logger = logging.getLogger(__name__)
-
 
 class HandleClient:
     def __init__(self, server_url, prefix, username, password, verify_https=False):
@@ -53,9 +50,9 @@ class HandleClient:
             self.client.register_handle(
                 handle=handle, location=record["URL"], overwrite=True, **record
             )
-            logger.info(f"Added handle: {handle}")
+            logging.debug(f"Added handle: {handle}")
         except pyhandle.handleexceptions.HandleAlreadyExistsException:
-            logger.info(f"Handle already exists: {handle}")
+            logging.warning(f"Handle already exists: {handle}")
         except Exception as e:
-            logger.error(f"Failed to register handle {handle}: {e}")
+            logging.error(f"Failed to register handle {handle}: {e}")
             raise

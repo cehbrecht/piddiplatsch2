@@ -3,9 +3,6 @@ from typing import Dict, Any, List
 from .cmip6_asset_record import CMIP6AssetRecord
 
 
-logger = logging.getLogger(__name__)
-
-
 def extract_asset_records(
     item: Dict[str, Any], exclude_keys: List[str] = None
 ) -> List[CMIP6AssetRecord]:
