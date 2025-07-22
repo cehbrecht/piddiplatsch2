@@ -18,7 +18,7 @@ class CMIP6Processor:
     @hookimpl
     def process(self, key: str, value: Dict[str, Any], handle_client: Any) -> None:
         """Process a Kafka message for a CMIP6 STAC item and register it in the Handle Service."""
-        logger.info("CMIP6 plugin processing key: %s", key)
+        logger.debug("CMIP6 plugin processing key: %s", key)
 
         try:
             item = value["data"]["payload"]["item"]

@@ -4,11 +4,8 @@ import signal
 import sys
 from confluent_kafka import Consumer as ConfluentConsumer, KafkaException
 from piddiplatsch.handle_client import HandleClient
-from piddiplatsch.config import config as piddi_config
-from piddiplatsch.plugin_loader import load_single_plugin
 
-# Set up logging
-piddi_config.configure_logging()
+from piddiplatsch.plugin_loader import load_single_plugin
 
 
 class Consumer:
@@ -58,14 +55,14 @@ class ConsumerPipeline:
         try:
             logging.info(f"Processing message: {key}")
             self.processor.process(key, value, self.handle_client)
-            logging.info(f"Processing message ... done: {key}")
+            logging.debug(f"Processing message ... done: {key}")
         except Exception as e:
             logging.error(f"Error processing message {key}: {e}")
             # raise
 
     def stop(self):
         """Gracefully stop the consumer."""
-        logging.info("Stopping consumer...")
+        logging.warning("Stopping consumer...")
         # Any other cleanup logic can be added here if needed.
 
 
@@ -74,7 +71,7 @@ def start_consumer(topic: str, kafka_cfg: dict, processor: str):
 
     # Handle graceful shutdown
     def sigint_handler(signal, frame):
-        logging.info("Received SIGINT. Gracefully shutting down.")
+        logging.warning("Received SIGINT. Gracefully shutting down.")
         pipeline.stop()
         sys.exit(0)
 
@@ -83,6 +80,6 @@ def start_consumer(topic: str, kafka_cfg: dict, processor: str):
     try:
         pipeline.run()
     except KeyboardInterrupt:
-        logging.info("Consumer interrupted.")
+        logging.warning("Consumer interrupted.")
         pipeline.stop()
         sys.exit(0)

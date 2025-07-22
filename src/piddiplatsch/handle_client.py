@@ -53,9 +53,9 @@ class HandleClient:
             self.client.register_handle(
                 handle=handle, location=record["URL"], overwrite=True, **record
             )
-            logger.info(f"Added handle: {handle}")
+            logger.debug(f"Added handle: {handle}")
         except pyhandle.handleexceptions.HandleAlreadyExistsException:
-            logger.info(f"Handle already exists: {handle}")
+            logger.warning(f"Handle already exists: {handle}")
         except Exception as e:
             logger.error(f"Failed to register handle {handle}: {e}")
             raise
