@@ -9,8 +9,6 @@ from dateutil.parser import isoparse
 from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
 from piddiplatsch.models import CMIP6ItemModel, HostingNode
 
-logger = logging.getLogger(__name__)
-
 
 class CMIP6ItemRecord:
     """Wraps a validated CMIP6 STAC item and prepares Handle records."""
@@ -23,7 +21,7 @@ class CMIP6ItemRecord:
         try:
             validate(instance=self.item, schema=SCHEMA)
         except ValidationError as e:
-            logger.error(
+            logging.error(
                 "Schema validation failed at %s: %s", list(e.absolute_path), e.message
             )
             raise ValueError(f"Invalid CMIP6 STAC item: {e.message}") from e
@@ -47,7 +45,7 @@ class CMIP6ItemRecord:
         try:
             id_str = item["id"]
         except KeyError as e:
-            logger.error("Missing 'id' in item: %s", e)
+            logging.error("Missing 'id' in item: %s", e)
             raise ValueError("Missing required 'id' field") from e
 
         return uuid3(NAMESPACE_URL, id_str)
@@ -57,7 +55,7 @@ class CMIP6ItemRecord:
         try:
             return item["links"][0]["href"]
         except (KeyError, IndexError) as e:
-            logger.error("Missing 'links[0].href' in item: %s", e)
+            logging.error("Missing 'links[0].href' in item: %s", e)
             raise ValueError("Missing required 'links[0].href' field") from e
 
     @staticmethod
@@ -75,7 +73,7 @@ class CMIP6ItemRecord:
         try:
             return isoparse(value)
         except Exception:
-            logger.warning(f"Failed to parse datetime: {value}")
+            logging.warning(f"Failed to parse datetime: {value}")
             return None
 
     @staticmethod
@@ -118,7 +116,7 @@ class CMIP6ItemRecord:
         if val is None:
             return []
         if not isinstance(val, list):
-            logger.warning(
+            logging.warning(
                 f"Expected list for '{key}', got {type(val)}. Coercing to list."
             )
             return [str(val)]

@@ -5,8 +5,6 @@ from pathlib import PurePosixPath
 
 from piddiplatsch.models import CMIP6AssetModel
 
-logger = logging.getLogger(__name__)
-
 
 class CMIP6AssetRecord:
     """Wraps a CMIP6 STAC asset and prepares Handle record for a file."""
@@ -27,7 +25,7 @@ class CMIP6AssetRecord:
         try:
             return item["assets"][asset_key]
         except KeyError as e:
-            logger.error(f"Missing asset '{asset_key}' in item: {e}")
+            logging.error(f"Missing asset '{asset_key}' in item: {e}")
             raise ValueError(f"Asset key '{asset_key}' not found") from e
 
     @staticmethod
@@ -41,7 +39,7 @@ class CMIP6AssetRecord:
         try:
             return asset["href"]
         except KeyError as e:
-            logger.error(f"Missing 'href' in asset: {e}")
+            logging.error(f"Missing 'href' in asset: {e}")
             raise ValueError("Missing required 'href' field in asset") from e
 
     @staticmethod
@@ -57,7 +55,7 @@ class CMIP6AssetRecord:
         try:
             return int(asset["size"])
         except (KeyError, ValueError, TypeError):
-            logger.debug("Size not available or invalid in asset")
+            logging.debug("Size not available or invalid in asset")
             return None
 
     @property
