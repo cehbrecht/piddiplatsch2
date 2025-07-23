@@ -3,7 +3,7 @@ import logging
 from datetime import datetime, timezone
 from pathlib import Path
 
-from kafka import KafkaProducer
+from confluent_kafka import Producer
 from piddiplatsch.config import config
 
 logger = logging.getLogger(__name__)
@@ -38,44 +38,53 @@ class FailureRecovery:
 
     @staticmethod
     def retry(
-        kafka_cfg: dict,
         retry_topic: str,
+        kafka_cfg: dict,
         jsonl_path: Path,
         delete_after: bool = False,
-    ):
-        """Retry failed items by sending them to a Kafka retry topic, incrementing 'retries'."""
-        bootstrap_servers = kafka_cfg.get("bootstrap.servers", "localhost:9092")
-
+    ) -> tuple[int, int]:
+        """Retry failed items from a JSONL file by sending them to Kafka using confluent_kafka."""
         if not jsonl_path.exists():
-            logger.error(f"Retry file not found: {jsonl_path}")
+            logging.error(f"Retry file not found: {jsonl_path}")
             return 0, 0
 
-        producer = KafkaProducer(
-            bootstrap_servers=bootstrap_servers,
-            value_serializer=lambda v: json.dumps(v).encode("utf-8"),
-            key_serializer=lambda k: k.encode("utf-8"),
-        )
+        producer = Producer({k: str(v) for k, v in kafka_cfg.items()})
 
-        success = 0
-        failed = 0
+        success, failed = 0, 0
+
+        def delivery_report(err, msg):
+            nonlocal success, failed
+            if err is not None:
+                logging.error(f"Delivery failed for {msg.key()}: {err}")
+                failed += 1
+            else:
+                logging.debug(f"Message delivered to {msg.topic()} [{msg.partition()}]")
+                success += 1
 
         with jsonl_path.open("r", encoding="utf-8") as f:
             for line in f:
                 try:
                     record = json.loads(line)
-                    key = record.get("key", "unknown")
+                    key = str(record.get("key") or record.get("id") or "unknown")
                     record["retries"] = int(record.get("retries", 0)) + 1
-                    producer.send(retry_topic, key=key, value=record)
-                    success += 1
+                    value = json.dumps(record).encode("utf-8")
+                    producer.produce(
+                        topic=retry_topic,
+                        key=key.encode("utf-8"),
+                        value=value,
+                        callback=delivery_report,
+                    )
                 except Exception as e:
-                    logger.error(f"Failed to send retry message: {e}")
+                    logging.exception(f"Error retrying failed item: {e}")
                     failed += 1
 
         producer.flush()
 
         if delete_after and success > 0 and failed == 0:
-            jsonl_path.unlink()
-            logger.info(f"Deleted successfully retried file: {jsonl_path}")
+            try:
+                jsonl_path.unlink()
+                logging.info(f"Deleted retried file: {jsonl_path}")
+            except Exception as e:
+                logging.warning(f"Could not delete {jsonl_path}: {e}")
 
-        logger.info(f"Retried {success} messages, {failed} failed from {jsonl_path}")
         return success, failed
