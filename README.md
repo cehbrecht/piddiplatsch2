@@ -114,21 +114,17 @@ docker-compose down -v
 make stop
 ```
 
-### Initialize the Kafka topic for testing only:
+Initialize the Kafka topic for testing only:
 
 ```bash
 piddiplatsch init
 ```
 
-### Send a record (JSON format) for testing only:
+Send a record (JSON format) for testing only:
 
 ```bash
 piddiplatsch send -p tests/testdata/CMIP6/<your_file>.json
 ```
-
----
-
-Got it! Here’s the failure recovery section ready for your README:
 
 ---
 
@@ -175,27 +171,6 @@ piddiplatsch retry outputs/failures/retries-0/failed_items_2025-07-23.jsonl --de
 ```
 
 This command will resend all items from that failure file to the configured Kafka retry topic, increasing their retry count automatically. If all messages succeed, the file will be deleted.
-
----
-
-## Failure Recovery and Retry
-
-Failed STAC items are saved as JSON Lines (`.jsonl`) in `outputs/failures`, grouped by date and retry count in folders like `r0`, `r1`, etc.
-
-Each record includes a timestamp and retry count.
-
-To retry failed items, run:
-
-```bash
-piddiplatsch retry <file.jsonl> [--delete-after]
-```
-
-The --delete-after option removes the file if all retries succeed.
-
-Example:
-```bash
-piddiplatsch retry outputs/failures/r0/failed_items_2025-07-23.jsonl --delete-after
-```
 
 ---
 
