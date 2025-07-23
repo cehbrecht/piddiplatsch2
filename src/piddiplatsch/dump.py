@@ -12,7 +12,7 @@ class DumpRecorder:
     @staticmethod
     def record_item(key: str, data: dict) -> None:
         now = datetime.now(timezone.utc)
-        dated_filename = f"success_items_{now.date()}.jsonl"
+        dated_filename = f"dump_messages_{now.date()}.jsonl"
         dump_file = DumpRecorder.DUMP_DIR / dated_filename
         record = {"key": key, "value": data, "timestamp": now.isoformat()}
         with dump_file.open("a", encoding="utf-8") as f:
