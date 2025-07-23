@@ -4,6 +4,7 @@ from uuid import uuid3, NAMESPACE_URL
 from pathlib import PurePosixPath
 
 from piddiplatsch.models import CMIP6AssetModel
+from piddiplatsch.config import config
 
 
 class CMIP6AssetRecord:
@@ -14,6 +15,7 @@ class CMIP6AssetRecord:
         self.asset_key = asset_key
         self.asset = self._get_asset(item, asset_key)
 
+        self._parent = self._build_handle(self._extract_parent_pid(item))
         self._pid = self._extract_pid(item, asset_key)
         self._url = self._extract_url(self.asset)
         self._filename = self._extract_filename(self._url)
@@ -27,6 +29,24 @@ class CMIP6AssetRecord:
         except KeyError as e:
             logging.error(f"Missing asset '{asset_key}' in item: {e}")
             raise ValueError(f"Asset key '{asset_key}' not found") from e
+
+    @staticmethod
+    def _build_handle(pid):
+        """Build a full handle by combining the prefix and the PID."""
+        # TODO: duplicate of handle_client.build_handle
+        prefix = config.get("handle", "prefix")
+        return f"{prefix}/{pid}"
+
+    @staticmethod
+    def _extract_parent_pid(item: Dict[str, Any]) -> Any:
+        # TODO: duplicate of item._extract_pid
+        try:
+            id_str = item["id"]
+        except KeyError as e:
+            logging.error("Missing 'id' in item: %s", e)
+            raise ValueError("Missing required 'id' field") from e
+
+        return uuid3(NAMESPACE_URL, id_str)
 
     @staticmethod
     def _extract_pid(item: Dict[str, Any], asset_key: str) -> Any:
@@ -59,6 +79,10 @@ class CMIP6AssetRecord:
             return None
 
     @property
+    def parent(self) -> Any:
+        return self._parent
+
+    @property
     def pid(self) -> Any:
         return self._pid
 
@@ -81,6 +105,7 @@ class CMIP6AssetRecord:
     def as_handle_model(self) -> CMIP6AssetModel:
         return CMIP6AssetModel(
             # PID=self.pid,
+            PARENT=self.parent,
             URL=self.url,
             AGGREGATION_LEVEL="File",
             FILENAME=self.filename,
@@ -89,7 +114,7 @@ class CMIP6AssetRecord:
         )
 
     def as_record(self) -> dict:
-        return self.as_handle_model().model_dump()
+        return self.as_handle_model().model_dump(mode="json")
 
     def as_json(self) -> str:
-        return self.as_handle_model().model_dump_json()
+        return self.as_handle_model().model_dump_json(mode="json")
