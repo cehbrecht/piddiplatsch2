@@ -4,6 +4,7 @@ import signal
 import sys
 from confluent_kafka import Consumer as ConfluentConsumer, KafkaException
 from piddiplatsch.handle_client import HandleClient
+from piddiplatsch.recovery import FailureRecovery
 
 from piddiplatsch.plugin_loader import load_single_plugin
 
@@ -58,6 +59,7 @@ class ConsumerPipeline:
             logging.debug(f"Processing message ... done: {key}")
         except Exception as e:
             logging.error(f"Error processing message {key}: {e}")
+            FailureRecovery.record_failed_item(key, value)
             # raise
 
     def stop(self):
