@@ -5,6 +5,7 @@ import sys
 from confluent_kafka import Consumer as ConfluentConsumer, KafkaException
 from piddiplatsch.handle_client import HandleClient
 from piddiplatsch.recovery import FailureRecovery
+from piddiplatsch.dump import DumpRecorder
 
 from piddiplatsch.plugin_loader import load_single_plugin
 
@@ -42,10 +43,13 @@ class Consumer:
 class ConsumerPipeline:
     """Encapsulates the Kafka consumer, processor, and handle client."""
 
-    def __init__(self, topic: str, kafka_cfg: dict, processor: str):
+    def __init__(
+        self, topic: str, kafka_cfg: dict, processor: str, dump_messages: bool = False
+    ):
         self.consumer = Consumer(topic, kafka_cfg)
         self.handle_client = HandleClient.from_config()
         self.processor = load_single_plugin(processor)
+        self.dump_messages = dump_messages
 
     def run(self):
         """Consume and process messages indefinitely."""
@@ -57,6 +61,8 @@ class ConsumerPipeline:
         """Process a single message."""
         try:
             logger.info(f"Processing message: {key}")
+            if self.dump_messages:
+                DumpRecorder.record_item(key, value)
             self.processor.process(key, value, self.handle_client)
             logger.debug(f"Processing message ... done: {key}")
         except Exception as e:
@@ -70,8 +76,12 @@ class ConsumerPipeline:
         # Any other cleanup logic can be added here if needed.
 
 
-def start_consumer(topic: str, kafka_cfg: dict, processor: str):
-    pipeline = ConsumerPipeline(topic, kafka_cfg, processor)
+def start_consumer(
+    topic: str, kafka_cfg: dict, processor: str, dump_messages: bool = False
+):
+    pipeline = ConsumerPipeline(
+        topic, kafka_cfg, processor, dump_messages=dump_messages
+    )
 
     # Handle graceful shutdown
     def sigint_handler(signal, frame):

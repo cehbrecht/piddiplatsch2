@@ -46,12 +46,13 @@ def init():
 
 
 @cli.command()
-def consume():
+@click.option("--dump", is_flag=True, help="Dump all consumed messages to JSONL files.")
+def consume(dump):
     """Start the Kafka consumer."""
     topic = config.get("consumer", "topic")
     kafka_cfg = config.get("kafka")
     processor = config.get("plugin", "processor")
-    start_consumer(topic, kafka_cfg, processor)
+    start_consumer(topic, kafka_cfg, processor, dump_messages=dump)
 
 
 ## retry command
