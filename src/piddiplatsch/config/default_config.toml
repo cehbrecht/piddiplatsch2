@@ -3,7 +3,7 @@ processor = "cmip6"
 
 [consumer]
 topic = "CMIP6"
-retry_topic = "CMIP6_retry"
+retry_topic = "CMIP6"
 output_dir = "outputs"
 
 [kafka]
