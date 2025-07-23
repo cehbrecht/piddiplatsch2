@@ -94,7 +94,7 @@
                     "version": null,
                     "data_specs_version": "01.00.30"
                 },
-                "id": "CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710",
+                "invalid_id": "CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710",
                 "stac_version": "1.0.0",
                 "assets": {
                     "reference_file": {
