@@ -38,13 +38,13 @@ class FailureRecovery:
 
     @staticmethod
     def retry(
-        jsonl_path: Path,
+        kafka_cfg: dict,
         retry_topic: str,
+        jsonl_path: Path,
         delete_after: bool = False,
     ):
         """Retry failed items by sending them to a Kafka retry topic, incrementing 'retries'."""
-        kafka_config = config.get("kafka", {})
-        bootstrap_servers = kafka_config.get("bootstrap.servers", "localhost:9092")
+        bootstrap_servers = kafka_cfg.get("bootstrap.servers", "localhost:9092")
 
         if not jsonl_path.exists():
             logger.error(f"Retry file not found: {jsonl_path}")

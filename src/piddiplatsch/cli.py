@@ -1,5 +1,4 @@
 import click
-import logging
 import json
 from pathlib import Path
 from piddiplatsch.consumer import start_consumer
@@ -7,7 +6,6 @@ from piddiplatsch.config import config
 from piddiplatsch import client
 from piddiplatsch.recovery import FailureRecovery
 
-logger = logging.getLogger(__name__)
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -64,22 +62,18 @@ def consume():
     "filename", type=click.Path(exists=True, dir_okay=False, path_type=Path)
 )
 @click.option(
-    "--retry-topic",
-    default="piddiplatsch-retry",
-    show_default=True,
-    help="Kafka topic to send retry messages to.",
-)
-@click.option(
     "--delete-after",
     is_flag=True,
     help="Delete the file if all messages are retried successfully.",
 )
-def retry(filename: Path, retry_topic: str, delete_after: bool):
+def retry(filename: Path, delete_after: bool):
     """Retry failed items from a failure .jsonl file."""
-    logger.info(f"Retrying failures from {filename} to topic '{retry_topic}'")
+    retry_topic = config.get("consumer", "retry_topic")
+    kafka_cfg = config.get("kafka", {})
     success, failed = FailureRecovery.retry(
-        jsonl_path=filename,
         retry_topic=retry_topic,
+        kafka_cfg=kafka_cfg,
+        jsonl_path=filename,
         delete_after=delete_after,
     )
     click.echo(f"Retried {success} messages, {failed} failed.")
