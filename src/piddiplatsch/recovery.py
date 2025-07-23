@@ -5,6 +5,8 @@ from pathlib import Path
 
 from piddiplatsch.config import config
 
+logger = logging.getLogger(__name__)
+
 
 class FailureRecovery:
     FAILURE_DIR = (
@@ -20,9 +22,9 @@ class FailureRecovery:
         dated_filename = f"failed_items_{now.date()}.jsonl"
         failure_file = FailureRecovery.FAILURE_DIR / dated_filename
 
-        data_with_timestamp = {**data, "failure_timestamp": timestamp}
+        data_with_timestamp = {**data, "failure_timestamp": timestamp, "key": key}
 
         with failure_file.open("a", encoding="utf-8") as f:
             json.dump(data_with_timestamp, f)
             f.write("\n")
-        logging.warning(f"Recorded failed item {key} to {failure_file}")
+        logger.warning(f"Recorded failed item {key} to {failure_file}")
