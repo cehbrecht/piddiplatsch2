@@ -49,14 +49,14 @@ make develop
 You can customize Kafka or Handle settings:
 
 ```bash
-cp src/config/default_config.toml my-config.toml
-vim my-config.toml
+cp src/config/default_config.toml custom.toml
+vim custom.toml
 ```
 
 Use your config file when running:
 
 ```bash
-piddiplatsch --config my-config.toml
+piddiplatsch --config custom.toml
 ```
 
 ---
