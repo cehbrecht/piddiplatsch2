@@ -128,6 +128,77 @@ piddiplatsch send -p tests/testdata/CMIP6/<your_file>.json
 
 ---
 
+Got it! Here’s the failure recovery section ready for your README:
+
+---
+
+## Failure Recovery and Retry
+
+When `piddiplatsch` fails to register or process a STAC item from Kafka, the failed item is saved for recovery in a JSON Lines (`.jsonl`) format. This enables you to preserve thousands of failure records for later inspection and retry.
+
+### How Failures Are Stored
+
+* Failed items are saved under the configured `output_dir` (default: `outputs/failures`).
+* Failures are grouped by UTC date in files named like `failed_items_YYYY-MM-DD.jsonl`.
+* To track retry attempts, failures are stored in subfolders named by retry count:
+
+```
+outputs/
+└── failures/
+    ├── retries-0/          # First failures (no retries yet)
+    │   └── failed_items_2025-07-23.jsonl
+    ├── retries-1/          # First retry attempt
+    │   └── failed_items_2025-07-23.jsonl
+    └── retries-2/          # Second retry attempt
+        └── failed_items_2025-07-23.jsonl
+```
+
+* Each JSON object includes a `"failure_timestamp"` (UTC ISO8601) and `"retries"` count.
+
+### Retrying Failed Items
+
+Use the `retry` CLI command to resend failed items from a `.jsonl` file back into Kafka for reprocessing.
+
+```bash
+piddiplatsch retry <failure-file.jsonl> [--delete-after]
+```
+
+Options:
+
+* `<failure-file.jsonl>`: Path to the failure file to retry.
+* `--delete-after`: Delete the file after all messages have been retried successfully.
+
+### Example
+
+```bash
+piddiplatsch retry outputs/failures/retries-0/failed_items_2025-07-23.jsonl --delete-after
+```
+
+This command will resend all items from that failure file to the configured Kafka retry topic, increasing their retry count automatically. If all messages succeed, the file will be deleted.
+
+---
+
+## Failure Recovery and Retry
+
+Failed STAC items are saved as JSON Lines (`.jsonl`) in `outputs/failures`, grouped by date and retry count in folders like `r0`, `r1`, etc.
+
+Each record includes a timestamp and retry count.
+
+To retry failed items, run:
+
+```bash
+piddiplatsch retry <file.jsonl> [--delete-after]
+```
+
+The --delete-after option removes the file if all retries succeed.
+
+Example:
+```bash
+piddiplatsch retry outputs/failures/r0/failed_items_2025-07-23.jsonl --delete-after
+```
+
+---
+
 ## 📓 Examples
 
 Explore the example notebooks here:  
@@ -148,8 +219,3 @@ Explore the example notebooks here:
 
 - [ ] **Performance tests with locust.io**  
   Add [locust.io](https://locust.io/) tests to check performance.
-
-- [ ] **Recovery strategy for failed registrations**  
-  Add recovery strategy for failed registrations. For example write failed items into a jsonlines document. Read items from jsonlines document in addition to kafka listening.
-
-
