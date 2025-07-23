@@ -1,8 +1,13 @@
 import click
+import logging
 import json
+from pathlib import Path
 from piddiplatsch.consumer import start_consumer
 from piddiplatsch.config import config
 from piddiplatsch import client
+from piddiplatsch.recovery import FailureRecovery
+
+logger = logging.getLogger(__name__)
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -27,7 +32,9 @@ def cli(ctx, config_file, debug, logfile):
     config.load_user_config(config_file)
     config.configure_logging(debug=debug, logfile=logfile)
 
+
 ## init command
+
 
 @cli.command()
 def init():
@@ -39,16 +46,47 @@ def init():
 
 ## consume command
 
+
 @cli.command()
 def consume():
     """Start the Kafka consumer."""
     topic = config.get("consumer", "topic")
     kafka_cfg = config.get("kafka")
-    processor= config.get("plugin", "processor")
+    processor = config.get("plugin", "processor")
     start_consumer(topic, kafka_cfg, processor)
 
 
+## retry command
+
+
+@cli.command("retry")
+@click.argument(
+    "filename", type=click.Path(exists=True, dir_okay=False, path_type=Path)
+)
+@click.option(
+    "--retry-topic",
+    default="piddiplatsch-retry",
+    show_default=True,
+    help="Kafka topic to send retry messages to.",
+)
+@click.option(
+    "--delete-after",
+    is_flag=True,
+    help="Delete the file if all messages are retried successfully.",
+)
+def retry(filename: Path, retry_topic: str, delete_after: bool):
+    """Retry failed items from a failure .jsonl file."""
+    logger.info(f"Retrying failures from {filename} to topic '{retry_topic}'")
+    success, failed = FailureRecovery.retry(
+        jsonl_path=filename,
+        retry_topic=retry_topic,
+        delete_after=delete_after,
+    )
+    click.echo(f"Retried {success} messages, {failed} failed.")
+
+
 ## send command
+
 
 @cli.command()
 @click.option("-m", "--message", help="Message (JSON string) to send.")

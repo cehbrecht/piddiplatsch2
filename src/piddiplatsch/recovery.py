@@ -37,7 +37,7 @@ class FailureRecovery:
         logger.warning(f"Recorded failed item {key} to {failure_file}")
 
     @staticmethod
-    def retry_failures_to_kafka(
+    def retry(
         jsonl_path: Path,
         retry_topic: str,
         delete_after: bool = False,
