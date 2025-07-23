@@ -16,6 +16,7 @@
 - Listens to a Kafka topic for CMIP6+ records
 - Adds, updates, and deletes PIDs via a Handle Service
 - Includes a mock Handle Server for local testing
+- Includes a Kafka service with docker-compose for testing
 - CLI and plugin support
 - Example notebooks
 
@@ -65,18 +66,6 @@ piddiplatsch --config my-config.toml
 > ⚠️ **Kafka and Handle service must be running!**  
 > 💡 Use Docker setup below for local testing.
 
-### Initialize the Kafka topic:
-
-```bash
-piddiplatsch init
-```
-
-### Send a record (STAC JSON format):
-
-```bash
-piddiplatsch send -p tests/testdata/CMIP6/<your_file>.json
-```
-
 ### Start the Kafka consumer:
 
 ```bash
@@ -125,6 +114,18 @@ docker-compose down -v
 make stop
 ```
 
+### Initialize the Kafka topic for testing only:
+
+```bash
+piddiplatsch init
+```
+
+### Send a record (JSON format) for testing only:
+
+```bash
+piddiplatsch send -p tests/testdata/CMIP6/<your_file>.json
+```
+
 ---
 
 ## 📓 Examples
@@ -136,22 +137,10 @@ Explore the example notebooks here:
 
 ## ✅ TODO
 
-- [ ] **Kafka integration**  
-  Add config and tests for running against a real Kafka instance.
-
-- [ ] **Handle Service integration**  
-  Add config and tests for connecting to a real Handle Service.
-
-- [ ] **Dataset file registration**  
-  Optionally include dataset files in Handle Service registration.
-
 - [ ] **Batch Handle registration**  
   Support committing one dataset and its associated files in a single batch request.
 
-- [ ] **Schema review**  
-  Check and update STAC and Handle Service schemas for compatibility.
-
-- [ ] **STAC version lookup example**  
+- [ ] **version lookup example**  
   Add an example demonstrating how to retrieve dataset versions via the STAC catalog.
 
 - [ ] **Plugin improvements**  
@@ -160,8 +149,7 @@ Explore the example notebooks here:
 - [ ] **Performance tests with locust.io**  
   Add [locust.io](https://locust.io/) tests to check performance.
 
----
+- [ ] **Recovery strategy for failed registrations**  
+  Add recovery strategy for failed registrations. For example write failed items into a jsonlines document. Read items from jsonlines document in addition to kafka listening.
 
-## 📄 License
 
-Licensed under the [Apache License 2.0](LICENSE).
