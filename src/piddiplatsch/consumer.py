@@ -8,6 +8,8 @@ from piddiplatsch.recovery import FailureRecovery
 
 from piddiplatsch.plugin_loader import load_single_plugin
 
+logger = logging.getLogger(__name__)
+
 
 class Consumer:
     def __init__(self, topic: str, kafka_cfg: dict):
@@ -29,7 +31,7 @@ class Consumer:
                 try:
                     value = json.loads(msg.value().decode("utf-8"))
                 except json.JSONDecodeError as e:
-                    logging.error(f"Failed to decode message: {e}")
+                    logger.error(f"Failed to decode message: {e}")
                     continue
 
                 yield key, value
@@ -47,24 +49,24 @@ class ConsumerPipeline:
 
     def run(self):
         """Consume and process messages indefinitely."""
-        logging.info("Starting consumer pipeline...")
+        logger.info("Starting consumer pipeline...")
         for key, value in self.consumer.consume():
             self.process_message(key, value)
 
     def process_message(self, key: str, value: dict):
         """Process a single message."""
         try:
-            logging.info(f"Processing message: {key}")
+            logger.info(f"Processing message: {key}")
             self.processor.process(key, value, self.handle_client)
-            logging.debug(f"Processing message ... done: {key}")
+            logger.debug(f"Processing message ... done: {key}")
         except Exception as e:
-            logging.error(f"Error processing message {key}: {e}")
+            logger.error(f"Error processing message {key}: {e}")
             FailureRecovery.record_failed_item(key, value)
             # raise
 
     def stop(self):
         """Gracefully stop the consumer."""
-        logging.warning("Stopping consumer...")
+        logger.warning("Stopping consumer...")
         # Any other cleanup logic can be added here if needed.
 
 
@@ -73,7 +75,7 @@ def start_consumer(topic: str, kafka_cfg: dict, processor: str):
 
     # Handle graceful shutdown
     def sigint_handler(signal, frame):
-        logging.warning("Received SIGINT. Gracefully shutting down.")
+        logger.warning("Received SIGINT. Gracefully shutting down.")
         pipeline.stop()
         sys.exit(0)
 
@@ -82,6 +84,6 @@ def start_consumer(topic: str, kafka_cfg: dict, processor: str):
     try:
         pipeline.run()
     except KeyboardInterrupt:
-        logging.warning("Consumer interrupted.")
+        logger.warning("Consumer interrupted.")
         pipeline.stop()
         sys.exit(0)
