@@ -3,10 +3,11 @@ processor = "cmip6"
 
 [consumer]
 topic = "CMIP6"
+output_dir = "outputs"
 
 [kafka]
 "bootstrap.servers" = "localhost:39092"
-"group.id" = "piddiplatsch-consumer"
+"group.id" = "piddiplatsch-001"
 "auto.offset.reset" = "earliest"
 "enable.auto.commit" = true
 
