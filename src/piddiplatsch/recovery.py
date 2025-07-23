@@ -4,9 +4,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from confluent_kafka import Producer
-from piddiplatsch.config import config
 
-logger = logging.getLogger(__name__)
+from piddiplatsch.config import config
 
 
 class FailureRecovery:
@@ -16,25 +15,30 @@ class FailureRecovery:
     FAILURE_DIR.mkdir(parents=True, exist_ok=True)
 
     @staticmethod
-    def record_failed_item(key: str, data: dict) -> None:
-        """Append a failed STAC item to a daily JSONL file with UTC timestamp and retries=0."""
+    def record_failed_item(key: str, data: dict, retries: int = 0) -> None:
+        """Append a failed STAC item to a daily JSONL file with UTC timestamp, under retries-N folder."""
         now = datetime.now(timezone.utc)
         timestamp = now.isoformat(timespec="seconds")
         dated_filename = f"failed_items_{now.date()}.jsonl"
-        failure_file = FailureRecovery.FAILURE_DIR / dated_filename
+
+        retry_folder = FailureRecovery.FAILURE_DIR / f"r{retries}"
+        retry_folder.mkdir(parents=True, exist_ok=True)
+
+        failure_file = retry_folder / dated_filename
 
         data_with_metadata = {
             **data,
             "failure_timestamp": timestamp,
-            "key": key,
-            "retries": data.get("retries", 0),
+            "retries": retries,
         }
 
         with failure_file.open("a", encoding="utf-8") as f:
             json.dump(data_with_metadata, f)
             f.write("\n")
 
-        logger.warning(f"Recorded failed item {key} to {failure_file}")
+        logging.warning(
+            f"Recorded failed item {key} (retries={retries}) to {failure_file}"
+        )
 
     @staticmethod
     def retry(
@@ -66,6 +70,7 @@ class FailureRecovery:
                 try:
                     record = json.loads(line)
                     key = str(record.get("key") or record.get("id") or "unknown")
+                    # Increment retries counter for next failure
                     record["retries"] = int(record.get("retries", 0)) + 1
                     value = json.dumps(record).encode("utf-8")
                     producer.produce(
@@ -74,8 +79,10 @@ class FailureRecovery:
                         value=value,
                         callback=delivery_report,
                     )
-                except Exception as e:
-                    logging.exception(f"Error retrying failed item: {e}")
+                except Exception:
+                    logging.exception(
+                        f"Error retrying failed item from {jsonl_path}: {line.strip()}"
+                    )
                     failed += 1
 
         producer.flush()
