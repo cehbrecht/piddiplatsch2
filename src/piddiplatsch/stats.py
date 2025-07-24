@@ -16,16 +16,16 @@ class StatsTracker:
             "stats_summary_interval", 100
         )
 
-    def _log_json(self, level, event_type, data):
+    def _log_json(self, level: str, event: str, data: dict):
         log_record = {
-            "event": event_type,
+            "event": event,
             "timestamp": datetime.utcnow().isoformat() + "Z",
             **data,
         }
         log_fn = getattr(self.logger, level)
         log_fn(json.dumps(log_record))
 
-    def record_success(self, dataset_id, num_files, elapsed=None):
+    def record_success(self, dataset_id: str, num_files: int, elapsed: float = None):
         self.datasets_processed += 1
         self.file_handles_created += num_files
         self.counter["success"] += 1
@@ -46,12 +46,17 @@ class StatsTracker:
         ):
             self.log_summary()
 
-    def record_failure(self, dataset_id, error):
+    def record_failure(self, dataset_id: str, error: str):
         self.failures += 1
         self.counter["failure"] += 1
 
         self._log_json(
-            "error", "dataset_failure", {"dataset_id": dataset_id, "error": str(error)}
+            "error",
+            "dataset_failure",
+            {
+                "dataset_id": dataset_id,
+                "error": str(error),
+            },
         )
 
     def summary(self):
