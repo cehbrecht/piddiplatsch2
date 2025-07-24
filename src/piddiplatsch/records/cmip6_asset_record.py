@@ -104,13 +104,12 @@ class CMIP6AssetRecord:
 
     def as_handle_model(self) -> CMIP6AssetModel:
         return CMIP6AssetModel(
-            # PID=self.pid,
-            PARENT=self.parent,
             URL=self.url,
-            AGGREGATION_LEVEL="File",
-            FILENAME=self.filename,
+            AGGREGATION_LEVEL="FILE",
+            IS_PART_OF=self.parent,
+            FILE_NAME=self.filename,
             CHECKSUM=self.checksum,
-            SIZE=self.size,
+            FILE_SIZE=self.size,
         )
 
     def as_record(self) -> dict:

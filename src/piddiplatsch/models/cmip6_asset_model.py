@@ -1,15 +1,14 @@
 from typing import Optional, Literal
 
-# from uuid import UUID
-
 from pydantic import BaseModel
 
 
 class CMIP6AssetModel(BaseModel):
-    # PID: UUID
-    PARENT: str
     URL: str
-    AGGREGATION_LEVEL: Literal["File"]
-    FILENAME: str
+    AGGREGATION_LEVEL: Literal["FILE"]
+    FILE_NAME: str
+    IS_PART_OF: str
     CHECKSUM: Optional[str] = None
-    SIZE: Optional[int] = None
+    FILE_SIZE: Optional[int] = None
+    FILE_VERSION: Optional[str] = None
+    CHECKSUM_METHOD: Optional[str] = None
