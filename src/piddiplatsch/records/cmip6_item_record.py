@@ -28,6 +28,8 @@ class CMIP6ItemRecord:
 
         self._pid = self._extract_pid(self.item)
         self._url = self._extract_url(self.item)
+        self._is_part_of = self._extract_is_part_of(self.item)
+        self._has_parts = self._extract_has_parts(self.item)
         self._dataset_id = self._extract_dataset_id(self.item)
         self._dataset_version = self._extract_dataset_version(self.item)
         self._hosting_node = self._extract_hosting_node(self.item)
@@ -63,6 +65,15 @@ class CMIP6ItemRecord:
         parts = id_str.rsplit(".", 1)
         dataset_id = parts[0]
         return dataset_id
+
+    @staticmethod
+    def _extract_has_parts(item: Dict[str, Any]) -> List[str]:
+        parts = []
+        return parts
+
+    @staticmethod
+    def _extract_is_part_of(item: Dict[str, Any]) -> str:
+        return None
 
     @staticmethod
     def _extract_dataset_version(item: Dict[str, Any]) -> str:
@@ -136,6 +147,22 @@ class CMIP6ItemRecord:
         return self._url
 
     @property
+    def dataset_id(self) -> str:
+        return self._dataset_id
+
+    @property
+    def dataset_version(self) -> str:
+        return self._dataset_version
+
+    @property
+    def has_parts(self) -> List[str]:
+        return self._has_parts
+
+    @property
+    def is_part_of(self) -> str:
+        return self._is_part_of
+
+    @property
     def hosting_node(self) -> HostingNode:
         return self._hosting_node
 
@@ -154,8 +181,10 @@ class CMIP6ItemRecord:
     def as_handle_model(self) -> CMIP6ItemModel:
         return CMIP6ItemModel(
             URL=self.url,
-            DRS_ID=self._dataset_id,
-            VERSION_NUMBER=self._dataset_version,
+            DRS_ID=self.dataset_id,
+            VERSION_NUMBER=self.dataset_version,
+            HAS_PARTS=self.has_parts,
+            IS_PART_OF=self.is_part_of,
             HOSTING_NODE=self.hosting_node,
             REPLICA_NODES=self.replica_nodes,
             UNPUBLISHED_REPLICAS=self.unpublished_replicas,
