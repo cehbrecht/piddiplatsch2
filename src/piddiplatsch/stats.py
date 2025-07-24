@@ -7,8 +7,8 @@ from piddiplatsch.config import config
 
 class StatsTracker:
     def __init__(self):
-        self.datasets_processed = 0
-        self.file_handles_created = 0
+        self.messages_processed = 0
+        self.handles_created = 0
         self.failures = 0
         self.counter = Counter()
         self.logger = logging.getLogger(__name__)
@@ -25,44 +25,44 @@ class StatsTracker:
         log_fn = getattr(self.logger, level)
         log_fn(json.dumps(log_record))
 
-    def record_success(self, dataset_id: str, num_files: int, elapsed: float = None):
-        self.datasets_processed += 1
-        self.file_handles_created += num_files
+    def record_success(self, key: str, num_handles: int, elapsed: float = None):
+        self.messages_processed += 1
+        self.handles_created += num_handles
         self.counter["success"] += 1
 
         self._log_json(
             "info",
-            "dataset_success",
+            "success",
             {
-                "dataset_id": dataset_id,
-                "files": num_files,
+                "key": key,
+                "handles": num_handles,
                 "elapsed_sec": round(elapsed, 3) if elapsed else None,
             },
         )
 
         if (
             self.summary_interval
-            and self.datasets_processed % self.summary_interval == 0
+            and self.messages_processed % self.summary_interval == 0
         ):
             self.log_summary()
 
-    def record_failure(self, dataset_id: str, error: str):
+    def record_failure(self, key: str, error: str):
         self.failures += 1
         self.counter["failure"] += 1
 
         self._log_json(
             "error",
-            "dataset_failure",
+            "failure",
             {
-                "dataset_id": dataset_id,
+                "key": key,
                 "error": str(error),
             },
         )
 
     def summary(self):
         return {
-            "datasets_processed": self.datasets_processed,
-            "file_handles_created": self.file_handles_created,
+            "messages_processed": self.messages_processed,
+            "handles_created": self.handles_created,
             "failures": self.failures,
             "counters": dict(self.counter),
         }

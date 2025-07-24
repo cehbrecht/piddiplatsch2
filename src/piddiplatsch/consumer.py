@@ -2,7 +2,6 @@ import logging
 import json
 import signal
 import sys
-from datetime import datetime
 from confluent_kafka import Consumer as ConfluentConsumer, KafkaException
 from piddiplatsch.handle_client import HandleClient
 from piddiplatsch.recovery import FailureRecovery
@@ -52,7 +51,7 @@ class ConsumerPipeline:
         self.handle_client = HandleClient.from_config()
         self.processor = load_single_plugin(processor)
         self.dump_messages = dump_messages
-        self.stats = StatsTracker(summary_interval=100)
+        self.stats = StatsTracker()
 
     def run(self):
         """Consume and process messages indefinitely."""
@@ -64,19 +63,23 @@ class ConsumerPipeline:
         """Process a single message."""
         try:
             logger.info(f"Processing message: {key}")
-            start = datetime.now()
             if self.dump_messages:
                 DumpRecorder.record_item(key, value)
-            self.processor.process(key, value, self.handle_client)
+            result = self.processor.process(key, value, self.handle_client)
             logger.debug(f"Processing message ... done: {key}")
 
-            elapsed = (datetime.now() - start).total_seconds()
-            self.stats.record_success(key, 1, elapsed)
+            if result.success:
+                self.stats.record_success(
+                    result.key, result.num_handles, elapsed=result.elapsed
+                )
+            else:
+                self.stats.record_failure(result.key, result.error)
+                raise Exception(result.error)
+
         except Exception as e:
             logger.error(f"Error processing message {key}: {e}")
             retries = value.get("retries", 0)
             FailureRecovery.record_failed_item(key, value, retries=retries)
-            self.stats.record_failure(key, e)
 
     def stop(self):
         """Gracefully stop the consumer."""
