@@ -15,9 +15,13 @@ class CMIP6AssetRecord:
         self.asset_key = asset_key
         self.asset = self._get_asset(item, asset_key)
 
+        # config
+        self.prefix = config.get("handle", {}).get("prefix", "")
+        self.lp_url = config.get("cmip6", {}).get("landing_page_url", "")
+
         self._parent = self._build_handle(self._extract_parent_pid(item))
         self._pid = self._extract_pid(item, asset_key)
-        self._url = self._extract_url(self.asset)
+        self._url = self._extract_url()
         self._filename = self._extract_filename(self._url)
         self._checksum = self._extract_checksum(self.asset)
         self._size = self._extract_size(self.asset)
@@ -54,8 +58,12 @@ class CMIP6AssetRecord:
         id_str = item.get("id", "") + "#" + asset_key
         return uuid3(NAMESPACE_URL, id_str)
 
+    def _extract_url(self) -> str:
+        url = f"{self.lp_url}/{self.prefix}/{self.pid}"
+        return url
+
     @staticmethod
-    def _extract_url(asset: Dict[str, Any]) -> str:
+    def _extract_download_url(asset: Dict[str, Any]) -> str:
         try:
             return asset["href"]
         except KeyError as e:
