@@ -2,16 +2,19 @@ import logging
 import json
 from collections import Counter
 from datetime import datetime
+from piddiplatsch.config import config
 
 
 class StatsTracker:
-    def __init__(self, logger=None, summary_interval=100):
+    def __init__(self):
         self.datasets_processed = 0
         self.file_handles_created = 0
         self.failures = 0
         self.counter = Counter()
-        self.logger = logger or logging.getLogger(__name__)
-        self.summary_interval = summary_interval
+        self.logger = logging.getLogger(__name__)
+        self.summary_interval = config.get("consumer", {}).get(
+            "stats_summary_interval", 100
+        )
 
     def _log_json(self, level, event_type, data):
         log_record = {
