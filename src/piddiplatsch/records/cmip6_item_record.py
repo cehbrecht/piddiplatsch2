@@ -8,6 +8,7 @@ from dateutil.parser import isoparse
 
 from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
 from piddiplatsch.models import CMIP6ItemModel, HostingNode
+from piddiplatsch.config import config
 
 
 class CMIP6ItemRecord:
@@ -16,6 +17,10 @@ class CMIP6ItemRecord:
     def __init__(self, item: Dict[str, Any], strict: bool):
         self.item = item
         self.strict = strict
+
+        # config
+        self.prefix = config.get("handle", {}).get("prefix", "")
+        self.lp_url = config.get("cmip6", {}).get("landing_page_url", "")
 
         # Validate the STAC item against schema
         try:
@@ -27,7 +32,7 @@ class CMIP6ItemRecord:
             raise ValueError(f"Invalid CMIP6 STAC item: {e.message}") from e
 
         self._pid = self._extract_pid(self.item)
-        self._url = self._extract_url(self.item)
+        self._url = self._extract_url()
         self._is_part_of = self._extract_is_part_of(self.item)
         self._has_parts = self._extract_has_parts(self.item)
         self._dataset_id = self._extract_dataset_id(self.item)
@@ -51,8 +56,12 @@ class CMIP6ItemRecord:
 
         return uuid3(NAMESPACE_URL, id_str)
 
+    def _extract_url(self) -> str:
+        url = f"{self.lp_url}/{self.prefix}/{self.pid}"
+        return url
+
     @staticmethod
-    def _extract_url(item: Dict[str, Any]) -> str:
+    def _extract_stac_url(item: Dict[str, Any]) -> str:
         try:
             return item["links"][0]["href"]
         except (KeyError, IndexError) as e:

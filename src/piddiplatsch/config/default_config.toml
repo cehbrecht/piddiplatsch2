@@ -18,3 +18,6 @@ server_url = "http://localhost:8000"
 prefix = "21.TEST"
 username = "testuser"
 password = "testpass"
+
+[cmip6]
+landing_page_url = "https://handle-esgf.dkrz.de/lp"
