@@ -5,6 +5,7 @@ processor = "cmip6"
 topic = "CMIP6"
 retry_topic = "CMIP6"
 output_dir = "outputs"
+stats_summary_interval = 100
 
 [kafka]
 "bootstrap.servers" = "localhost:39092"

@@ -3,9 +3,9 @@ import json
 import signal
 import sys
 from confluent_kafka import Consumer as ConfluentConsumer, KafkaException
-from piddiplatsch.handle_client import HandleClient
 from piddiplatsch.recovery import FailureRecovery
 from piddiplatsch.dump import DumpRecorder
+from piddiplatsch.stats import StatsTracker
 
 from piddiplatsch.plugin_loader import load_single_plugin
 
@@ -47,9 +47,9 @@ class ConsumerPipeline:
         self, topic: str, kafka_cfg: dict, processor: str, dump_messages: bool = False
     ):
         self.consumer = Consumer(topic, kafka_cfg)
-        self.handle_client = HandleClient.from_config()
         self.processor = load_single_plugin(processor)
         self.dump_messages = dump_messages
+        self.stats = StatsTracker()
 
     def run(self):
         """Consume and process messages indefinitely."""
@@ -63,8 +63,17 @@ class ConsumerPipeline:
             logger.info(f"Processing message: {key}")
             if self.dump_messages:
                 DumpRecorder.record_item(key, value)
-            self.processor.process(key, value, self.handle_client)
+            result = self.processor.process(key, value)
             logger.debug(f"Processing message ... done: {key}")
+
+            if result.success:
+                self.stats.record_success(
+                    result.key, result.num_handles, elapsed=result.elapsed
+                )
+            else:
+                self.stats.record_failure(result.key, result.error)
+                raise Exception(result.error)
+
         except Exception as e:
             logger.error(f"Error processing message {key}: {e}")
             retries = value.get("retries", 0)
@@ -74,6 +83,7 @@ class ConsumerPipeline:
         """Gracefully stop the consumer."""
         logger.warning("Stopping consumer...")
         # Any other cleanup logic can be added here if needed.
+        self.stats.log_summary()
 
 
 def start_consumer(
