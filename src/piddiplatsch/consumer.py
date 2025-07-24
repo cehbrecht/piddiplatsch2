@@ -3,7 +3,6 @@ import json
 import signal
 import sys
 from confluent_kafka import Consumer as ConfluentConsumer, KafkaException
-from piddiplatsch.handle_client import HandleClient
 from piddiplatsch.recovery import FailureRecovery
 from piddiplatsch.dump import DumpRecorder
 from piddiplatsch.stats import StatsTracker
@@ -48,7 +47,6 @@ class ConsumerPipeline:
         self, topic: str, kafka_cfg: dict, processor: str, dump_messages: bool = False
     ):
         self.consumer = Consumer(topic, kafka_cfg)
-        self.handle_client = HandleClient.from_config()
         self.processor = load_single_plugin(processor)
         self.dump_messages = dump_messages
         self.stats = StatsTracker()
@@ -65,7 +63,7 @@ class ConsumerPipeline:
             logger.info(f"Processing message: {key}")
             if self.dump_messages:
                 DumpRecorder.record_item(key, value)
-            result = self.processor.process(key, value, self.handle_client)
+            result = self.processor.process(key, value)
             logger.debug(f"Processing message ... done: {key}")
 
             if result.success:

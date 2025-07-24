@@ -8,6 +8,7 @@ from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
 from piddiplatsch.records import CMIP6ItemRecord
 from piddiplatsch.records.utils import extract_asset_records
 from piddiplatsch.result import ProcessingResult
+from piddiplatsch.handle_client import HandleClient
 
 hookimpl = pluggy.HookimplMarker("piddiplatsch")
 
@@ -15,17 +16,18 @@ hookimpl = pluggy.HookimplMarker("piddiplatsch")
 class CMIP6Processor:
     """Pluggy processor for CMIP6 STAC items."""
 
+    def __init__(self):
+        self.handle_client = HandleClient.from_config()
+
     @hookimpl
-    def process(
-        self, key: str, value: Dict[str, Any], handle_client: Any
-    ) -> ProcessingResult:
+    def process(self, key: str, value: Dict[str, Any]) -> ProcessingResult:
         """Process a Kafka message for a CMIP6 STAC item and register it in the Handle Service."""
         logging.debug(f"CMIP6 plugin processing key: {key}")
 
         start = datetime.now()
 
         try:
-            num_handles = self._do_process(value, handle_client)
+            num_handles = self._do_process(value)
             elapsed = (datetime.now() - start).total_seconds()
             return ProcessingResult(
                 key=key,
@@ -36,7 +38,7 @@ class CMIP6Processor:
         except Exception as e:
             return ProcessingResult(key=key, success=False, error=str(e))
 
-    def _do_process(self, value: Dict[str, Any], handle_client: Any) -> int:
+    def _do_process(self, value: Dict[str, Any]) -> int:
         num_handles = 0
 
         try:
@@ -58,7 +60,7 @@ class CMIP6Processor:
         logging.debug(
             f"Register item record for PID {record.pid}: {record.as_record()}"
         )
-        handle_client.add_item(record.pid, record.as_record())
+        self.handle_client.add_item(record.pid, record.as_record())
         num_handles += 1
 
         # Iterate over file assets and register them as well
@@ -70,7 +72,7 @@ class CMIP6Processor:
             logging.debug(
                 f"Register assert record for PID {record.pid}: {record.as_record()}"
             )
-            handle_client.add_item(record.pid, record.as_record())
+            self.handle_client.add_item(record.pid, record.as_record())
             num_handles += 1
 
         return num_handles

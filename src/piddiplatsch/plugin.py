@@ -10,5 +10,5 @@ hookspec = pluggy.HookspecMarker(PLUGIN_NAMESPACE)
 
 class MessageProcessorSpec:
     @hookspec
-    def process(self, key: str, value: dict, handle_client: object) -> ProcessingResult:
+    def process(self, key: str, value: dict) -> ProcessingResult:
         """Process a single Kafka message."""
