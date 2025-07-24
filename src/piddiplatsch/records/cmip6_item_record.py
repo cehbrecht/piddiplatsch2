@@ -8,6 +8,7 @@ from dateutil.parser import isoparse
 
 from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
 from piddiplatsch.models import CMIP6ItemModel, HostingNode
+from piddiplatsch.config import config
 
 
 class CMIP6ItemRecord:
@@ -16,6 +17,10 @@ class CMIP6ItemRecord:
     def __init__(self, item: Dict[str, Any], strict: bool):
         self.item = item
         self.strict = strict
+
+        # config
+        self.prefix = config.get("handle", {}).get("prefix", "")
+        self.lp_url = config.get("cmip6", {}).get("landing_page_url", "")
 
         # Validate the STAC item against schema
         try:
@@ -27,10 +32,11 @@ class CMIP6ItemRecord:
             raise ValueError(f"Invalid CMIP6 STAC item: {e.message}") from e
 
         self._pid = self._extract_pid(self.item)
-        self._url = self._extract_url(self.item)
-        self._dataset_id, self._dataset_version = self._extract_dataset_version(
-            self.item
-        )
+        self._url = self._extract_url()
+        self._is_part_of = self._extract_is_part_of(self.item)
+        self._has_parts = self._extract_has_parts(self.item)
+        self._dataset_id = self._extract_dataset_id(self.item)
+        self._dataset_version = self._extract_dataset_version(self.item)
         self._hosting_node = self._extract_hosting_node(self.item)
         self._replica_nodes = self._extract_replica_nodes(self.item)
         self._unpublished_replicas = self._extract_unpublished(
@@ -50,8 +56,12 @@ class CMIP6ItemRecord:
 
         return uuid3(NAMESPACE_URL, id_str)
 
+    def _extract_url(self) -> str:
+        url = f"{self.lp_url}/{self.prefix}/{self.pid}"
+        return url
+
     @staticmethod
-    def _extract_url(item: Dict[str, Any]) -> str:
+    def _extract_stac_url(item: Dict[str, Any]) -> str:
         try:
             return item["links"][0]["href"]
         except (KeyError, IndexError) as e:
@@ -59,12 +69,27 @@ class CMIP6ItemRecord:
             raise ValueError("Missing required 'links[0].href' field") from e
 
     @staticmethod
-    def _extract_dataset_version(item: Dict[str, Any]) -> (str, Optional[str]):
+    def _extract_dataset_id(item: Dict[str, Any]) -> str:
         id_str = item.get("id", "")
         parts = id_str.rsplit(".", 1)
         dataset_id = parts[0]
+        return dataset_id
+
+    @staticmethod
+    def _extract_has_parts(item: Dict[str, Any]) -> List[str]:
+        parts = []
+        return parts
+
+    @staticmethod
+    def _extract_is_part_of(item: Dict[str, Any]) -> str:
+        return None
+
+    @staticmethod
+    def _extract_dataset_version(item: Dict[str, Any]) -> str:
+        id_str = item.get("id", "")
+        parts = id_str.rsplit(".", 1)
         dataset_version = parts[1] if len(parts) > 1 else None
-        return dataset_id, dataset_version
+        return dataset_version
 
     @staticmethod
     def _parse_datetime(value: Optional[str]) -> Optional[datetime]:
@@ -131,6 +156,22 @@ class CMIP6ItemRecord:
         return self._url
 
     @property
+    def dataset_id(self) -> str:
+        return self._dataset_id
+
+    @property
+    def dataset_version(self) -> str:
+        return self._dataset_version
+
+    @property
+    def has_parts(self) -> List[str]:
+        return self._has_parts
+
+    @property
+    def is_part_of(self) -> str:
+        return self._is_part_of
+
+    @property
     def hosting_node(self) -> HostingNode:
         return self._hosting_node
 
@@ -148,10 +189,11 @@ class CMIP6ItemRecord:
 
     def as_handle_model(self) -> CMIP6ItemModel:
         return CMIP6ItemModel(
-            PID=self.pid,
             URL=self.url,
-            DATASET_ID=self._dataset_id,
-            DATASET_VERSION=self._dataset_version,
+            DRS_ID=self.dataset_id,
+            VERSION_NUMBER=self.dataset_version,
+            HAS_PARTS=self.has_parts,
+            IS_PART_OF=self.is_part_of,
             HOSTING_NODE=self.hosting_node,
             REPLICA_NODES=self.replica_nodes,
             UNPUBLISHED_REPLICAS=self.unpublished_replicas,
