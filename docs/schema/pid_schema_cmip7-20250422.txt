@@ -1,3 +1,19 @@
+## examples
+
+cmip6:
+* file: http://fox.cloud.dkrz.de:8000/api/handles/21.14100/77b13123-f172-483c-a53b-2ee7686aa437
+* dataset: http://fox.cloud.dkrz.de:8000/api/handles/21.14100/37528ff1-2653-3c50-b670-7c00ba96fd6e
+
+cordex:
+* file: http://fox.cloud.dkrz.de:8003/api/handles/21.14103/a0b3795b-1ed1-438c-9c80-9222458c0bc9
+* dataset: http://fox.cloud.dkrz.de:8003/api/handles/21.14103/143ad83b-81f4-3bd3-905d-4c99eea5ad38
+
+palmod:
+* file: http://fox.cloud.dkrz.de:8005/api/handles/21.14105/b259c72a-c2f5-4331-a6ca-be13a17cede7
+* dataset: http://fox.cloud.dkrz.de:8005/api/handles/21.14105/bd39a751-6911-3653-a112-cec67384fada
+
+wdcc lta:
+* dataset: http://fox.cloud.dkrz.de:8006/api/handles/21.14106/81D6053E36D55F4D41C1E5757684A35BB9BCEB0F
 -----------
 | Dataset |
 -----------
