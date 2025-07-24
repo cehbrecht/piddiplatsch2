@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import Optional, List
 
-# from uuid import UUID
 from datetime import datetime
 
 from pydantic import BaseModel, Field, model_validator
@@ -13,11 +12,12 @@ class HostingNode(BaseModel):
 
 
 class CMIP6ItemModel(BaseModel):
-    # PID: UUID
     URL: str
-    AGGREGATION_LEVEL: str = "Dataset"
-    DATASET_ID: str
-    DATASET_VERSION: Optional[str] = None
+    AGGREGATION_LEVEL: str = "DATASET"
+    DRS_ID: str
+    VERSION_NUMBER: Optional[str] = None
+    IS_PART_OF: Optional[str] = None
+    HAS_PARTS: List[str] = Field(default_factory=list)
     HOSTING_NODE: HostingNode
     REPLICA_NODES: List[HostingNode] = Field(default_factory=list)
     UNPUBLISHED_REPLICAS: List[str] = Field(default_factory=list)
@@ -25,10 +25,6 @@ class CMIP6ItemModel(BaseModel):
 
     @model_validator(mode="after")
     def validate_required(self) -> CMIP6ItemModel:
-        # if not self.PID:
-        #    raise ValueError("PID is required.")
-        if not self.URL:
-            raise ValueError("URL is required.")
         if not self.HOSTING_NODE or not self.HOSTING_NODE.host:
             raise ValueError("HOSTING_NODE with host is required.")
         return self

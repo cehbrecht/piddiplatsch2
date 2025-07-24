@@ -28,9 +28,8 @@ class CMIP6ItemRecord:
 
         self._pid = self._extract_pid(self.item)
         self._url = self._extract_url(self.item)
-        self._dataset_id, self._dataset_version = self._extract_dataset_version(
-            self.item
-        )
+        self._dataset_id = self._extract_dataset_id(self.item)
+        self._dataset_version = self._extract_dataset_version(self.item)
         self._hosting_node = self._extract_hosting_node(self.item)
         self._replica_nodes = self._extract_replica_nodes(self.item)
         self._unpublished_replicas = self._extract_unpublished(
@@ -59,12 +58,18 @@ class CMIP6ItemRecord:
             raise ValueError("Missing required 'links[0].href' field") from e
 
     @staticmethod
-    def _extract_dataset_version(item: Dict[str, Any]) -> (str, Optional[str]):
+    def _extract_dataset_id(item: Dict[str, Any]) -> str:
         id_str = item.get("id", "")
         parts = id_str.rsplit(".", 1)
         dataset_id = parts[0]
+        return dataset_id
+
+    @staticmethod
+    def _extract_dataset_version(item: Dict[str, Any]) -> str:
+        id_str = item.get("id", "")
+        parts = id_str.rsplit(".", 1)
         dataset_version = parts[1] if len(parts) > 1 else None
-        return dataset_id, dataset_version
+        return dataset_version
 
     @staticmethod
     def _parse_datetime(value: Optional[str]) -> Optional[datetime]:
@@ -148,10 +153,9 @@ class CMIP6ItemRecord:
 
     def as_handle_model(self) -> CMIP6ItemModel:
         return CMIP6ItemModel(
-            PID=self.pid,
             URL=self.url,
-            DATASET_ID=self._dataset_id,
-            DATASET_VERSION=self._dataset_version,
+            DRS_ID=self._dataset_id,
+            VERSION_NUMBER=self._dataset_version,
             HOSTING_NODE=self.hosting_node,
             REPLICA_NODES=self.replica_nodes,
             UNPUBLISHED_REPLICAS=self.unpublished_replicas,
