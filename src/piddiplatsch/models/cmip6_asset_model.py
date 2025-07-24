@@ -12,3 +12,4 @@ class CMIP6AssetModel(BaseModel):
     FILE_SIZE: Optional[int] = None
     FILE_VERSION: Optional[str] = None
     CHECKSUM_METHOD: Optional[str] = None
+    URL_ORIGINAL_DATA: str
