@@ -28,11 +28,32 @@ def test_send_valid_example(runner, testdata_path):
 
 
 @pytest.mark.online
-def test_send_valid_cmip6_mpi(runner, testdata_path):
-    # Path to the JSON file in tests/testdata
+def test_send_valid_cmip6_mpi_day(runner, testdata_path):
     filename = os.path.join(
         testdata_path,
         "CMIP6",
+        "CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710.json",
+    )
+
+    send_message(runner, filename)
+
+
+@pytest.mark.online
+def test_send_valid_cmip6_mpi_mon(runner, testdata_path):
+    filename = os.path.join(
+        testdata_path,
+        "CMIP6",
+        "CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.Amon.tasmin.gn.v20190710.json",
+    )
+
+    send_message(runner, filename)
+
+
+@pytest.mark.online
+def test_send_invalid_cmip6_mpi_mon(runner, testdata_path):
+    filename = os.path.join(
+        testdata_path,
+        "CMIP6_invalid",
         "CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710.json",
     )
 
