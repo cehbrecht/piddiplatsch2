@@ -1,6 +1,5 @@
 import pluggy
 import logging
-import uuid
 from datetime import datetime
 from typing import Any, Dict
 from jsonschema import validate, ValidationError
@@ -15,6 +14,8 @@ hookimpl = pluggy.HookimplMarker("piddiplatsch")
 
 class CMIP6Processor:
     """Pluggy processor for CMIP6 STAC items."""
+
+    EXCLUDED_ASSET_KEYS = ["reference_file", "thumbnail", "quicklook"]
 
     def __init__(self):
         self.handle_client = HandleClient.from_config()
@@ -65,12 +66,16 @@ class CMIP6Processor:
 
         # Iterate over file assets and register them as well
         asset_records = extract_asset_records(
-            item, exclude_keys=["reference_file", "thumbnail", "quicklook"]
+            item, exclude_keys=self.EXCLUDED_ASSET_KEYS
         )
+        if not asset_records:
+            logging.warning(f"No file assets found for item PID {record.pid}")
+        else:
+            logging.debug(f"Found {len(asset_records)} asset records to register")
 
         for record in asset_records:
             logging.debug(
-                f"Register assert record for PID {record.pid}: {record.as_record()}"
+                f"Register asset record for PID {record.pid}: {record.as_record()}"
             )
             self.handle_client.add_item(record.pid, record.as_record())
             num_handles += 1
