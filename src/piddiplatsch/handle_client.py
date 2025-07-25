@@ -1,6 +1,21 @@
 import logging
 import pyhandle
 from piddiplatsch.config import config
+import json
+from typing import Any
+from pyhandle.handleexceptions import HandleAlreadyExistsException
+
+
+def _prepare_handle_data(record: dict[str, Any]) -> dict[str, str]:
+    """Prepare handle record fields: serialize list/dict values, skip None."""
+    prepared = {}
+    for key, value in record.items():
+        if value is None:
+            continue
+        if isinstance(value, (list, dict)):
+            value = json.dumps(value)
+        prepared[key] = value
+    return prepared
 
 
 class HandleClient:
@@ -41,33 +56,25 @@ class HandleClient:
         """Build a full handle by combining the prefix and the PID."""
         return f"{self.prefix}/{pid}"
 
-    def add_item(self, pid: str, record: dict):
-        """Add a new PID to the Handle Service, supporting multi-valued fields like HAS_PARTS."""
+    def add_item(self, pid: str, record: dict[str, Any]):
+        """Add a new PID to the Handle Service."""
         handle = self.build_handle(pid)
 
-        # Extract location if present
-        location = record.get(
-            "URL", "https://example.org/placeholder"
-        )  # fallback required by pyhandle
-
-        # Build list of handle values
-        handle_data = []
-        for key, value in record.items():
-            if isinstance(value, list):
-                for v in value:
-                    handle_data.append({"type": key, "parsed_data": v})
-            else:
-                handle_data.append({"type": key, "parsed_data": value})
-
         try:
+            handle_data = _prepare_handle_data(record)
+
+            location = handle_data.pop("URL", None)
+            if not location:
+                raise ValueError("Missing required 'URL' in record")
+
             self.client.register_handle(
                 handle=handle,
                 location=location,
-                list_of_entries=handle_data,
                 overwrite=True,
+                **handle_data,
             )
             logging.debug(f"Added handle: {handle}")
-        except pyhandle.handleexceptions.HandleAlreadyExistsException:
+        except HandleAlreadyExistsException:
             logging.warning(f"Handle already exists: {handle}")
         except Exception as e:
             logging.error(f"Failed to register handle {handle}: {e}")
