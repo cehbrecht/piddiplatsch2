@@ -30,9 +30,8 @@ def test_send_valid_example(runner, testfile, handle_client):
     record = handle_client.get_item(pid)
 
     assert record is not None, f"PID {pid} was not registered"
-    record_text = json.dumps(record)
-    print(record_text)
-    assert "URL" in record_text, f"PID {pid} missing 'URL' field"
+    print(record)
+    assert "URL" in record, f"PID {pid} missing 'URL' field"
 
 
 @pytest.mark.online

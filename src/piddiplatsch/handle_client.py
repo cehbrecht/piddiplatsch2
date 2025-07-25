@@ -58,10 +58,29 @@ class HandleClient:
             raise
 
     def get_item(self, pid: str) -> dict | None:
-        """Retrieve a PID record from the Handle Service. Returns None if not found."""
+        """Retrieve a PID record as a dict of {type: value}. Returns None if not found."""
         handle = self.build_handle(pid)
+
         try:
-            return self.client.retrieve_handle_record_json(handle)
+            response = self.client.retrieve_handle_record_json(handle)
+            if not response or "values" not in response:
+                return None
+
+            result = {}
+            for entry in response["values"]:
+                key = entry.get("type")
+                data = entry.get("data")
+
+                # Handle both string and dict formats
+                if isinstance(data, dict):
+                    value = data.get("value", data)
+                else:
+                    value = data
+
+                result[key] = value
+
+            return result
+
         except pyhandle.handleexceptions.HandleNotFoundException:
             logging.warning(f"Handle not found: {handle}")
             return None
