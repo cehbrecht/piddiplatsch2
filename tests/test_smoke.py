@@ -1,8 +1,15 @@
 import pytest
 from pathlib import Path
 import time
-import json
 from piddiplatsch.cli import cli
+
+
+def assert_handle_record(handle_client, pid: str):
+    record = handle_client.get_item(pid)
+
+    assert record is not None, f"PID {pid} was not registered"
+    print(record)
+    assert "URL" in record, f"PID {pid} missing 'URL' field"
 
 
 def send_message(runner, filename: Path):
@@ -27,11 +34,7 @@ def test_send_valid_example(runner, testfile, handle_client):
 
     # TODO: extract the PID dynamically from the file
     pid = "453eed3c-8b9a-31c5-b9c3-a4bb5433cb3d"
-    record = handle_client.get_item(pid)
-
-    assert record is not None, f"PID {pid} was not registered"
-    print(record)
-    assert "URL" in record, f"PID {pid} missing 'URL' field"
+    assert_handle_record(handle_client, pid)
 
 
 @pytest.mark.online
@@ -42,7 +45,7 @@ def test_send_invalid_file(runner):
 
 
 @pytest.mark.online
-def test_send_valid_cmip6_mpi_day(runner, testfile):
+def test_send_valid_cmip6_mpi_day(runner, testfile, handle_client):
     path = testfile(
         "CMIP6",
         "CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710.json",
@@ -50,14 +53,38 @@ def test_send_valid_cmip6_mpi_day(runner, testfile):
 
     send_message(runner, path)
 
+    time.sleep(1)  # wait for consumer to process
+
+    pids = [
+        "bfa39fac-49db-35f1-a5c0-bc67fa7315b0",
+        "a5a79818-8ae5-35a7-9cc2-57cffe70d408",
+        "20cedc42-2fc5-32c2-9fae-511acfbc8f22",
+        "f6b25cf3-844e-32a6-8d07-9b817c90c2ef",
+        "d63b6c5e-0595-36f2-8009-e9ad9a0dbd24",
+        "8aedb952-e482-3bec-bddd-39b3bca951b3",
+    ]
+    for pid in pids:
+        assert_handle_record(handle_client, pid)
+
 
 @pytest.mark.online
-def test_send_valid_cmip6_mpi_mon(runner, testfile):
+def test_send_valid_cmip6_mpi_mon(runner, testfile, handle_client):
     path = testfile(
         "CMIP6",
         "CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.Amon.tasmin.gn.v20190710.json",
     )
     send_message(runner, path)
+
+    pids = [
+        "4f3e6ba6-839d-3e2f-8683-793f8ae66344",
+        "a00ed634-4260-3bbd-b7a8-075266d8fd2d",
+        "8f72d01f-4bc8-3272-b246-cebe15511d49",
+        "5a0ec944-ab03-3900-871c-ccd8ed48f6fd",
+        "7980290b-2429-334a-893f-45df2a3ef2e4",
+        "aaf8684d-341e-37d2-80bb-854a94a90777",
+    ]
+    for pid in pids:
+        assert_handle_record(handle_client, pid)
 
 
 @pytest.mark.online
