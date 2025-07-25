@@ -3,6 +3,9 @@ from pathlib import Path
 import time
 from piddiplatsch.cli import cli
 
+# wait for consumer to process
+WAIT_SECS = 1
+
 
 def assert_handle_record(handle_client, pid: str):
     record = handle_client.get_item(pid)
@@ -30,7 +33,7 @@ def test_send_valid_example(runner, testfile, handle_client):
 
     send_message(runner, path)
 
-    time.sleep(1)  # wait for consumer to process
+    time.sleep(WAIT_SECS)
 
     # TODO: extract the PID dynamically from the file
     pid = "453eed3c-8b9a-31c5-b9c3-a4bb5433cb3d"
@@ -53,7 +56,7 @@ def test_send_valid_cmip6_mpi_day(runner, testfile, handle_client):
 
     send_message(runner, path)
 
-    time.sleep(1)  # wait for consumer to process
+    time.sleep(WAIT_SECS)
 
     pids = [
         "bfa39fac-49db-35f1-a5c0-bc67fa7315b0",
@@ -74,6 +77,8 @@ def test_send_valid_cmip6_mpi_mon(runner, testfile, handle_client):
         "CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.Amon.tasmin.gn.v20190710.json",
     )
     send_message(runner, path)
+
+    time.sleep(WAIT_SECS)
 
     pids = [
         "4f3e6ba6-839d-3e2f-8683-793f8ae66344",
