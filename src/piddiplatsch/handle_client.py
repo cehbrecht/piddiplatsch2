@@ -42,13 +42,29 @@ class HandleClient:
         return f"{self.prefix}/{pid}"
 
     def add_item(self, pid: str, record: dict):
-        """Add a new PID to the Handle Service."""
+        """Add a new PID to the Handle Service, supporting multi-valued fields like HAS_PARTS."""
         handle = self.build_handle(pid)
 
+        # Extract location if present
+        location = record.get(
+            "URL", "https://example.org/placeholder"
+        )  # fallback required by pyhandle
+
+        # Build list of handle values
+        handle_data = []
+        for key, value in record.items():
+            if isinstance(value, list):
+                for v in value:
+                    handle_data.append({"type": key, "parsed_data": v})
+            else:
+                handle_data.append({"type": key, "parsed_data": value})
+
         try:
-            # Register the handle and overwrite flag
             self.client.register_handle(
-                handle=handle, location=record["URL"], overwrite=True, **record
+                handle=handle,
+                location=location,
+                list_of_entries=handle_data,
+                overwrite=True,
             )
             logging.debug(f"Added handle: {handle}")
         except pyhandle.handleexceptions.HandleAlreadyExistsException:
