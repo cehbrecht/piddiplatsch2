@@ -57,7 +57,9 @@ class CMIP6Processor:
             )
             raise ValueError(f"Invalid CMIP6 STAC item: {e.message}") from e
 
-        record = CMIP6ItemRecord(item, strict=self.strict)
+        record = CMIP6ItemRecord(
+            item, strict=self.strict, exclude_keys=self.EXCLUDED_ASSET_KEYS
+        )
 
         logging.debug(
             f"Register item record for PID {record.pid}: {record.as_record()}"

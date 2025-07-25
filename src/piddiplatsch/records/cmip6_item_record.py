@@ -9,14 +9,16 @@ from dateutil.parser import isoparse
 from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
 from piddiplatsch.models import CMIP6ItemModel, HostingNode
 from piddiplatsch.config import config
+from piddiplatsch.utils.pid import item_pid, asset_pid
 
 
 class CMIP6ItemRecord:
     """Wraps a validated CMIP6 STAC item and prepares Handle records."""
 
-    def __init__(self, item: Dict[str, Any], strict: bool):
+    def __init__(self, item: Dict[str, Any], strict: bool, exclude_keys: List[str]):
         self.item = item
         self.strict = strict
+        self.exclude_keys = exclude_keys
 
         # config
         self.prefix = config.get("handle", {}).get("prefix", "")
@@ -49,12 +51,10 @@ class CMIP6ItemRecord:
     @staticmethod
     def _extract_pid(item: Dict[str, Any]) -> Any:
         try:
-            id_str = item["id"]
+            return item_pid(item["id"])
         except KeyError as e:
             logging.error("Missing 'id' in item: %s", e)
             raise ValueError("Missing required 'id' field") from e
-
-        return uuid3(NAMESPACE_URL, id_str)
 
     def _extract_url(self) -> str:
         url = f"{self.lp_url}/{self.prefix}/{self.pid}"
@@ -75,9 +75,21 @@ class CMIP6ItemRecord:
         dataset_id = parts[0]
         return dataset_id
 
-    @staticmethod
-    def _extract_has_parts(item: Dict[str, Any]) -> List[str]:
+    from piddiplatsch.utils.pid import asset_pid
+
+    def _extract_has_parts(self, item: Dict[str, Any]) -> List[str]:
         parts = []
+        item_id = item.get("id")
+        if not item_id:
+            logging.warning("Missing item 'id'; cannot compute HAS_PARTS")
+            return parts
+
+        asset_keys = item.get("assets", {}).keys()
+        for key in asset_keys:
+            if key in self.exclude_keys:
+                continue
+            parts.append(asset_pid(item_id, key))
+
         return parts
 
     @staticmethod
