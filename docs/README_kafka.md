@@ -1,4 +1,6 @@
-# How to create docker compose for running Kafka in Kraft mode
+# kafka stuff
+
+## How to create docker compose for running Kafka in Kraft mode
 
 Before starting the clusterId must be generated and the storage must be formatted with a special tool.
 The command for generating uuid:
@@ -25,3 +27,11 @@ Send the data:
 Read the data:
 
 `docker exec -ti kafka1 /usr/bin/kafka-console-consumer --bootstrap-server kafka1:19092,kafka2:19093,kafka3:19094 --topic topic1 --from-beginning`
+
+
+## kafka consumer for publication
+
+links:
+
+* https://github.com/rhysrevans3/west-consumer
+* https://github.com/esgf2-us/west-consumer
