@@ -1,5 +1,6 @@
 import pytest
 from pathlib import Path
+from piddiplatsch.handle_client import HandleClient
 from click.testing import CliRunner
 
 
@@ -30,3 +31,11 @@ def pytest_runtest_setup(item):
 @pytest.fixture
 def runner():
     return CliRunner()
+
+
+@pytest.fixture
+def handle_client():
+    """
+    Returns a HandleClient instance connected to the test/mock Handle Service.
+    """
+    return HandleClient.from_config()

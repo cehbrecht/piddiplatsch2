@@ -1,5 +1,7 @@
 import pytest
 from pathlib import Path
+import time
+import json
 from piddiplatsch.cli import cli
 
 
@@ -16,10 +18,21 @@ def send_message(runner, filename: Path):
 
 
 @pytest.mark.online
-def test_send_valid_example(runner, testfile):
+def test_send_valid_example(runner, testfile, handle_client):
     path = testfile("example.json")
 
     send_message(runner, path)
+
+    time.sleep(1)  # wait for consumer to process
+
+    # TODO: extract the PID dynamically from the file
+    pid = "453eed3c-8b9a-31c5-b9c3-a4bb5433cb3d"
+    record = handle_client.get_item(pid)
+
+    assert record is not None, f"PID {pid} was not registered"
+    record_text = json.dumps(record)
+    print(record_text)
+    assert "URL" in record_text, f"PID {pid} missing 'URL' field"
 
 
 @pytest.mark.online
