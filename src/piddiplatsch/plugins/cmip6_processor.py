@@ -17,7 +17,8 @@ class CMIP6Processor:
 
     EXCLUDED_ASSET_KEYS = ["reference_file", "thumbnail", "quicklook"]
 
-    def __init__(self):
+    def __init__(self, strict: bool = False):
+        self.strict = strict
         self.handle_client = HandleClient.from_config()
 
     @hookimpl
@@ -56,7 +57,7 @@ class CMIP6Processor:
             )
             raise ValueError(f"Invalid CMIP6 STAC item: {e.message}") from e
 
-        record = CMIP6ItemRecord(item, strict=False)
+        record = CMIP6ItemRecord(item, strict=self.strict)
 
         logging.debug(
             f"Register item record for PID {record.pid}: {record.as_record()}"
