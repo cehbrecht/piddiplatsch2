@@ -4,10 +4,12 @@ from piddiplatsch.cli import cli
 
 
 def send_message(runner, filename: Path):
-    result = runner.invoke(
-        cli,
-        ["send", filename.as_posix()],
-    )
+    result = runner.invoke(cli, ["send", filename.as_posix()])
+
+    if result.exit_code != 0 or "📤 Message delivered" not in result.output:
+        print("---- CLI Output ----")
+        print(result.output)
+        print("--------------------")
 
     assert result.exit_code == 0
     assert "📤 Message delivered" in result.output
@@ -18,6 +20,13 @@ def test_send_valid_example(runner, testfile):
     path = testfile("example.json")
 
     send_message(runner, path)
+
+
+@pytest.mark.online
+def test_send_invalid_file(runner):
+    result = runner.invoke(cli, ["send", "nonexistent.json"])
+    assert result.exit_code != 0
+    assert "No such file" in result.output or "Error" in result.output
 
 
 @pytest.mark.online
