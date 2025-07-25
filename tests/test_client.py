@@ -1,14 +1,13 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from piddiplatsch.client import (
-    ensure_topic_exists,
-    send_message,
-)
+from piddiplatsch.client import ensure_topic_exists
+
 
 @pytest.fixture
 def topic():
     return "CMIP6-test"
+
 
 @pytest.fixture
 def kafka_cfg():
