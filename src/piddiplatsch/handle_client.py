@@ -37,11 +37,11 @@ class HandleClient:
             password=config.get("handle", "password"),
         )
 
-    def build_handle(self, pid):
+    def build_handle(self, pid: str):
         """Build a full handle by combining the prefix and the PID."""
         return f"{self.prefix}/{pid}"
 
-    def add_item(self, pid, record):
+    def add_item(self, pid: str, record: dict):
         """Add a new PID to the Handle Service."""
         handle = self.build_handle(pid)
 
@@ -55,4 +55,35 @@ class HandleClient:
             logging.warning(f"Handle already exists: {handle}")
         except Exception as e:
             logging.error(f"Failed to register handle {handle}: {e}")
+            raise
+
+    def get_item(self, pid: str) -> dict | None:
+        """Retrieve a PID record as a dict of {type: value}. Returns None if not found."""
+        handle = self.build_handle(pid)
+
+        try:
+            response = self.client.retrieve_handle_record_json(handle)
+            if not response or "values" not in response:
+                return None
+
+            result = {}
+            for entry in response["values"]:
+                key = entry.get("type")
+                data = entry.get("data")
+
+                # Handle both string and dict formats
+                if isinstance(data, dict):
+                    value = data.get("value", data)
+                else:
+                    value = data
+
+                result[key] = value
+
+            return result
+
+        except pyhandle.handleexceptions.HandleNotFoundException:
+            logging.warning(f"Handle not found: {handle}")
+            return None
+        except Exception as e:
+            logging.error(f"Error retrieving handle {handle}: {e}")
             raise

@@ -1,61 +1,97 @@
-import json
-import uuid
-import os
-import requests
 import pytest
+from pathlib import Path
+import time
 from piddiplatsch.cli import cli
 
 
-@pytest.fixture
-def example_message():
-    return {
-        "data": {
-            "payload": {
-                "item": {
-                    "id": f"cmip6-{uuid.uuid4()}",
-                    "properties": {"version": "v20250430"},
-                    "assets": {"reference_file": {"alternate:name": "example.com"}},
-                    "links": [{"href": "http://example.com/data.nc"}],
-                }
-            }
-        }
-    }
+def assert_handle_record(handle_client, pid: str):
+    record = handle_client.get_item(pid)
+
+    assert record is not None, f"PID {pid} was not registered"
+    print(record)
+    assert "URL" in record, f"PID {pid} missing 'URL' field"
 
 
-def send_and_consume_message(runner, message):
-    # Send the message
-    result_send = runner.invoke(
-        cli,
-        [
-            "send",
-            "--message",
-            json.dumps(message),  # ensure it's a string
-        ],
-    )
+def send_message(runner, filename: Path):
+    result = runner.invoke(cli, ["send", filename.as_posix()])
 
-    assert result_send.exit_code == 0
-    assert "📤 Message delivered" in result_send.output
+    if result.exit_code != 0 or "📤 Message delivered" not in result.output:
+        print("---- CLI Output ----")
+        print(result.output)
+        print("--------------------")
+
+    assert result.exit_code == 0
+    assert "📤 Message delivered" in result.output
 
 
 @pytest.mark.online
-def test_send_valid_example_message(runner, example_message):
+def test_send_valid_example(runner, testfile, handle_client):
+    path = testfile("example.json")
 
-    send_and_consume_message(runner, example_message)
+    send_message(runner, path)
+
+    time.sleep(1)  # wait for consumer to process
+
+    # TODO: extract the PID dynamically from the file
+    pid = "453eed3c-8b9a-31c5-b9c3-a4bb5433cb3d"
+    assert_handle_record(handle_client, pid)
 
 
 @pytest.mark.online
-def test_send_valid_cmip6_mpi(runner, testdata_path):
-    # Path to the JSON file in tests/testdata
-    json_path = os.path.join(
-        testdata_path,
+def test_send_invalid_file(runner):
+    result = runner.invoke(cli, ["send", "nonexistent.json"])
+    assert result.exit_code != 0
+    assert "No such file" in result.output or "Error" in result.output
+
+
+@pytest.mark.online
+def test_send_valid_cmip6_mpi_day(runner, testfile, handle_client):
+    path = testfile(
         "CMIP6",
         "CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710.json",
     )
 
-    # Ensure the file exists before continuing
-    assert os.path.exists(json_path), f"Missing file: {json_path}"
+    send_message(runner, path)
 
-    with open(json_path, "r") as file:
-        message = json.load(file)
+    time.sleep(1)  # wait for consumer to process
 
-    send_and_consume_message(runner, message)
+    pids = [
+        "bfa39fac-49db-35f1-a5c0-bc67fa7315b0",
+        "a5a79818-8ae5-35a7-9cc2-57cffe70d408",
+        "20cedc42-2fc5-32c2-9fae-511acfbc8f22",
+        "f6b25cf3-844e-32a6-8d07-9b817c90c2ef",
+        "d63b6c5e-0595-36f2-8009-e9ad9a0dbd24",
+        "8aedb952-e482-3bec-bddd-39b3bca951b3",
+    ]
+    for pid in pids:
+        assert_handle_record(handle_client, pid)
+
+
+@pytest.mark.online
+def test_send_valid_cmip6_mpi_mon(runner, testfile, handle_client):
+    path = testfile(
+        "CMIP6",
+        "CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.Amon.tasmin.gn.v20190710.json",
+    )
+    send_message(runner, path)
+
+    pids = [
+        "4f3e6ba6-839d-3e2f-8683-793f8ae66344",
+        "a00ed634-4260-3bbd-b7a8-075266d8fd2d",
+        "8f72d01f-4bc8-3272-b246-cebe15511d49",
+        "5a0ec944-ab03-3900-871c-ccd8ed48f6fd",
+        "7980290b-2429-334a-893f-45df2a3ef2e4",
+        "aaf8684d-341e-37d2-80bb-854a94a90777",
+    ]
+    for pid in pids:
+        assert_handle_record(handle_client, pid)
+
+
+@pytest.mark.online
+def test_send_invalid_cmip6_mpi_mon(runner, testfile):
+    path = testfile(
+        "CMIP6_invalid",
+        "CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710.json",
+    )
+
+    send_message(runner, path)

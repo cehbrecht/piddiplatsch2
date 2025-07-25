@@ -83,28 +83,18 @@ def retry(filename: Path, delete_after: bool):
 ## send command
 
 
-@cli.command()
-@click.option("-m", "--message", help="Message (JSON string) to send.")
-@click.option("-p", "--path", help="Path to JSON file to send.")
+@cli.command("send")
+@click.argument(
+    "filename", type=click.Path(exists=True, dir_okay=False, path_type=Path)
+)
 @click.option(
     "--verbose", is_flag=True, help="Show message key and value before sending."
 )
 @click.pass_context
-def send(ctx, message, path, verbose):
+def send(ctx, filename: Path, verbose: bool):
     """Send a message to the Kafka queue."""
-    if message and path:
-        click.echo("❌ Provide only one of --message or --path.", err=True)
-        ctx.exit(1)
-
-    if not message and not path:
-        click.echo("❌ Please provide a message or a path to a JSON file.", err=True)
-        ctx.exit(1)
-
     try:
-        if path:
-            key, value = client.build_message_from_path(path)
-        else:
-            key, value = client.build_message_from_json_string(message)
+        key, value = client.build_message_from_path(filename)
     except (FileNotFoundError, json.JSONDecodeError) as e:
         click.echo(f"❌ {e}", err=True)
         ctx.exit(1)
