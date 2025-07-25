@@ -1,36 +1,13 @@
-import json
-import uuid
 import os
-import requests
 import pytest
 from piddiplatsch.cli import cli
 
 
-@pytest.fixture
-def example_message():
-    return {
-        "data": {
-            "payload": {
-                "item": {
-                    "id": f"cmip6-{uuid.uuid4()}",
-                    "properties": {"version": "v20250430"},
-                    "assets": {"reference_file": {"alternate:name": "example.com"}},
-                    "links": [{"href": "http://example.com/data.nc"}],
-                }
-            }
-        }
-    }
-
-
-def send_and_consume_message(runner, message):
+def send_and_consume_message(runner, filename):
     # Send the message
     result_send = runner.invoke(
         cli,
-        [
-            "send",
-            "--message",
-            json.dumps(message),  # ensure it's a string
-        ],
+        ["send", filename],
     )
 
     assert result_send.exit_code == 0
@@ -38,9 +15,13 @@ def send_and_consume_message(runner, message):
 
 
 @pytest.mark.online
-def test_send_valid_example_message(runner, example_message):
+def test_send_valid_example(runner, testdata_path):
+    filename = os.path.join(
+        testdata_path,
+        "example.json",
+    )
 
-    send_and_consume_message(runner, example_message)
+    send_and_consume_message(runner, filename)
 
 
 @pytest.mark.online
@@ -55,7 +36,4 @@ def test_send_valid_cmip6_mpi(runner, testdata_path):
     # Ensure the file exists before continuing
     assert os.path.exists(json_path), f"Missing file: {json_path}"
 
-    with open(json_path, "r") as file:
-        message = json.load(file)
-
-    send_and_consume_message(runner, message)
+    send_and_consume_message(runner, json_path)

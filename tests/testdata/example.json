@@ -1,0 +1,22 @@
+{
+    "data": {
+        "payload": {
+            "item": {
+                "id": "cmip6-1234",
+                "properties": {
+                    "version": "v20250430"
+                },
+                "assets": {
+                    "reference_file": {
+                        "alternate:name": "example.com"
+                    }
+                },
+                "links": [
+                    {
+                        "href": "http://example.com/data.nc"
+                    }
+                ]
+            }
+        }
+    }
+}
