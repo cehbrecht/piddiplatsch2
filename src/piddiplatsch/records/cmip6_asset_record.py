@@ -5,6 +5,7 @@ from pathlib import PurePosixPath
 
 from piddiplatsch.models import CMIP6AssetModel
 from piddiplatsch.config import config
+from piddiplatsch.utils.pid import item_pid, asset_pid
 
 
 class CMIP6AssetRecord:
@@ -43,21 +44,20 @@ class CMIP6AssetRecord:
         return f"{prefix}/{pid}"
 
     @staticmethod
-    def _extract_parent_pid(item: Dict[str, Any]) -> Any:
-        # TODO: duplicate of item._extract_pid
+    def _extract_parent_pid(item: Dict[str, Any]) -> str:
         try:
-            id_str = item["id"]
+            return item_pid(item["id"])
         except KeyError as e:
-            logging.error("Missing 'id' in item: %s", e)
+            logging.error("Missing 'id' in item for parent PID: %s", e)
             raise ValueError("Missing required 'id' field") from e
 
-        return uuid3(NAMESPACE_URL, id_str)
-
     @staticmethod
-    def _extract_pid(item: Dict[str, Any], asset_key: str) -> Any:
-        # TODO: use correct PID
-        id_str = item.get("id", "") + "#" + asset_key
-        return uuid3(NAMESPACE_URL, id_str)
+    def _extract_pid(item: Dict[str, Any], asset_key: str) -> str:
+        try:
+            return asset_pid(item["id"], asset_key)
+        except KeyError as e:
+            logging.error("Missing 'id' in item for asset PID: %s", e)
+            raise ValueError("Missing required 'id' field") from e
 
     def _extract_url(self) -> str:
         url = f"{self.lp_url}/{self.prefix}/{self.pid}"
