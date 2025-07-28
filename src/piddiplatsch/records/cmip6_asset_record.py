@@ -1,6 +1,5 @@
 import logging
 from typing import Any, Dict, Optional
-from uuid import uuid3, NAMESPACE_URL
 from pathlib import PurePosixPath
 
 from piddiplatsch.models import CMIP6FileModel
