@@ -3,7 +3,7 @@ from typing import Optional, Literal, List
 from pydantic import BaseModel, Field
 
 
-class CMIP6AssetModel(BaseModel):
+class CMIP6FileModel(BaseModel):
     ESGF: str = "ESGF2 TEST"
     URL: str
     AGGREGATION_LEVEL: Literal["FILE"]
