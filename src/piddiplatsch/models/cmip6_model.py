@@ -11,13 +11,16 @@ class HostingNode(BaseModel):
     published_on: Optional[datetime] = None
 
 
-class CMIP6ItemModel(BaseModel):
+class BaseCMIP6Model(BaseModel):
+    ESGF: str = "ESGF2 TEST"
+    URL: str
+
+
+class CMIP6DatasetModel(BaseCMIP6Model):
     """
     TODO: clean empty fields
     """
 
-    ESGF: str = "ESGF2 TEST"
-    URL: str
     AGGREGATION_LEVEL: str = "DATASET"
     DATASET_ID: str
     DATASET_VERSION: Optional[str] = None
@@ -29,7 +32,19 @@ class CMIP6ItemModel(BaseModel):
     UNPUBLISHED_HOSTS: Optional[HostingNode] = None
 
     @model_validator(mode="after")
-    def validate_required(self) -> CMIP6ItemModel:
+    def validate_required(self) -> CMIP6DatasetModel:
         if not self.HOSTING_NODE or not self.HOSTING_NODE.host:
             raise ValueError("HOSTING_NODE with host is required.")
         return self
+
+
+class CMIP6FileModel(BaseCMIP6Model):
+    AGGREGATION_LEVEL: str = "FILE"
+    FILE_NAME: str
+    IS_PART_OF: str
+    CHECKSUM: Optional[str] = None
+    CHECKSUM_METHOD: Optional[str] = None
+    FILE_SIZE: Optional[int] = None
+    FILE_VERSION: Optional[str] = None
+    DOWNLOAD_URL: str
+    DOWNLOAD_URL_REPLICA: List[str] = Field(default_factory=list)

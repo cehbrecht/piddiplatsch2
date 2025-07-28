@@ -1,9 +1,8 @@
 import logging
 from typing import Any, Dict, Optional
-from uuid import uuid3, NAMESPACE_URL
 from pathlib import PurePosixPath
 
-from piddiplatsch.models import CMIP6AssetModel
+from piddiplatsch.models import CMIP6FileModel
 from piddiplatsch.config import config
 from piddiplatsch.utils.pid import item_pid, asset_pid
 
@@ -115,8 +114,8 @@ class CMIP6AssetRecord:
     def download_url(self) -> str:
         return self._download_url
 
-    def as_handle_model(self) -> CMIP6AssetModel:
-        return CMIP6AssetModel(
+    def as_handle_model(self) -> CMIP6FileModel:
+        return CMIP6FileModel(
             URL=self.url,
             AGGREGATION_LEVEL="FILE",
             IS_PART_OF=self.parent,
