@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 
 class CMIP6AssetModel(BaseModel):
+    ESGF: str = "ESGF2 TEST"
     URL: str
     AGGREGATION_LEVEL: Literal["FILE"]
     FILE_NAME: str

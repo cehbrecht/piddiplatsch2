@@ -12,6 +12,7 @@ class HostingNode(BaseModel):
 
 
 class CMIP6ItemModel(BaseModel):
+    ESGF: str = "ESGF2 TEST"
     URL: str
     AGGREGATION_LEVEL: str = "DATASET"
     DRS_ID: str
