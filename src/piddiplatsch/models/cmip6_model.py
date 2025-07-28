@@ -11,13 +11,16 @@ class HostingNode(BaseModel):
     published_on: Optional[datetime] = None
 
 
-class CMIP6DatasetModel(BaseModel):
+class BaseCMIP6Model(BaseModel):
+    ESGF: str = "ESGF2 TEST"
+    URL: str
+
+
+class CMIP6DatasetModel(BaseCMIP6Model):
     """
     TODO: clean empty fields
     """
 
-    ESGF: str = "ESGF2 TEST"
-    URL: str
     AGGREGATION_LEVEL: str = "DATASET"
     DATASET_ID: str
     DATASET_VERSION: Optional[str] = None
@@ -35,9 +38,7 @@ class CMIP6DatasetModel(BaseModel):
         return self
 
 
-class CMIP6FileModel(BaseModel):
-    ESGF: str = "ESGF2 TEST"
-    URL: str
+class CMIP6FileModel(BaseCMIP6Model):
     AGGREGATION_LEVEL: str = "FILE"
     FILE_NAME: str
     IS_PART_OF: str
