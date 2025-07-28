@@ -6,6 +6,10 @@ from typing import Any
 from pyhandle.handleexceptions import HandleAlreadyExistsException
 from pyhandle.clientcredentials import PIDClientCredentials
 
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 
 def _prepare_handle_data(record: dict[str, Any]) -> dict[str, str]:
     """Prepare handle record fields: serialize list/dict values, skip None."""
@@ -48,30 +52,21 @@ def _parse_handle_record(values: list[dict[str, Any]]) -> dict[str, Any]:
 
 class HandleClient:
     def __init__(self, server_url, prefix, username, password, verify_https=False):
-        # self.server_url = server_url
         self.prefix = prefix
-        # self.verify_https = verify_https
-        """ client.instantiate_with_username_and_password(
-            handle_server_url=server_url,
-            username=f"300:{prefix}/{username}",
-            password=password,
-            HTTPS_verify=verify_https,
-        ) """
-        cred = PIDClientCredentials.load_from_JSON("/tmp/credentials_21T14995.json")
+
+        handle_cfg = {
+            "client": "rest",
+            "handle_server_url": server_url,
+            "username": username,
+            "password": password,
+            "HTTPS_verify": verify_https,
+            "prefix": self.prefix,
+        }
+
+        cred = PIDClientCredentials(**handle_cfg)
         self.client = pyhandle.handleclient.PyHandleClient(
             "rest"
         ).instantiate_with_credentials(cred)
-        # set rest client
-        # self.client = client.handle_client
-
-        # Patch internal connector for testing purposes
-        if False:
-            connector = self.client._RESTHandleClient__handlesystemconnector
-            connector._HandleSystemConnector__has_write_access = True
-            connector._HandleSystemConnector__handle_server_url = server_url
-            connector._HandleSystemConnector__HTTPS_verify = verify_https
-            connector._HandleSystemConnector__authentication_method = "user_pw"
-            connector._HandleSystemConnector__basic_authentication_string = "_noauth_"
 
     @classmethod
     def from_config(cls):

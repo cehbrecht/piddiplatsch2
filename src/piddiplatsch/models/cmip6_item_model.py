@@ -26,7 +26,7 @@ class CMIP6ItemModel(BaseModel):
     HOSTING_NODE: HostingNode
     REPLICA_NODES: List[HostingNode] = Field(default_factory=list)  # one per replica
     UNPUBLISHED_REPLICAS: List[str] = Field(default_factory=list)  # same as replica
-    UNPUBLISHED_HOSTS: Optional[HostingNode]
+    UNPUBLISHED_HOSTS: Optional[HostingNode] = None
 
     @model_validator(mode="after")
     def validate_required(self) -> CMIP6ItemModel:
