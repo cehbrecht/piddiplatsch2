@@ -64,7 +64,7 @@ class CMIP6Processor:
         logging.debug(
             f"Register item record for PID {record.pid}: {record.as_record()}"
         )
-        self.handle_client.add_item(record.pid, record.as_record())
+        self.handle_client.add_record(record.pid, record.as_record())
         num_handles += 1
 
         # Iterate over file assets and register them as well
@@ -80,7 +80,7 @@ class CMIP6Processor:
             logging.debug(
                 f"Register asset record for PID {record.pid}: {record.as_record()}"
             )
-            self.handle_client.add_item(record.pid, record.as_record())
+            self.handle_client.add_record(record.pid, record.as_record())
             num_handles += 1
 
         return num_handles

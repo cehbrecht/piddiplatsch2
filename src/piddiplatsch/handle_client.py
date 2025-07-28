@@ -83,7 +83,7 @@ class HandleClient:
         """Build a full handle by combining the prefix and the PID."""
         return f"{self.prefix}/{pid}"
 
-    def add_item(self, pid: str, record: dict[str, Any]):
+    def add_record(self, pid: str, record: dict[str, Any]):
         """Add a new PID to the Handle Service."""
         handle = self.build_handle(pid)
 
@@ -107,7 +107,7 @@ class HandleClient:
             logging.error(f"Failed to register handle {handle}: {e}")
             raise
 
-    def get_item(self, pid: str) -> dict | None:
+    def get_record(self, pid: str) -> dict | None:
         """Retrieve a PID record as a dict of {type: value}. Returns None if not found."""
         handle = self.build_handle(pid)
 

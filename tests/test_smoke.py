@@ -8,7 +8,7 @@ WAIT_SECS = 1
 
 
 def assert_handle_record(handle_client, pid: str):
-    record = handle_client.get_item(pid)
+    record = handle_client.get_record(pid)
 
     assert record is not None, f"PID {pid} was not registered"
     print(record)
