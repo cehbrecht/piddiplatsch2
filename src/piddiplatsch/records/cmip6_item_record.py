@@ -202,8 +202,8 @@ class CMIP6ItemRecord:
     def as_handle_model(self) -> CMIP6ItemModel:
         return CMIP6ItemModel(
             URL=self.url,
-            DRS_ID=self.dataset_id,
-            VERSION_NUMBER=self.dataset_version,
+            DATASET_ID=self.dataset_id,
+            DATASET_VERSION=self.dataset_version,
             HAS_PARTS=self.has_parts,
             IS_PART_OF=self.is_part_of,
             HOSTING_NODE=self.hosting_node,

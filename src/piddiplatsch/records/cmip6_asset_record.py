@@ -123,7 +123,7 @@ class CMIP6AssetRecord:
             FILE_NAME=self.filename,
             CHECKSUM=self.checksum,
             FILE_SIZE=self.size,
-            URL_ORIGINAL_DATA=self.download_url,
+            DOWNLOAD_URL=self.download_url,
         )
 
     def as_record(self) -> dict:
