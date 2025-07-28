@@ -41,9 +41,7 @@ class CMIP6ItemRecord:
         self._dataset_version = self._extract_dataset_version(self.item)
         self._hosting_node = self._extract_hosting_node(self.item)
         self._replica_nodes = self._extract_replica_nodes(self.item)
-        self._unpublished_replicas = self._extract_unpublished(
-            self.item, "unpublished_replicas"
-        )
+        self._unpublished_replicas = []
         self._unpublished_hosts = self._extract_unpublished(
             self.item, "unpublished_hosts"
         )
@@ -149,15 +147,11 @@ class CMIP6ItemRecord:
 
     @staticmethod
     def _extract_unpublished(item: Dict[str, Any], key: str) -> List[str]:
-        val = item.get(key)
-        if val is None:
-            return []
-        if not isinstance(val, list):
-            logging.warning(
-                f"Expected list for '{key}', got {type(val)}. Coercing to list."
-            )
-            return [str(val)]
-        return val
+        host = "unknown"
+        pub_on = ""
+        return HostingNode(
+            host=host, published_on=CMIP6ItemRecord._parse_datetime(pub_on)
+        )
 
     @property
     def pid(self) -> Any:
@@ -202,8 +196,8 @@ class CMIP6ItemRecord:
     def as_handle_model(self) -> CMIP6ItemModel:
         return CMIP6ItemModel(
             URL=self.url,
-            DRS_ID=self.dataset_id,
-            VERSION_NUMBER=self.dataset_version,
+            DATASET_ID=self.dataset_id,
+            DATASET_VERSION=self.dataset_version,
             HAS_PARTS=self.has_parts,
             IS_PART_OF=self.is_part_of,
             HOSTING_NODE=self.hosting_node,

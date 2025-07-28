@@ -16,7 +16,7 @@ stats_summary_interval = 100
 [handle]
 server_url = "http://localhost:8000"
 prefix = "21.TEST"
-username = "testuser"
+username = "300:21.TEST/testuser"
 password = "testpass"
 
 [cmip6]
