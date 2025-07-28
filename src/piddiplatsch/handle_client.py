@@ -18,6 +18,33 @@ def _prepare_handle_data(record: dict[str, Any]) -> dict[str, str]:
     return prepared
 
 
+def parse_handle_record(values: list[dict[str, Any]]) -> dict[str, Any]:
+    """
+    Convert Handle record 'values' list into a flat dict.
+
+    Deserializes JSON strings for list/dict fields where possible.
+    """
+    record = {}
+
+    for entry in values:
+        key = entry.get("type")
+        value = entry.get("data")
+
+        if key in ("HS_ADMIN", None):
+            continue  # skip control/undefined values
+
+        if isinstance(value, str):
+            try:
+                parsed = json.loads(value)
+                record[key] = parsed
+            except (json.JSONDecodeError, TypeError):
+                record[key] = value
+        else:
+            record[key] = value
+
+    return record
+
+
 class HandleClient:
     def __init__(self, server_url, prefix, username, password, verify_https=False):
         self.server_url = server_url
@@ -89,20 +116,8 @@ class HandleClient:
             if not response or "values" not in response:
                 return None
 
-            result = {}
-            for entry in response["values"]:
-                key = entry.get("type")
-                data = entry.get("data")
-
-                # Handle both string and dict formats
-                if isinstance(data, dict):
-                    value = data.get("value", data)
-                else:
-                    value = data
-
-                result[key] = value
-
-            return result
+            record = parse_handle_record(response["values"])
+            return record
 
         except pyhandle.handleexceptions.HandleNotFoundException:
             logging.warning(f"Handle not found: {handle}")
