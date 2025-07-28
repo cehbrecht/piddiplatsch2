@@ -7,7 +7,7 @@ from jsonschema import validate, ValidationError
 from dateutil.parser import isoparse
 
 from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
-from piddiplatsch.models import CMIP6ItemModel, HostingNode
+from piddiplatsch.models import CMIP6DatasetModel, HostingNode
 from piddiplatsch.config import config
 from piddiplatsch.utils.pid import item_pid, asset_pid
 
@@ -193,8 +193,8 @@ class CMIP6ItemRecord:
     def unpublished_hosts(self) -> List[str]:
         return self._unpublished_hosts
 
-    def as_handle_model(self) -> CMIP6ItemModel:
-        return CMIP6ItemModel(
+    def as_handle_model(self) -> CMIP6DatasetModel:
+        return CMIP6DatasetModel(
             URL=self.url,
             DATASET_ID=self.dataset_id,
             DATASET_VERSION=self.dataset_version,

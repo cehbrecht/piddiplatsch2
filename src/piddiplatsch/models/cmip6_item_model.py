@@ -11,7 +11,7 @@ class HostingNode(BaseModel):
     published_on: Optional[datetime] = None
 
 
-class CMIP6ItemModel(BaseModel):
+class CMIP6DatasetModel(BaseModel):
     """
     TODO: clean empty fields
     """
@@ -29,7 +29,7 @@ class CMIP6ItemModel(BaseModel):
     UNPUBLISHED_HOSTS: Optional[HostingNode] = None
 
     @model_validator(mode="after")
-    def validate_required(self) -> CMIP6ItemModel:
+    def validate_required(self) -> CMIP6DatasetModel:
         if not self.HOSTING_NODE or not self.HOSTING_NODE.host:
             raise ValueError("HOSTING_NODE with host is required.")
         return self
