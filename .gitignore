@@ -178,4 +178,5 @@ clusterID/
 
 # piddiplatsch
 custom.toml
+custom_*.toml
 outputs/
