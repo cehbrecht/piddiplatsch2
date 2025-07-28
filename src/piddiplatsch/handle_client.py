@@ -18,7 +18,7 @@ def _prepare_handle_data(record: dict[str, Any]) -> dict[str, str]:
     return prepared
 
 
-def parse_handle_record(values: list[dict[str, Any]]) -> dict[str, Any]:
+def _parse_handle_record(values: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Convert Handle record 'values' list into a flat dict.
 
@@ -116,7 +116,7 @@ class HandleClient:
             if not response or "values" not in response:
                 return None
 
-            record = parse_handle_record(response["values"])
+            record = _parse_handle_record(response["values"])
             return record
 
         except pyhandle.handleexceptions.HandleNotFoundException:
