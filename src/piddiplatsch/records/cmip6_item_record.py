@@ -22,6 +22,7 @@ class CMIP6ItemRecord:
         # config
         self.prefix = config.get("handle", {}).get("prefix", "")
         self.lp_url = config.get("cmip6", {}).get("landing_page_url", "")
+        self.max_parts = config.get("cmip6", {}).get("max_parts", -1)
 
         # Validate the STAC item against schema
         try:
@@ -85,6 +86,10 @@ class CMIP6ItemRecord:
         for key in asset_keys:
             if key in self.exclude_keys:
                 continue
+            # don't save more then max_parts
+            if self.max_parts > -1 and len(parts) >= self.max_parts:
+                logging.debug(f"reached limit of {self.max_parts} assets.")
+                break
             parts.append(asset_pid(item_id, key))
 
         return parts
