@@ -1,6 +1,6 @@
 import logging
 from typing import Dict, Any, List
-from .cmip6_asset_record import CMIP6FileRecord
+from .cmip6_file_record import CMIP6FileRecord
 
 
 def extract_asset_records(
