@@ -11,7 +11,7 @@ from piddiplatsch.config import config
 from piddiplatsch.utils.pid import item_pid, asset_pid
 
 
-class CMIP6ItemRecord:
+class CMIP6DatasetRecord:
     """Wraps a validated CMIP6 STAC item and prepares Handle records."""
 
     def __init__(self, item: Dict[str, Any], strict: bool, exclude_keys: List[str]):
@@ -131,7 +131,7 @@ class CMIP6ItemRecord:
                 break
 
         return HostingNode(
-            host=host, published_on=CMIP6ItemRecord._parse_datetime(pub_on)
+            host=host, published_on=CMIP6DatasetRecord._parse_datetime(pub_on)
         )
 
     @staticmethod
@@ -144,7 +144,7 @@ class CMIP6ItemRecord:
                 locs = [locs]
             for loc in locs:
                 h = loc.get("host")
-                p = CMIP6ItemRecord._parse_datetime(loc.get("publishedOn"))
+                p = CMIP6DatasetRecord._parse_datetime(loc.get("publishedOn"))
                 if h:
                     nodes.append(HostingNode(host=h, published_on=p))
         return nodes
@@ -154,7 +154,7 @@ class CMIP6ItemRecord:
         host = "unknown"
         pub_on = ""
         return HostingNode(
-            host=host, published_on=CMIP6ItemRecord._parse_datetime(pub_on)
+            host=host, published_on=CMIP6DatasetRecord._parse_datetime(pub_on)
         )
 
     @property

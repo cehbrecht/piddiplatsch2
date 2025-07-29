@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any, Dict
 from jsonschema import validate, ValidationError
 from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
-from piddiplatsch.records import CMIP6ItemRecord
+from piddiplatsch.records import CMIP6DatasetRecord
 from piddiplatsch.records.utils import extract_asset_records
 from piddiplatsch.result import ProcessingResult
 from piddiplatsch.handle_client import HandleClient
@@ -57,7 +57,7 @@ class CMIP6Processor:
             )
             raise ValueError(f"Invalid CMIP6 STAC item: {e.message}") from e
 
-        record = CMIP6ItemRecord(
+        record = CMIP6DatasetRecord(
             item, strict=self.strict, exclude_keys=self.EXCLUDED_ASSET_KEYS
         )
 

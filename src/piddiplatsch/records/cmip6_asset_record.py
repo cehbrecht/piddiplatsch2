@@ -7,7 +7,7 @@ from piddiplatsch.config import config
 from piddiplatsch.utils.pid import item_pid, asset_pid
 
 
-class CMIP6AssetRecord:
+class CMIP6FileRecord:
     """Wraps a CMIP6 STAC asset and prepares Handle record for a file."""
 
     def __init__(self, item: Dict[str, Any], asset_key: str):
