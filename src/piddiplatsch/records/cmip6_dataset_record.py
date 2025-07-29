@@ -11,7 +11,7 @@ from piddiplatsch.config import config
 from piddiplatsch.utils.pid import item_pid, asset_pid
 
 
-class CMIP6ItemRecord:
+class CMIP6DatasetRecord:
     """Wraps a validated CMIP6 STAC item and prepares Handle records."""
 
     def __init__(self, item: Dict[str, Any], strict: bool, exclude_keys: List[str]):
@@ -22,6 +22,7 @@ class CMIP6ItemRecord:
         # config
         self.prefix = config.get("handle", {}).get("prefix", "")
         self.lp_url = config.get("cmip6", {}).get("landing_page_url", "")
+        self.max_parts = config.get("cmip6", {}).get("max_parts", -1)
 
         # Validate the STAC item against schema
         try:
@@ -85,6 +86,10 @@ class CMIP6ItemRecord:
         for key in asset_keys:
             if key in self.exclude_keys:
                 continue
+            # don't save more then max_parts
+            if self.max_parts > -1 and len(parts) >= self.max_parts:
+                logging.debug(f"reached limit of {self.max_parts} assets.")
+                break
             parts.append(asset_pid(item_id, key))
 
         return parts
@@ -126,7 +131,7 @@ class CMIP6ItemRecord:
                 break
 
         return HostingNode(
-            host=host, published_on=CMIP6ItemRecord._parse_datetime(pub_on)
+            host=host, published_on=CMIP6DatasetRecord._parse_datetime(pub_on)
         )
 
     @staticmethod
@@ -139,7 +144,7 @@ class CMIP6ItemRecord:
                 locs = [locs]
             for loc in locs:
                 h = loc.get("host")
-                p = CMIP6ItemRecord._parse_datetime(loc.get("publishedOn"))
+                p = CMIP6DatasetRecord._parse_datetime(loc.get("publishedOn"))
                 if h:
                     nodes.append(HostingNode(host=h, published_on=p))
         return nodes
@@ -149,7 +154,7 @@ class CMIP6ItemRecord:
         host = "unknown"
         pub_on = ""
         return HostingNode(
-            host=host, published_on=CMIP6ItemRecord._parse_datetime(pub_on)
+            host=host, published_on=CMIP6DatasetRecord._parse_datetime(pub_on)
         )
 
     @property

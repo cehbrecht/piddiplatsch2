@@ -7,7 +7,7 @@ from piddiplatsch.config import config
 from piddiplatsch.utils.pid import item_pid, asset_pid
 
 
-class CMIP6AssetRecord:
+class CMIP6FileRecord:
     """Wraps a CMIP6 STAC asset and prepares Handle record for a file."""
 
     def __init__(self, item: Dict[str, Any], asset_key: str):
@@ -22,7 +22,7 @@ class CMIP6AssetRecord:
         self._parent = self._build_handle(self._extract_parent_pid(item))
         self._pid = self._extract_pid(item, asset_key)
         self._url = self._extract_url()
-        self._filename = self._extract_filename(self._url)
+        self._filename = self._extract_filename(self.asset)
         self._checksum = self._extract_checksum(self.asset)
         self._size = self._extract_size(self.asset)
         self._download_url = self._extract_download_url(self.asset)
@@ -71,8 +71,13 @@ class CMIP6AssetRecord:
             raise ValueError("Missing required 'href' field in asset") from e
 
     @staticmethod
-    def _extract_filename(href: str) -> str:
-        return PurePosixPath(href).name
+    def _extract_filename(asset: Dict[str, Any]) -> str:
+        try:
+            href = asset["href"]
+            return PurePosixPath(href).name
+        except KeyError as e:
+            logging.error(f"Missing 'href' in asset: {e}")
+            raise ValueError("Missing required 'href' field in asset") from e
 
     @staticmethod
     def _extract_checksum(asset: Dict[str, Any]) -> Optional[str]:
