@@ -1,4 +1,3 @@
-import pytest
 from piddiplatsch.cli import cli
 
 

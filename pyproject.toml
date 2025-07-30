@@ -102,6 +102,7 @@ ignore = [
   "B904", # raise exceptions with `raise ... from err`
   "PERF203", # `try`-`except` within a loop incurs performance overhead
   "G004", # Logging statement uses f-string
+  "S101", # Use of `assert` detected
   "S104", # Possible binding to all interfaces
   "S105", # Possible hardcoded password
   "S110", # `try`-`except`-`pass` detected, consider logging the exception
