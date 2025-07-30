@@ -139,7 +139,7 @@ class CMIP6FileRecord:
 
 
 def extract_asset_records(
-    item: dict[str, Any], exclude_keys: list[str] = None
+    item: dict[str, Any], exclude_keys: list[str]
 ) -> list[CMIP6FileRecord]:
     """Given a CMIP6 STAC item, return a list of CMIP6AssetRecord instances
     for all asset keys except those in exclude_keys.
