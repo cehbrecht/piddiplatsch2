@@ -30,6 +30,11 @@ def assert_file_record(handle_client, pid: str):
     assert "FILE_NAME" in record
     assert "IS_PART_OF" in record
     assert "DOWNLOAD_URL" in record
+    # assert "CHECKSUM" in record
+    # assert "CHECKSUM_METHOD" in record
+    # assert "FILE_SIZE" in record
+    # assert "FILE_VERSION" in record
+    # assert "DOWNLOAD_URL_REPLICA" in record
 
 
 def assert_record(handle_client, pid, sub_pids):
