@@ -108,7 +108,7 @@ ignore = [
 ]
 select = [
   "BLE", # blind-except
-  "D", # docstrings
+  # "D", # docstrings
   "E", # pycodestyle errors
   "F", # pyflakes errors
   "RUF", # ruff checks

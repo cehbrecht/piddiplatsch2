@@ -1,5 +1,5 @@
 import json
-from functools import lru_cache, cache
+from functools import cache
 from pathlib import Path
 
 SCHEMA_DIR = Path(__file__).parent / "files"  # store all schema files here
