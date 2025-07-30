@@ -2,9 +2,9 @@
     "data": {
         "payload": {
             "item": {
-                "id": "cmip6-1234",
+                "id": "CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.Amon.tasmin.gn.v20250730",
                 "properties": {
-                    "version": "v20250430"
+                    "version": "v20250730"
                 },
                 "assets": {
                     "reference_file": {

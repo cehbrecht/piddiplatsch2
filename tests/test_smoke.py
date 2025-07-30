@@ -12,7 +12,7 @@ def assert_dataset_record(handle_client, pid: str):
     assert "URL" in record
     assert "AGGREGATION_LEVEL" in record
     assert "DATASET_ID" in record
-    # assert "DATASET_VERSION" in record
+    assert "DATASET_VERSION" in record
     # assert "HAS_PARTS" in record
     assert "HOSTING_NODE" in record
     # assert "REPLICA_NODES" in record
@@ -58,7 +58,7 @@ def test_send_valid_example(runner, testfile, handle_client):
     send_message(runner, path)
 
     # TODO: extract the PID dynamically from the file
-    pid = "453eed3c-8b9a-31c5-b9c3-a4bb5433cb3d"
+    pid = "66c1ca97-88fe-33da-9b9b-979fbf978921"
 
     wait_for_pid(handle_client, pid)
 
