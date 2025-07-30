@@ -13,8 +13,8 @@ def assert_dataset_record(handle_client, pid: str):
     assert "AGGREGATION_LEVEL" in record
     assert "DATASET_ID" in record
     assert "DATASET_VERSION" in record
-    # assert "HAS_PARTS" in record
     assert "HOSTING_NODE" in record
+    # assert "HAS_PARTS" in record
     # assert "REPLICA_NODES" in record
     # assert "UNPUBLISHED_REPLICAS" in record
     # assert "UNPUBLISHED_HOSTS" in record
@@ -27,6 +27,9 @@ def assert_file_record(handle_client, pid: str):
     print(record)
     assert "URL" in record
     assert "AGGREGATION_LEVEL" in record
+    assert "FILE_NAME" in record
+    assert "IS_PART_OF" in record
+    assert "DOWNLOAD_URL" in record
 
 
 def wait_for_pid(handle_client, pid: str, timeout: float = 5.0):
