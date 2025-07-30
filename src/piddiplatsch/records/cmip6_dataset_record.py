@@ -1,6 +1,6 @@
 import logging
 from typing import Any, Dict, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from jsonschema import validate, ValidationError
 from dateutil.parser import isoparse
@@ -129,6 +129,9 @@ class CMIP6DatasetRecord:
             if published:
                 pub_on = published
                 break
+
+        if not pub_on:
+            pub_on = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
         return HostingNode(
             host=host, published_on=CMIP6DatasetRecord._parse_datetime(pub_on)
