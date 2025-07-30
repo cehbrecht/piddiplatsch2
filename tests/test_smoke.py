@@ -3,11 +3,8 @@ from pathlib import Path
 import time
 from piddiplatsch.cli import cli
 
-# wait for consumer to process
-WAIT_SECS = 1
 
-
-def assert_dataset_record(handle_client, pid: str):
+def assert_dataset_record(handle_client, pid: str, all: bool = False):
     record = handle_client.get_record(pid)
 
     assert record is not None, f"PID {pid} was not registered"
@@ -15,12 +12,13 @@ def assert_dataset_record(handle_client, pid: str):
     assert "URL" in record
     assert "AGGREGATION_LEVEL" in record
     assert "DATASET_ID" in record
-    # assert "DATASET_VERSION" in record
-    assert "HAS_PARTS" in record
+    assert "DATASET_VERSION" in record
     assert "HOSTING_NODE" in record
-    assert "REPLICA_NODES" in record
-    assert "UNPUBLISHED_REPLICAS" in record
-    assert "UNPUBLISHED_HOSTS" in record
+    if all:
+        assert "HAS_PARTS" in record
+        # assert "REPLICA_NODES" in record
+        # assert "UNPUBLISHED_REPLICAS" in record
+        # assert "UNPUBLISHED_HOSTS" in record
 
 
 def assert_file_record(handle_client, pid: str):
@@ -30,6 +28,33 @@ def assert_file_record(handle_client, pid: str):
     print(record)
     assert "URL" in record
     assert "AGGREGATION_LEVEL" in record
+    assert "FILE_NAME" in record
+    assert "IS_PART_OF" in record
+    assert "DOWNLOAD_URL" in record
+    # assert "CHECKSUM" in record
+    # assert "CHECKSUM_METHOD" in record
+    # assert "FILE_SIZE" in record
+    # assert "FILE_VERSION" in record
+    # assert "DOWNLOAD_URL_REPLICA" in record
+
+
+def assert_record(handle_client, pid, sub_pids, all: bool = False):
+    wait_for_pid(handle_client, pid)
+
+    assert_dataset_record(handle_client, pid, all)
+
+    for pid in sub_pids:
+        assert_file_record(handle_client, pid)
+
+
+def wait_for_pid(handle_client, pid: str, timeout: float = 5.0):
+    """Wait until a PID is available in the handle service or timeout."""
+    start = time.time()
+    while time.time() - start < timeout:
+        if handle_client.get_record(pid):
+            return
+        time.sleep(0.2)
+    raise AssertionError(f"PID {pid} was not registered within {timeout:.1f} seconds")
 
 
 def send_message(runner, filename: Path):
@@ -50,11 +75,14 @@ def test_send_valid_example(runner, testfile, handle_client):
 
     send_message(runner, path)
 
-    time.sleep(WAIT_SECS)
-
     # TODO: extract the PID dynamically from the file
-    pid = "453eed3c-8b9a-31c5-b9c3-a4bb5433cb3d"
-    assert_dataset_record(handle_client, pid)
+    pid = "ac903313-aca4-321a-9751-e9f3559ccecd"
+    pids = [
+        "a5a79818-8ae5-35a7-9cc2-57cffe70d408",
+        "20cedc42-2fc5-32c2-9fae-511acfbc8f22",
+    ]
+
+    assert_record(handle_client, pid, pids, all=True)
 
 
 @pytest.mark.online
@@ -73,10 +101,7 @@ def test_send_valid_cmip6_mpi_day(runner, testfile, handle_client):
 
     send_message(runner, path)
 
-    time.sleep(WAIT_SECS)
-
-    assert_dataset_record(handle_client, "bfa39fac-49db-35f1-a5c0-bc67fa7315b0")
-
+    pid = "bfa39fac-49db-35f1-a5c0-bc67fa7315b0"
     pids = [
         "a5a79818-8ae5-35a7-9cc2-57cffe70d408",
         "20cedc42-2fc5-32c2-9fae-511acfbc8f22",
@@ -84,8 +109,8 @@ def test_send_valid_cmip6_mpi_day(runner, testfile, handle_client):
         "d63b6c5e-0595-36f2-8009-e9ad9a0dbd24",
         "8aedb952-e482-3bec-bddd-39b3bca951b3",
     ]
-    for pid in pids:
-        assert_file_record(handle_client, pid)
+
+    assert_record(handle_client, pid, pids)
 
 
 @pytest.mark.online
@@ -96,10 +121,7 @@ def test_send_valid_cmip6_mpi_mon(runner, testfile, handle_client):
     )
     send_message(runner, path)
 
-    time.sleep(WAIT_SECS)
-
-    assert_dataset_record(handle_client, "4f3e6ba6-839d-3e2f-8683-793f8ae66344")
-
+    pid = "4f3e6ba6-839d-3e2f-8683-793f8ae66344"
     pids = [
         "a00ed634-4260-3bbd-b7a8-075266d8fd2d",
         "8f72d01f-4bc8-3272-b246-cebe15511d49",
@@ -107,8 +129,8 @@ def test_send_valid_cmip6_mpi_mon(runner, testfile, handle_client):
         "7980290b-2429-334a-893f-45df2a3ef2e4",
         "aaf8684d-341e-37d2-80bb-854a94a90777",
     ]
-    for pid in pids:
-        assert_file_record(handle_client, pid)
+
+    assert_record(handle_client, pid, pids)
 
 
 @pytest.mark.online

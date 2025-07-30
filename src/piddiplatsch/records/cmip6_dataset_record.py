@@ -1,6 +1,6 @@
 import logging
 from typing import Any, Dict, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from jsonschema import validate, ValidationError
 from dateutil.parser import isoparse
@@ -9,6 +9,7 @@ from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
 from piddiplatsch.models import CMIP6DatasetModel, HostingNode
 from piddiplatsch.config import config
 from piddiplatsch.utils.pid import item_pid, asset_pid
+from piddiplatsch.records.utils import drop_empty
 
 
 class CMIP6DatasetRecord:
@@ -130,6 +131,9 @@ class CMIP6DatasetRecord:
                 pub_on = published
                 break
 
+        if not pub_on:
+            pub_on = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+
         return HostingNode(
             host=host, published_on=CMIP6DatasetRecord._parse_datetime(pub_on)
         )
@@ -212,7 +216,7 @@ class CMIP6DatasetRecord:
 
     def as_record(self) -> dict:
         """Return the handle model as dict."""
-        return self.as_handle_model().model_dump()
+        return drop_empty(self.as_handle_model().model_dump())
 
     def as_json(self) -> str:
         """Return the handle model as JSON string."""

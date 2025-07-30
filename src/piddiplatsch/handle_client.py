@@ -2,6 +2,7 @@ import logging
 import pyhandle
 from piddiplatsch.config import config
 import json
+from datetime import datetime
 from typing import Any
 from pyhandle.handleexceptions import HandleAlreadyExistsException
 from pyhandle.clientcredentials import PIDClientCredentials
@@ -12,13 +13,21 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def _prepare_handle_data(record: dict[str, Any]) -> dict[str, str]:
-    """Prepare handle record fields: serialize list/dict values, skip None."""
+    """Prepare handle record fields: serialize list/dict values, skip None and convert datetime."""
     prepared = {}
     for key, value in record.items():
         if value is None:
             continue
-        if isinstance(value, (list, dict)):
-            value = json.dumps(value)
+        if isinstance(value, datetime):
+            value = value.isoformat()
+        elif isinstance(value, (list, dict)):
+            # Recursively convert datetimes inside lists/dicts
+            def serialize(obj):
+                if isinstance(obj, datetime):
+                    return obj.isoformat()
+                return obj
+
+            value = json.dumps(value, default=serialize)
         prepared[key] = value
     return prepared
 

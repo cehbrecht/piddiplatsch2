@@ -1,10 +1,11 @@
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 from pathlib import PurePosixPath
 
 from piddiplatsch.models import CMIP6FileModel
 from piddiplatsch.config import config
 from piddiplatsch.utils.pid import item_pid, asset_pid
+from piddiplatsch.records.utils import drop_empty
 
 
 class CMIP6FileRecord:
@@ -131,7 +132,37 @@ class CMIP6FileRecord:
         )
 
     def as_record(self) -> dict:
-        return self.as_handle_model().model_dump(mode="json")
+        return drop_empty(self.as_handle_model().model_dump(mode="json"))
 
     def as_json(self) -> str:
         return self.as_handle_model().model_dump_json(mode="json")
+
+
+def extract_asset_records(
+    item: Dict[str, Any], exclude_keys: List[str] = None
+) -> List[CMIP6FileRecord]:
+    """
+    Given a CMIP6 STAC item, return a list of CMIP6AssetRecord instances
+    for all asset keys except those in exclude_keys.
+
+    Args:
+        item: A CMIP6 STAC item as a dict.
+        exclude_keys: Optional list of asset keys to ignore (e.g., ["thumbnail", "quicklook"]).
+
+    Returns:
+        A list of CMIP6AssetRecord objects.
+    """
+    exclude_keys = set(exclude_keys or [])
+    assets = item.get("assets", {})
+
+    records = []
+    for key in assets:
+        if key in exclude_keys:
+            continue
+        try:
+            record = CMIP6FileRecord(item, key)
+            records.append(record)
+        except ValueError as e:
+            # Log and skip problematic assets
+            logging.warning(f"Skipping asset '{key}': {e}")
+    return records
