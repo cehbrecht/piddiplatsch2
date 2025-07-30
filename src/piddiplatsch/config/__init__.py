@@ -18,7 +18,7 @@ class Config:
             return toml.load(path)
         return {}
 
-    def load_user_config(self, user_config_path: Optional[str]):
+    def load_user_config(self, user_config_path: str | None):
         if user_config_path:
             user_path = Path(user_config_path)
             if user_path.exists():
@@ -32,7 +32,7 @@ class Config:
             else:
                 base[key] = value
 
-    def get(self, section: str, key: Optional[str] = None, fallback=None):
+    def get(self, section: str, key: str | None = None, fallback=None):
         cfg = self.config_data.get(section, {})
         if key:
             value = cfg.get(key, fallback)
@@ -40,7 +40,7 @@ class Config:
             value = cfg
         return value
 
-    def configure_logging(self, debug: bool = False, logfile: Optional[str] = None):
+    def configure_logging(self, debug: bool = False, logfile: str | None = None):
         log_level = logging.DEBUG if debug else logging.INFO
 
         handlers = []

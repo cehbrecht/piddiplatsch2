@@ -31,7 +31,7 @@ def cli(ctx, config_file, debug, logfile):
     config.configure_logging(debug=debug, logfile=logfile)
 
 
-## init command
+# init command
 
 
 @cli.command()
@@ -42,7 +42,7 @@ def init():
     client.ensure_topic_exists(topic, kafka_cfg)
 
 
-## consume command
+# consume command
 
 
 @cli.command()
@@ -55,7 +55,7 @@ def consume(dump):
     start_consumer(topic, kafka_cfg, processor, dump_messages=dump)
 
 
-## retry command
+# retry command
 
 
 @cli.command("retry")
@@ -80,7 +80,7 @@ def retry(filename: Path, delete_after: bool):
     click.echo(f"Retried {success} messages, {failed} failed.")
 
 
-## send command
+# send command
 
 
 @cli.command("send")

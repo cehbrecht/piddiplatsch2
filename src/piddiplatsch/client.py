@@ -54,7 +54,7 @@ def send_message(topic, kafka_cfg, key, value, on_delivery=None):
 
 
 def build_message_from_path(path):
-    with open(path, "r") as f:
+    with open(path) as f:
         data = json.load(f)
     key = os.path.splitext(os.path.basename(path))[0]
     value = json.dumps(data)

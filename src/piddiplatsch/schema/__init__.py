@@ -1,20 +1,20 @@
 import json
-from functools import lru_cache
+from functools import lru_cache, cache
 from pathlib import Path
 
 SCHEMA_DIR = Path(__file__).parent / "files"  # store all schema files here
 
 
-@lru_cache(maxsize=None)
+@cache
 def load_schema(name: str) -> dict:
-    """
-    Load and cache a JSON schema by name (e.g. 'cmip6', 'cmip7').
+    """Load and cache a JSON schema by name (e.g. 'cmip6', 'cmip7').
 
     Args:
         name: The schema name (without .json).
 
     Returns:
         The loaded JSON schema as a dict.
+
     """
     schema_file = SCHEMA_DIR / f"{name}.schema.json"
     if not schema_file.exists():

@@ -1,6 +1,5 @@
 import pluggy
 
-from piddiplatsch.plugins.cmip6_processor import CMIP6Processor
 from piddiplatsch.result import ProcessingResult
 
 PLUGIN_NAMESPACE = "piddiplatsch"

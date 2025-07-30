@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 from datetime import datetime, timezone
 
 from jsonschema import validate, ValidationError
@@ -15,7 +15,7 @@ from piddiplatsch.records.utils import drop_empty
 class CMIP6DatasetRecord:
     """Wraps a validated CMIP6 STAC item and prepares Handle records."""
 
-    def __init__(self, item: Dict[str, Any], strict: bool, exclude_keys: List[str]):
+    def __init__(self, item: dict[str, Any], strict: bool, exclude_keys: list[str]):
         self.item = item
         self.strict = strict
         self.exclude_keys = exclude_keys
@@ -48,7 +48,7 @@ class CMIP6DatasetRecord:
         )
 
     @staticmethod
-    def _extract_pid(item: Dict[str, Any]) -> Any:
+    def _extract_pid(item: dict[str, Any]) -> Any:
         try:
             return item_pid(item["id"])
         except KeyError as e:
@@ -60,7 +60,7 @@ class CMIP6DatasetRecord:
         return url
 
     @staticmethod
-    def _extract_stac_url(item: Dict[str, Any]) -> str:
+    def _extract_stac_url(item: dict[str, Any]) -> str:
         try:
             return item["links"][0]["href"]
         except (KeyError, IndexError) as e:
@@ -68,7 +68,7 @@ class CMIP6DatasetRecord:
             raise ValueError("Missing required 'links[0].href' field") from e
 
     @staticmethod
-    def _extract_dataset_id(item: Dict[str, Any]) -> str:
+    def _extract_dataset_id(item: dict[str, Any]) -> str:
         id_str = item.get("id", "")
         parts = id_str.rsplit(".", 1)
         dataset_id = parts[0]
@@ -76,7 +76,7 @@ class CMIP6DatasetRecord:
 
     from piddiplatsch.utils.pid import asset_pid
 
-    def _extract_has_parts(self, item: Dict[str, Any]) -> List[str]:
+    def _extract_has_parts(self, item: dict[str, Any]) -> list[str]:
         parts = []
         item_id = item.get("id")
         if not item_id:
@@ -96,18 +96,18 @@ class CMIP6DatasetRecord:
         return parts
 
     @staticmethod
-    def _extract_is_part_of(item: Dict[str, Any]) -> str:
+    def _extract_is_part_of(item: dict[str, Any]) -> str:
         return None
 
     @staticmethod
-    def _extract_dataset_version(item: Dict[str, Any]) -> str:
+    def _extract_dataset_version(item: dict[str, Any]) -> str:
         id_str = item.get("id", "")
         parts = id_str.rsplit(".", 1)
         dataset_version = parts[1] if len(parts) > 1 else None
         return dataset_version
 
     @staticmethod
-    def _parse_datetime(value: Optional[str]) -> Optional[datetime]:
+    def _parse_datetime(value: str | None) -> datetime | None:
         if not value:
             return None
         try:
@@ -117,7 +117,7 @@ class CMIP6DatasetRecord:
             return None
 
     @staticmethod
-    def _extract_hosting_node(item: Dict[str, Any]) -> HostingNode:
+    def _extract_hosting_node(item: dict[str, Any]) -> HostingNode:
         ref_node = (
             item.get("assets", {}).get("reference_file", {}).get("alternate:name")
         )
@@ -139,7 +139,7 @@ class CMIP6DatasetRecord:
         )
 
     @staticmethod
-    def _extract_replica_nodes(item: Dict[str, Any]) -> List[HostingNode]:
+    def _extract_replica_nodes(item: dict[str, Any]) -> list[HostingNode]:
         nodes = []
         locations = item.get("locations")
         if locations:
@@ -154,7 +154,7 @@ class CMIP6DatasetRecord:
         return nodes
 
     @staticmethod
-    def _extract_unpublished(item: Dict[str, Any], key: str) -> List[str]:
+    def _extract_unpublished(item: dict[str, Any], key: str) -> list[str]:
         host = "unknown"
         pub_on = ""
         return HostingNode(
@@ -178,7 +178,7 @@ class CMIP6DatasetRecord:
         return self._dataset_version
 
     @property
-    def has_parts(self) -> List[str]:
+    def has_parts(self) -> list[str]:
         return self._has_parts
 
     @property
@@ -190,15 +190,15 @@ class CMIP6DatasetRecord:
         return self._hosting_node
 
     @property
-    def replica_nodes(self) -> List[HostingNode]:
+    def replica_nodes(self) -> list[HostingNode]:
         return self._replica_nodes
 
     @property
-    def unpublished_replicas(self) -> List[str]:
+    def unpublished_replicas(self) -> list[str]:
         return self._unpublished_replicas
 
     @property
-    def unpublished_hosts(self) -> List[str]:
+    def unpublished_hosts(self) -> list[str]:
         return self._unpublished_hosts
 
     def as_handle_model(self) -> CMIP6DatasetModel:

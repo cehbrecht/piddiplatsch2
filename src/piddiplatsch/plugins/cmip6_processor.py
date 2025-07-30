@@ -1,7 +1,7 @@
 import pluggy
 import logging
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 from jsonschema import validate, ValidationError
 from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
 from piddiplatsch.records import CMIP6DatasetRecord
@@ -22,7 +22,7 @@ class CMIP6Processor:
         self.handle_client = HandleClient.from_config()
 
     @hookimpl
-    def process(self, key: str, value: Dict[str, Any]) -> ProcessingResult:
+    def process(self, key: str, value: dict[str, Any]) -> ProcessingResult:
         """Process a Kafka message for a CMIP6 STAC item and register it in the Handle Service."""
         logging.debug(f"CMIP6 plugin processing key: {key}")
 
@@ -40,7 +40,7 @@ class CMIP6Processor:
         except Exception as e:
             return ProcessingResult(key=key, success=False, error=str(e))
 
-    def _do_process(self, value: Dict[str, Any]) -> int:
+    def _do_process(self, value: dict[str, Any]) -> int:
         num_handles = 0
 
         try:

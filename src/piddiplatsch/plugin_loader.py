@@ -2,6 +2,7 @@ import pluggy
 import importlib.metadata
 from piddiplatsch.plugin import MessageProcessorSpec
 
+
 def load_single_plugin(processor_name: str):
     pm = pluggy.PluginManager("piddiplatsch")
     pm.add_hookspecs(MessageProcessorSpec)
