@@ -3,9 +3,6 @@ from pathlib import Path
 import time
 from piddiplatsch.cli import cli
 
-# wait for consumer to process
-WAIT_SECS = 1
-
 
 def assert_dataset_record(handle_client, pid: str):
     record = handle_client.get_record(pid)
@@ -32,6 +29,16 @@ def assert_file_record(handle_client, pid: str):
     assert "AGGREGATION_LEVEL" in record
 
 
+def wait_for_pid(handle_client, pid: str, timeout: float = 5.0):
+    """Wait until a PID is available in the handle service or timeout."""
+    start = time.time()
+    while time.time() - start < timeout:
+        if handle_client.get_record(pid):
+            return
+        time.sleep(0.2)
+    raise AssertionError(f"PID {pid} was not registered within {timeout:.1f} seconds")
+
+
 def send_message(runner, filename: Path):
     result = runner.invoke(cli, ["send", filename.as_posix()])
 
@@ -50,10 +57,11 @@ def test_send_valid_example(runner, testfile, handle_client):
 
     send_message(runner, path)
 
-    time.sleep(WAIT_SECS)
-
     # TODO: extract the PID dynamically from the file
     pid = "453eed3c-8b9a-31c5-b9c3-a4bb5433cb3d"
+
+    wait_for_pid(handle_client, pid)
+
     assert_dataset_record(handle_client, pid)
 
 
@@ -73,9 +81,10 @@ def test_send_valid_cmip6_mpi_day(runner, testfile, handle_client):
 
     send_message(runner, path)
 
-    time.sleep(WAIT_SECS)
+    pid = "bfa39fac-49db-35f1-a5c0-bc67fa7315b0"
+    wait_for_pid(handle_client, pid)
 
-    assert_dataset_record(handle_client, "bfa39fac-49db-35f1-a5c0-bc67fa7315b0")
+    assert_dataset_record(handle_client, pid)
 
     pids = [
         "a5a79818-8ae5-35a7-9cc2-57cffe70d408",
@@ -96,9 +105,10 @@ def test_send_valid_cmip6_mpi_mon(runner, testfile, handle_client):
     )
     send_message(runner, path)
 
-    time.sleep(WAIT_SECS)
+    pid = "4f3e6ba6-839d-3e2f-8683-793f8ae66344"
+    wait_for_pid(handle_client, pid)
 
-    assert_dataset_record(handle_client, "4f3e6ba6-839d-3e2f-8683-793f8ae66344")
+    assert_dataset_record(handle_client, pid)
 
     pids = [
         "a00ed634-4260-3bbd-b7a8-075266d8fd2d",
