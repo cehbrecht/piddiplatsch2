@@ -9,6 +9,7 @@ from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
 from piddiplatsch.models import CMIP6DatasetModel, HostingNode
 from piddiplatsch.config import config
 from piddiplatsch.utils.pid import item_pid, asset_pid
+from piddiplatsch.records.utils import drop_empty
 
 
 class CMIP6DatasetRecord:
@@ -215,7 +216,7 @@ class CMIP6DatasetRecord:
 
     def as_record(self) -> dict:
         """Return the handle model as dict."""
-        return self.as_handle_model().model_dump()
+        return drop_empty(self.as_handle_model().model_dump())
 
     def as_json(self) -> str:
         """Return the handle model as JSON string."""

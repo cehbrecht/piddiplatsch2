@@ -5,7 +5,7 @@ from typing import Any, Dict
 from jsonschema import validate, ValidationError
 from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
 from piddiplatsch.records import CMIP6DatasetRecord
-from piddiplatsch.records.utils import extract_asset_records
+from piddiplatsch.records.cmip6_file_record import extract_asset_records
 from piddiplatsch.result import ProcessingResult
 from piddiplatsch.handle_client import HandleClient
 

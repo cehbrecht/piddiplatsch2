@@ -1,33 +1,15 @@
-import logging
-from typing import Dict, Any, List
-from .cmip6_file_record import CMIP6FileRecord
-
-
-def extract_asset_records(
-    item: Dict[str, Any], exclude_keys: List[str] = None
-) -> List[CMIP6FileRecord]:
+def drop_empty(d):
     """
-    Given a CMIP6 STAC item, return a list of CMIP6AssetRecord instances
-    for all asset keys except those in exclude_keys.
-
-    Args:
-        item: A CMIP6 STAC item as a dict.
-        exclude_keys: Optional list of asset keys to ignore (e.g., ["thumbnail", "quicklook"]).
-
-    Returns:
-        A list of CMIP6AssetRecord objects.
+    Recursively clean empty fields
     """
-    exclude_keys = set(exclude_keys or [])
-    assets = item.get("assets", {})
-
-    records = []
-    for key in assets:
-        if key in exclude_keys:
+    result = {}
+    for k, v in d.items():
+        if v in ("", [], {}, None):
             continue
-        try:
-            record = CMIP6FileRecord(item, key)
-            records.append(record)
-        except ValueError as e:
-            # Log and skip problematic assets
-            logging.warning(f"Skipping asset '{key}': {e}")
-    return records
+        if isinstance(v, dict):
+            nested = drop_empty(v)
+            if nested:
+                result[k] = nested
+        else:
+            result[k] = v
+    return result

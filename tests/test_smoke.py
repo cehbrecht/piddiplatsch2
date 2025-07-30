@@ -16,11 +16,11 @@ def assert_dataset_record(handle_client, pid: str):
     assert "AGGREGATION_LEVEL" in record
     assert "DATASET_ID" in record
     # assert "DATASET_VERSION" in record
-    assert "HAS_PARTS" in record
+    # assert "HAS_PARTS" in record
     assert "HOSTING_NODE" in record
-    assert "REPLICA_NODES" in record
-    assert "UNPUBLISHED_REPLICAS" in record
-    assert "UNPUBLISHED_HOSTS" in record
+    # assert "REPLICA_NODES" in record
+    # assert "UNPUBLISHED_REPLICAS" in record
+    # assert "UNPUBLISHED_HOSTS" in record
 
 
 def assert_file_record(handle_client, pid: str):
