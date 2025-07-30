@@ -32,6 +32,15 @@ def assert_file_record(handle_client, pid: str):
     assert "DOWNLOAD_URL" in record
 
 
+def assert_record(handle_client, pid, sub_pids):
+    wait_for_pid(handle_client, pid)
+
+    assert_dataset_record(handle_client, pid)
+
+    for pid in sub_pids:
+        assert_file_record(handle_client, pid)
+
+
 def wait_for_pid(handle_client, pid: str, timeout: float = 5.0):
     """Wait until a PID is available in the handle service or timeout."""
     start = time.time()
@@ -63,9 +72,7 @@ def test_send_valid_example(runner, testfile, handle_client):
     # TODO: extract the PID dynamically from the file
     pid = "66c1ca97-88fe-33da-9b9b-979fbf978921"
 
-    wait_for_pid(handle_client, pid)
-
-    assert_dataset_record(handle_client, pid)
+    assert_record(handle_client, pid, [])
 
 
 @pytest.mark.online
@@ -85,10 +92,6 @@ def test_send_valid_cmip6_mpi_day(runner, testfile, handle_client):
     send_message(runner, path)
 
     pid = "bfa39fac-49db-35f1-a5c0-bc67fa7315b0"
-    wait_for_pid(handle_client, pid)
-
-    assert_dataset_record(handle_client, pid)
-
     pids = [
         "a5a79818-8ae5-35a7-9cc2-57cffe70d408",
         "20cedc42-2fc5-32c2-9fae-511acfbc8f22",
@@ -96,8 +99,8 @@ def test_send_valid_cmip6_mpi_day(runner, testfile, handle_client):
         "d63b6c5e-0595-36f2-8009-e9ad9a0dbd24",
         "8aedb952-e482-3bec-bddd-39b3bca951b3",
     ]
-    for pid in pids:
-        assert_file_record(handle_client, pid)
+
+    assert_record(handle_client, pid, pids)
 
 
 @pytest.mark.online
@@ -109,10 +112,6 @@ def test_send_valid_cmip6_mpi_mon(runner, testfile, handle_client):
     send_message(runner, path)
 
     pid = "4f3e6ba6-839d-3e2f-8683-793f8ae66344"
-    wait_for_pid(handle_client, pid)
-
-    assert_dataset_record(handle_client, pid)
-
     pids = [
         "a00ed634-4260-3bbd-b7a8-075266d8fd2d",
         "8f72d01f-4bc8-3272-b246-cebe15511d49",
@@ -120,8 +119,8 @@ def test_send_valid_cmip6_mpi_mon(runner, testfile, handle_client):
         "7980290b-2429-334a-893f-45df2a3ef2e4",
         "aaf8684d-341e-37d2-80bb-854a94a90777",
     ]
-    for pid in pids:
-        assert_file_record(handle_client, pid)
+
+    assert_record(handle_client, pid, pids)
 
 
 @pytest.mark.online
