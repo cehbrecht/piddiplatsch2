@@ -25,7 +25,7 @@ class StatsTracker:
         log_fn = getattr(self.logger, level)
         log_fn(json.dumps(log_record))
 
-    def record_success(self, key: str, num_handles: int, elapsed: float = None):
+    def record_success(self, key: str, num_handles: int, elapsed: float):
         self.messages_processed += 1
         self.handles_created += num_handles
         self.counter["success"] += 1

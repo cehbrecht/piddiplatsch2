@@ -33,8 +33,7 @@ def _prepare_handle_data(record: dict[str, Any]) -> dict[str, str]:
 
 
 def _parse_handle_record(values: list[dict[str, Any]]) -> dict[str, Any]:
-    """
-    Convert Handle record 'values' list into a flat dict.
+    """Convert Handle record 'values' list into a flat dict.
 
     Deserializes JSON strings for list/dict fields where possible.
     """

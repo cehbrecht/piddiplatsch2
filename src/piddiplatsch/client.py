@@ -1,16 +1,14 @@
-import os
 import json
+import logging
 import uuid
+from pathlib import Path
+
 from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient, NewTopic
 
-import logging
-
 
 def client_cfg(kafka_cfg):
-    cfg = {
-        "bootstrap.servers": kafka_cfg["bootstrap.servers"]
-    }
+    cfg = {"bootstrap.servers": kafka_cfg["bootstrap.servers"]}
     return cfg
 
 
@@ -30,7 +28,9 @@ def ensure_topic_exists(topic, kafka_cfg, num_partitions=1, replication_factor=1
         logging.debug(f"Kafka topic '{topic}' already exists.")
         return
 
-    new_topic = NewTopic(topic, num_partitions=num_partitions, replication_factor=replication_factor)
+    new_topic = NewTopic(
+        topic, num_partitions=num_partitions, replication_factor=replication_factor
+    )
     futures = admin_client.create_topics([new_topic])
 
     try:
@@ -54,9 +54,10 @@ def send_message(topic, kafka_cfg, key, value, on_delivery=None):
 
 
 def build_message_from_path(path):
-    with open(path, "r") as f:
+    path = Path(path)
+    with path.open() as f:
         data = json.load(f)
-    key = os.path.splitext(os.path.basename(path))[0]
+    key = path.stem
     value = json.dumps(data)
     return key, value
 
