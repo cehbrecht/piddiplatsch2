@@ -4,7 +4,7 @@ import time
 from piddiplatsch.cli import cli
 
 
-def assert_dataset_record(handle_client, pid: str):
+def assert_dataset_record(handle_client, pid: str, all: bool = False):
     record = handle_client.get_record(pid)
 
     assert record is not None, f"PID {pid} was not registered"
@@ -14,10 +14,11 @@ def assert_dataset_record(handle_client, pid: str):
     assert "DATASET_ID" in record
     assert "DATASET_VERSION" in record
     assert "HOSTING_NODE" in record
-    # assert "HAS_PARTS" in record
-    # assert "REPLICA_NODES" in record
-    # assert "UNPUBLISHED_REPLICAS" in record
-    # assert "UNPUBLISHED_HOSTS" in record
+    if all:
+        assert "HAS_PARTS" in record
+        # assert "REPLICA_NODES" in record
+        # assert "UNPUBLISHED_REPLICAS" in record
+        # assert "UNPUBLISHED_HOSTS" in record
 
 
 def assert_file_record(handle_client, pid: str):
@@ -37,10 +38,10 @@ def assert_file_record(handle_client, pid: str):
     # assert "DOWNLOAD_URL_REPLICA" in record
 
 
-def assert_record(handle_client, pid, sub_pids):
+def assert_record(handle_client, pid, sub_pids, all: bool = False):
     wait_for_pid(handle_client, pid)
 
-    assert_dataset_record(handle_client, pid)
+    assert_dataset_record(handle_client, pid, all)
 
     for pid in sub_pids:
         assert_file_record(handle_client, pid)
@@ -75,9 +76,13 @@ def test_send_valid_example(runner, testfile, handle_client):
     send_message(runner, path)
 
     # TODO: extract the PID dynamically from the file
-    pid = "66c1ca97-88fe-33da-9b9b-979fbf978921"
+    pid = "ac903313-aca4-321a-9751-e9f3559ccecd"
+    pids = [
+        "a5a79818-8ae5-35a7-9cc2-57cffe70d408",
+        "20cedc42-2fc5-32c2-9fae-511acfbc8f22",
+    ]
 
-    assert_record(handle_client, pid, [])
+    assert_record(handle_client, pid, pids, all=True)
 
 
 @pytest.mark.online
