@@ -3,6 +3,7 @@
 [![Build Status](https://github.com/cehbrecht/piddiplatsch2/actions/workflows/ci.yml/badge.svg)](https://github.com/cehbrecht/piddiplatsch2/actions)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![pre-commit enabled](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://pre-commit.com/)
 [![View Notebooks on nbviewer](https://img.shields.io/badge/nbviewer-view%20notebooks-orange)](https://nbviewer.org/github/cehbrecht/piddiplatsch2/tree/main/notebooks/)
 
 ---
@@ -92,6 +93,37 @@ Run smoke tests (Kafka and Handle service must be up):
 
 ```bash
 make smoke
+```
+
+---
+
+## 🧼 Code Style and Linting
+
+This project uses [pre-commit](https://pre-commit.com) to enforce code style and quality:
+
+- [`black`](https://black.readthedocs.io) for code formatting  
+- [`isort`](https://pycqa.github.io/isort/) for import sorting  
+- [`ruff`](https://docs.astral.sh/ruff/) for linting and fast checks
+
+### Setup
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+### Run manually
+
+```bash
+pre-commit run --all-files
+```
+
+Or use:
+
+```bash
+make lint        # Run ruff, black, and isort checks
+make format      # Auto-format with black and isort
+make check-format  # Check formatting only
 ```
 
 ---

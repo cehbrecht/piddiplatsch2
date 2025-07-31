@@ -84,6 +84,11 @@ format: ## format code using isort and black
 	@bash -c 'isort src tests'
 	@bash -c 'black src tests'
 
+check-format: ## check that code is correctly formatted
+	@echo "Checking code formatting with isort and black ..."
+	@bash -c 'isort --check-only src tests'
+	@bash -c 'black --check src tests'
+
 pre-commit: ## run all pre-commit hooks
 	@pre-commit run --all-files
 
