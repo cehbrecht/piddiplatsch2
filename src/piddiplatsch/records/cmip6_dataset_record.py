@@ -2,8 +2,6 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from jsonschema import ValidationError, validate
-
 from piddiplatsch.config import config
 from piddiplatsch.models import CMIP6DatasetModel, HostingNode
 from piddiplatsch.records.base import BaseRecord
@@ -16,23 +14,13 @@ class CMIP6DatasetRecord(BaseRecord):
     """Wraps a validated CMIP6 STAC item and prepares Handle records."""
 
     def __init__(self, item: dict[str, Any], strict: bool, exclude_keys: list[str]):
-        self.item = item
-        self.strict = strict
+        super().__init__(item, schema=SCHEMA, strict=strict)
         self.exclude_keys = exclude_keys
 
         # config
         self.prefix = config.get("handle", {}).get("prefix", "")
         self.lp_url = config.get("cmip6", {}).get("landing_page_url", "")
         self.max_parts = config.get("cmip6", {}).get("max_parts", -1)
-
-        # Validate the STAC item against schema
-        try:
-            validate(instance=self.item, schema=SCHEMA)
-        except ValidationError as e:
-            logging.error(
-                "Schema validation failed at %s: %s", list(e.absolute_path), e.message
-            )
-            raise ValueError(f"Invalid CMIP6 STAC item: {e.message}") from e
 
         self._pid = self._extract_pid(self.item)
         self._url = self._extract_url()

@@ -5,14 +5,15 @@ from typing import Any
 from piddiplatsch.config import config
 from piddiplatsch.models import CMIP6FileModel
 from piddiplatsch.records.base import BaseRecord
+from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
 from piddiplatsch.utils.pid import asset_pid, item_pid
 
 
 class CMIP6FileRecord(BaseRecord):
     """Wraps a CMIP6 STAC asset and prepares Handle record for a file."""
 
-    def __init__(self, item: dict[str, Any], asset_key: str):
-        self.item = item
+    def __init__(self, item: dict[str, Any], asset_key: str, strict: bool):
+        super().__init__(item, schema=SCHEMA, strict=strict)
         self.asset_key = asset_key
         self.asset = self._get_asset(item, asset_key)
 
@@ -133,7 +134,7 @@ class CMIP6FileRecord(BaseRecord):
 
 
 def extract_asset_records(
-    item: dict[str, Any], exclude_keys: list[str]
+    item: dict[str, Any], exclude_keys: list[str], strict: bool
 ) -> list[CMIP6FileRecord]:
     """Given a CMIP6 STAC item, return a list of CMIP6AssetRecord instances
     for all asset keys except those in exclude_keys.
@@ -154,7 +155,7 @@ def extract_asset_records(
         if key in exclude_keys:
             continue
         try:
-            record = CMIP6FileRecord(item, key)
+            record = CMIP6FileRecord(item, key, strict)
             records.append(record)
         except ValueError as e:
             # Log and skip problematic assets
