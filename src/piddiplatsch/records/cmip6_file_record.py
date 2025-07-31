@@ -1,4 +1,5 @@
 import logging
+from functools import cached_property
 from pathlib import PurePosixPath
 from typing import Any
 
@@ -14,19 +15,7 @@ class CMIP6FileRecord(BaseRecord):
     def __init__(self, item: dict[str, Any], asset_key: str, strict: bool):
         super().__init__(item, strict=strict)
         self.asset_key = asset_key
-        self.asset = self._get_asset(item, asset_key)
-
-        # config
-        self.prefix = config.get("handle", {}).get("prefix", "")
-        self.lp_url = config.get("cmip6", {}).get("landing_page_url", "")
-
-        self._parent = self._build_handle(self._extract_parent_pid(item))
-        self._pid = self._extract_pid(item, asset_key)
-        self._url = self._extract_url()
-        self._filename = self._extract_filename(self.asset)
-        self._checksum = self._extract_checksum(self.asset)
-        self._size = self._extract_size(self.asset)
-        self._download_url = self._extract_download_url(self.asset)
+        self.asset = self._get_asset(self.item, self.asset_key)
 
     @staticmethod
     def _get_asset(item: dict[str, Any], asset_key: str) -> dict[str, Any]:
@@ -37,88 +26,80 @@ class CMIP6FileRecord(BaseRecord):
             raise ValueError(f"Asset key '{asset_key}' not found") from e
 
     @staticmethod
-    def _build_handle(pid):
-        """Build a full handle by combining the prefix and the PID."""
-        # TODO: duplicate of handle_client.build_handle
+    def _build_handle(pid: str) -> str:
         prefix = config.get("handle", "prefix")
         return f"{prefix}/{pid}"
 
-    @staticmethod
-    def _extract_parent_pid(item: dict[str, Any]) -> str:
+    def _extract_parent_pid(self) -> str:
         try:
-            return item_pid(item["id"])
+            return item_pid(self.item["id"])
         except KeyError as e:
             logging.error("Missing 'id' in item for parent PID: %s", e)
             raise ValueError("Missing required 'id' field") from e
 
-    @staticmethod
-    def _extract_pid(item: dict[str, Any], asset_key: str) -> str:
+    def _extract_pid(self) -> str:
         try:
-            return asset_pid(item["id"], asset_key)
+            return asset_pid(self.item["id"], self.asset_key)
         except KeyError as e:
             logging.error("Missing 'id' in item for asset PID: %s", e)
             raise ValueError("Missing required 'id' field") from e
 
     def _extract_url(self) -> str:
-        url = f"{self.lp_url}/{self.prefix}/{self.pid}"
-        return url
+        prefix = config.get("handle", {}).get("prefix", "")
+        lp_url = config.get("cmip6", {}).get("landing_page_url", "")
+        return f"{lp_url}/{prefix}/{self.pid}"
 
-    @staticmethod
-    def _extract_download_url(asset: dict[str, Any]) -> str:
+    def _extract_download_url(self) -> str:
         try:
-            return asset["href"]
+            return self.asset["href"]
         except KeyError as e:
             logging.error(f"Missing 'href' in asset: {e}")
             raise ValueError("Missing required 'href' field in asset") from e
 
-    @staticmethod
-    def _extract_filename(asset: dict[str, Any]) -> str:
+    def _extract_filename(self) -> str:
         try:
-            href = asset["href"]
-            return PurePosixPath(href).name
+            return PurePosixPath(self.asset["href"]).name
         except KeyError as e:
             logging.error(f"Missing 'href' in asset: {e}")
             raise ValueError("Missing required 'href' field in asset") from e
 
-    @staticmethod
-    def _extract_checksum(asset: dict[str, Any]) -> str | None:
-        return asset.get("checksum")
+    def _extract_checksum(self) -> str | None:
+        return self.asset.get("checksum")
 
-    @staticmethod
-    def _extract_size(asset: dict[str, Any]) -> int | None:
+    def _extract_size(self) -> int | None:
         try:
-            return int(asset["size"])
+            return int(self.asset["size"])
         except (KeyError, ValueError, TypeError):
             logging.debug("Size not available or invalid in asset")
             return None
 
-    @property
-    def parent(self) -> Any:
-        return self._parent
+    @cached_property
+    def parent(self) -> str:
+        return self._build_handle(self._extract_parent_pid())
 
-    @property
-    def pid(self) -> Any:
-        return self._pid
+    @cached_property
+    def pid(self) -> str:
+        return self._extract_pid()
 
-    @property
+    @cached_property
     def url(self) -> str:
-        return self._url
+        return self._extract_url()
 
-    @property
+    @cached_property
     def filename(self) -> str:
-        return self._filename
+        return self._extract_filename()
 
-    @property
+    @cached_property
     def checksum(self) -> str | None:
-        return self._checksum
+        return self._extract_checksum()
 
-    @property
+    @cached_property
     def size(self) -> int | None:
-        return self._size
+        return self._extract_size()
 
-    @property
+    @cached_property
     def download_url(self) -> str:
-        return self._download_url
+        return self._extract_download_url()
 
     def as_handle_model(self) -> CMIP6FileModel:
         return CMIP6FileModel(
@@ -135,17 +116,7 @@ class CMIP6FileRecord(BaseRecord):
 def extract_asset_records(
     item: dict[str, Any], exclude_keys: list[str], strict: bool
 ) -> list[CMIP6FileRecord]:
-    """Given a CMIP6 STAC item, return a list of CMIP6AssetRecord instances
-    for all asset keys except those in exclude_keys.
-
-    Args:
-        item: A CMIP6 STAC item as a dict.
-        exclude_keys: Optional list of asset keys to ignore (e.g., ["thumbnail", "quicklook"]).
-
-    Returns:
-        A list of CMIP6AssetRecord objects.
-
-    """
+    """Return a list of CMIP6FileRecord instances for all assets except those in exclude_keys."""
     exclude_keys = set(exclude_keys or [])
     assets = item.get("assets", {})
 
@@ -154,9 +125,7 @@ def extract_asset_records(
         if key in exclude_keys:
             continue
         try:
-            record = CMIP6FileRecord(item, key, strict)
-            records.append(record)
+            records.append(CMIP6FileRecord(item, key, strict))
         except ValueError as e:
-            # Log and skip problematic assets
             logging.warning(f"Skipping asset '{key}': {e}")
     return records
