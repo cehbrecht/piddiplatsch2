@@ -84,6 +84,10 @@ format: ## format code using isort and black
 	@bash -c 'isort src tests'
 	@bash -c 'black src tests'
 
+pre-commit: ## run all pre-commit hooks
+	@pre-commit run --all-files
+
+
 ## Testing targets:
 
 test: ## run tests quickly with the default Python (skip slow and online tests)
