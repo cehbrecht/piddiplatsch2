@@ -42,10 +42,8 @@ class CMIP6DatasetRecord:
         self._dataset_version = self._extract_dataset_version(self.item)
         self._hosting_node = self._extract_hosting_node(self.item)
         self._replica_nodes = self._extract_replica_nodes(self.item)
-        self._unpublished_replicas = []
-        self._unpublished_hosts = self._extract_unpublished(
-            self.item, "unpublished_hosts"
-        )
+        self._unpublished_replicas = self._extract_unpublished_replicas(self.item)
+        self._unpublished_hosts = self._extract_unpublished_host(self.item)
 
     @staticmethod
     def _extract_pid(item: dict[str, Any]) -> Any:
@@ -56,25 +54,24 @@ class CMIP6DatasetRecord:
             raise ValueError("Missing required 'id' field") from e
 
     def _extract_url(self) -> str:
-        url = f"{self.lp_url}/{self.prefix}/{self.pid}"
-        return url
-
-    @staticmethod
-    def _extract_stac_url(item: dict[str, Any]) -> str:
-        try:
-            return item["links"][0]["href"]
-        except (KeyError, IndexError) as e:
-            logging.error("Missing 'links[0].href' in item: %s", e)
-            raise ValueError("Missing required 'links[0].href' field") from e
+        return f"{self.lp_url}/{self.prefix}/{self.pid}"
 
     @staticmethod
     def _extract_dataset_id(item: dict[str, Any]) -> str:
         id_str = item.get("id", "")
         parts = id_str.rsplit(".", 1)
-        dataset_id = parts[0]
-        return dataset_id
+        if not parts or len(parts) < 2:
+            logging.warning(f"Unable to parse dataset ID from: {id_str}")
+        return parts[0]
 
-    from piddiplatsch.utils.pid import asset_pid
+    @staticmethod
+    def _extract_dataset_version(item: dict[str, Any]) -> str:
+        id_str = item.get("id", "")
+        parts = id_str.rsplit(".", 1)
+        if len(parts) < 2:
+            logging.warning(f"No version found in ID: {id_str}")
+            return ""
+        return parts[1]
 
     def _extract_has_parts(self, item: dict[str, Any]) -> list[str]:
         parts = []
@@ -87,24 +84,16 @@ class CMIP6DatasetRecord:
         for key in asset_keys:
             if key in self.exclude_keys:
                 continue
-            # don't save more then max_parts
             if self.max_parts > -1 and len(parts) >= self.max_parts:
-                logging.debug(f"reached limit of {self.max_parts} assets.")
+                logging.debug(f"Reached limit of {self.max_parts} assets.")
                 break
             parts.append(asset_pid(item_id, key))
-
         return parts
 
     @staticmethod
-    def _extract_is_part_of(item: dict[str, Any]) -> str:
+    def _extract_is_part_of(item: dict[str, Any]) -> str | None:
+        # Placeholder; return None or derive from parent ID if needed
         return None
-
-    @staticmethod
-    def _extract_dataset_version(item: dict[str, Any]) -> str:
-        id_str = item.get("id", "")
-        parts = id_str.rsplit(".", 1)
-        dataset_version = parts[1] if len(parts) > 1 else None
-        return dataset_version
 
     @staticmethod
     def _parse_datetime(value: str | None) -> datetime | None:
@@ -118,15 +107,14 @@ class CMIP6DatasetRecord:
 
     @staticmethod
     def _extract_hosting_node(item: dict[str, Any]) -> HostingNode:
-        ref_node = (
-            item.get("assets", {}).get("reference_file", {}).get("alternate:name")
-        )
-        data_node = item.get("assets", {}).get("data0001", {}).get("alternate:name")
+        assets = item.get("assets", {})
+        ref_node = assets.get("reference_file", {}).get("alternate:name")
+        data_node = assets.get("data0001", {}).get("alternate:name")
         host = ref_node or data_node or "unknown"
 
         pub_on = None
         for key in ["reference_file", "data0001"]:
-            published = item.get("assets", {}).get(key, {}).get("published_on")
+            published = assets.get(key, {}).get("published_on")
             if published:
                 pub_on = published
                 break
@@ -141,25 +129,35 @@ class CMIP6DatasetRecord:
     @staticmethod
     def _extract_replica_nodes(item: dict[str, Any]) -> list[HostingNode]:
         nodes = []
-        locations = item.get("locations")
-        if locations:
-            locs = locations.get("location", [])
-            if isinstance(locs, dict):
-                locs = [locs]
-            for loc in locs:
-                h = loc.get("host")
-                p = CMIP6DatasetRecord._parse_datetime(loc.get("publishedOn"))
-                if h:
-                    nodes.append(HostingNode(host=h, published_on=p))
+        locations = item.get("locations", {}).get("location", [])
+        if isinstance(locations, dict):
+            locations = [locations]
+        for loc in locations:
+            host = loc.get("host")
+            pub_on = CMIP6DatasetRecord._parse_datetime(loc.get("publishedOn"))
+            if host:
+                nodes.append(HostingNode(host=host, published_on=pub_on))
         return nodes
 
     @staticmethod
-    def _extract_unpublished(item: dict[str, Any], key: str) -> list[str]:
-        host = "unknown"
-        pub_on = ""
+    def _extract_unpublished_host(item: dict[str, Any]) -> HostingNode:
+        host = item.get("unpublished_hosts", {}).get("host", "unknown")
+        pub_on = item.get("unpublished_hosts", {}).get("published_on", "")
         return HostingNode(
             host=host, published_on=CMIP6DatasetRecord._parse_datetime(pub_on)
         )
+
+    @staticmethod
+    def _extract_unpublished_replicas(item: dict[str, Any]) -> list[HostingNode]:
+        replicas = []
+        data = item.get("unpublished_replicas", [])
+        if isinstance(data, dict):
+            data = [data]
+        for entry in data:
+            host = entry.get("host", "unknown")
+            pub_on = CMIP6DatasetRecord._parse_datetime(entry.get("published_on", ""))
+            replicas.append(HostingNode(host=host, published_on=pub_on))
+        return replicas
 
     @property
     def pid(self) -> Any:
@@ -182,7 +180,7 @@ class CMIP6DatasetRecord:
         return self._has_parts
 
     @property
-    def is_part_of(self) -> str:
+    def is_part_of(self) -> str | None:
         return self._is_part_of
 
     @property
@@ -215,9 +213,9 @@ class CMIP6DatasetRecord:
         )
 
     def as_record(self) -> dict:
-        """Return the handle model as dict."""
+        """Return the handle model as a cleaned dictionary."""
         return drop_empty(self.as_handle_model().model_dump())
 
     def as_json(self) -> str:
-        """Return the handle model as JSON string."""
+        """Return the handle model as a JSON string."""
         return self.as_handle_model().model_dump_json()
