@@ -155,7 +155,7 @@ piddiplatsch init
 Send a record (JSON format) for testing only:
 
 ```bash
-piddiplatsch send -p tests/testdata/CMIP6/<your_file>.json
+piddiplatsch send tests/testdata/CMIP6/<your_file>.json
 ```
 
 ---
