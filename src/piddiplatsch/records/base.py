@@ -10,8 +10,6 @@ class BaseRecord(ABC):
     def __init__(self, item: dict[str, Any], strict: bool):
         self.item = item
         self.strict = strict
-        # Optionally validate using Pydantic model if you want
-        # self.validate()
 
     @abstractmethod
     def as_handle_model(self) -> BaseModel:
@@ -21,7 +19,7 @@ class BaseRecord(ABC):
     def validate(self):
         """Validate the Pydantic model constructed from item."""
         try:
-            self.as_handle_model().model_validate()
+            self.as_handle_model()
         except ValidationError as e:
             # Log or raise as needed
             raise ValueError(f"Pydantic validation failed: {e}") from e
