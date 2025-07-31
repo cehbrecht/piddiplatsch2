@@ -1,15 +1,15 @@
 import logging
-from typing import Any
 from datetime import datetime, timezone
+from typing import Any
 
-from jsonschema import validate, ValidationError
 from dateutil.parser import isoparse
+from jsonschema import ValidationError, validate
 
-from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
-from piddiplatsch.models import CMIP6DatasetModel, HostingNode
 from piddiplatsch.config import config
-from piddiplatsch.utils.pid import item_pid, asset_pid
+from piddiplatsch.models import CMIP6DatasetModel, HostingNode
 from piddiplatsch.records.utils import drop_empty
+from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
+from piddiplatsch.utils.pid import asset_pid, item_pid
 
 
 class CMIP6DatasetRecord:

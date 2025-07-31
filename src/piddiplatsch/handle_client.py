@@ -1,13 +1,14 @@
-import logging
-import pyhandle
-from piddiplatsch.config import config
 import json
+import logging
 from datetime import datetime
 from typing import Any
-from pyhandle.handleexceptions import HandleAlreadyExistsException
-from pyhandle.clientcredentials import PIDClientCredentials
 
+import pyhandle
 import urllib3
+from pyhandle.clientcredentials import PIDClientCredentials
+from pyhandle.handleexceptions import HandleAlreadyExistsException
+
+from piddiplatsch.config import config
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -20,7 +21,7 @@ def _prepare_handle_data(record: dict[str, Any]) -> dict[str, str]:
             continue
         if isinstance(value, datetime):
             value = value.isoformat()
-        elif isinstance(value, (list, dict)):
+        elif isinstance(value, (list | dict)):
             # Recursively convert datetimes inside lists/dicts
             def serialize(obj):
                 if isinstance(obj, datetime):

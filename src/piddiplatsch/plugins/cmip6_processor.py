@@ -1,13 +1,15 @@
-import pluggy
 import logging
 from datetime import datetime
 from typing import Any
-from jsonschema import validate, ValidationError
-from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
+
+import pluggy
+from jsonschema import ValidationError, validate
+
+from piddiplatsch.handle_client import HandleClient
 from piddiplatsch.records import CMIP6DatasetRecord
 from piddiplatsch.records.cmip6_file_record import extract_asset_records
 from piddiplatsch.result import ProcessingResult
-from piddiplatsch.handle_client import HandleClient
+from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
 
 hookimpl = pluggy.HookimplMarker("piddiplatsch")
 

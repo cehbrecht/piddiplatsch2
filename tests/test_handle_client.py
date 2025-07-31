@@ -1,4 +1,5 @@
 import pytest
+
 from piddiplatsch.handle_client import _prepare_handle_data
 
 

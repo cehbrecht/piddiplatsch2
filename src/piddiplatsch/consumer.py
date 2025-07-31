@@ -1,13 +1,15 @@
-import logging
 import json
+import logging
 import signal
 import sys
-from confluent_kafka import Consumer as ConfluentConsumer, KafkaException
-from piddiplatsch.recovery import FailureRecovery
-from piddiplatsch.dump import DumpRecorder
-from piddiplatsch.stats import StatsTracker
 
+from confluent_kafka import Consumer as ConfluentConsumer
+from confluent_kafka import KafkaException
+
+from piddiplatsch.dump import DumpRecorder
 from piddiplatsch.plugin_loader import load_single_plugin
+from piddiplatsch.recovery import FailureRecovery
+from piddiplatsch.stats import StatsTracker
 
 logger = logging.getLogger(__name__)
 

@@ -1,5 +1,7 @@
-import pluggy
 import importlib.metadata
+
+import pluggy
+
 from piddiplatsch.plugin import MessageProcessorSpec
 
 
@@ -12,7 +14,9 @@ def load_single_plugin(processor_name: str):
     entry_point_map = {ep.name: ep for ep in entry_points}
 
     if processor_name not in entry_point_map:
-        raise ValueError(f"Processor plugin '{processor_name}' not found among: {list(entry_point_map)}")
+        raise ValueError(
+            f"Processor plugin '{processor_name}' not found among: {list(entry_point_map)}"
+        )
 
     plugin = entry_point_map[processor_name].load()()
     pm.register(plugin)

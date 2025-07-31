@@ -16,8 +16,7 @@ class BaseCMIP6Model(BaseModel):
 
 
 class CMIP6DatasetModel(BaseCMIP6Model):
-    """TODO: clean empty fields
-    """
+    """TODO: clean empty fields"""
 
     AGGREGATION_LEVEL: str = "DATASET"
     DATASET_ID: str

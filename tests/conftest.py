@@ -1,7 +1,9 @@
-import pytest
 from pathlib import Path
-from piddiplatsch.handle_client import HandleClient
+
+import pytest
 from click.testing import CliRunner
+
+from piddiplatsch.handle_client import HandleClient
 
 
 @pytest.fixture

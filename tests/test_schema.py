@@ -1,4 +1,5 @@
 import pytest
+
 from piddiplatsch.schema import load_schema
 
 

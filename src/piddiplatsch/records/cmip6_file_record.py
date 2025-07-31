@@ -1,11 +1,11 @@
 import logging
-from typing import Any
 from pathlib import PurePosixPath
+from typing import Any
 
-from piddiplatsch.models import CMIP6FileModel
 from piddiplatsch.config import config
-from piddiplatsch.utils.pid import item_pid, asset_pid
+from piddiplatsch.models import CMIP6FileModel
 from piddiplatsch.records.utils import drop_empty
+from piddiplatsch.utils.pid import asset_pid, item_pid
 
 
 class CMIP6FileRecord:
