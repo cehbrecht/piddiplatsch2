@@ -1,6 +1,5 @@
 def drop_empty(d):
-    """Recursively clean empty fields
-    """
+    """Recursively clean empty fields"""
     result = {}
     for k, v in d.items():
         if v in ("", [], {}, None):

@@ -1,5 +1,6 @@
 import pytest
-from piddiplatsch.testing.mock_handle_server import app, HANDLE_PREFIX, _reset_handles
+
+from piddiplatsch.testing.mock_handle_server import HANDLE_PREFIX, _reset_handles, app
 
 TEST_SUFFIX = "pytest-test"
 TEST_HANDLE = f"{HANDLE_PREFIX}/{TEST_SUFFIX}"

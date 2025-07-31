@@ -73,9 +73,16 @@ clean-docs: ## remove documentation artifacts
 	@echo "Removing documentation artifacts ..."
 	$(MAKE) -C docs clean
 
-lint: ## check style with ruff
-	@echo "Running code style checks ..."
+lint: ## check style with ruff, black, isort
+	@echo "Running code style checks (ruff, black, isort) ..."
 	@bash -c 'ruff check src tests'
+	@bash -c 'black --check src tests'
+	@bash -c 'isort --check-only src tests'
+
+format: ## format code using isort and black
+	@echo "Formatting code with isort and black ..."
+	@bash -c 'isort src tests'
+	@bash -c 'black src tests'
 
 ## Testing targets:
 

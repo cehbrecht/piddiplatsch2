@@ -1,13 +1,14 @@
-import logging
-import pyhandle
-from piddiplatsch.config import config
 import json
+import logging
 from datetime import datetime
 from typing import Any
-from pyhandle.handleexceptions import HandleAlreadyExistsException
-from pyhandle.clientcredentials import PIDClientCredentials
 
+import pyhandle
 import urllib3
+from pyhandle.clientcredentials import PIDClientCredentials
+from pyhandle.handleexceptions import HandleAlreadyExistsException
+
+from piddiplatsch.config import config
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 

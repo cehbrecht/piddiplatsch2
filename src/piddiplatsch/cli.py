@@ -1,11 +1,12 @@
-import click
 import json
 from pathlib import Path
-from piddiplatsch.consumer import start_consumer
-from piddiplatsch.config import config
-from piddiplatsch import client
-from piddiplatsch.recovery import FailureRecovery
 
+import click
+
+from piddiplatsch import client
+from piddiplatsch.config import config
+from piddiplatsch.consumer import start_consumer
+from piddiplatsch.recovery import FailureRecovery
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 

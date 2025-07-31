@@ -1,4 +1,4 @@
-from uuid import uuid3, NAMESPACE_URL
+from uuid import NAMESPACE_URL, uuid3
 
 
 def item_pid(item_id: str) -> str:
