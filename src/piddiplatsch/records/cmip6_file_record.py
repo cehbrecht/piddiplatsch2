@@ -1,12 +1,11 @@
 import logging
-from functools import cached_property
 from pathlib import PurePosixPath
 from typing import Any
 
 from piddiplatsch.config import config
 from piddiplatsch.models import CMIP6FileModel
 from piddiplatsch.records.base import BaseRecord
-from piddiplatsch.utils.pid import asset_pid, item_pid
+from piddiplatsch.utils.pid import asset_pid, build_handle, item_pid
 
 
 class CMIP6FileRecord(BaseRecord):
@@ -15,91 +14,68 @@ class CMIP6FileRecord(BaseRecord):
     def __init__(self, item: dict[str, Any], asset_key: str, strict: bool):
         super().__init__(item, strict=strict)
         self.asset_key = asset_key
-        self.asset = self._get_asset(self.item, self.asset_key)
+        self.asset = self._get_asset(asset_key)
 
-    @staticmethod
-    def _get_asset(item: dict[str, Any], asset_key: str) -> dict[str, Any]:
+        self.prefix = config.get("handle", {}).get("prefix", "")
+        self.lp_url = config.get("cmip6", {}).get("landing_page_url", "")
+
+        self._parent = build_handle(item_pid(self.item_id))
+        self._pid = asset_pid(self.item_id, self.asset_key)
+
+    def _get_asset(self, asset_key: str) -> dict[str, Any]:
         try:
-            return item["assets"][asset_key]
+            return self.item["assets"][asset_key]
         except KeyError as e:
             logging.error(f"Missing asset '{asset_key}' in item: {e}")
             raise ValueError(f"Asset key '{asset_key}' not found") from e
 
-    @staticmethod
-    def _build_handle(pid: str) -> str:
-        prefix = config.get("handle", "prefix")
-        return f"{prefix}/{pid}"
-
-    def _extract_parent_pid(self) -> str:
+    @property
+    def item_id(self) -> str:
         try:
-            return item_pid(self.item["id"])
+            return self.item["id"]
         except KeyError as e:
-            logging.error("Missing 'id' in item for parent PID: %s", e)
+            logging.error("Missing 'id' in item: %s", e)
             raise ValueError("Missing required 'id' field") from e
 
-    def _extract_pid(self) -> str:
-        try:
-            return asset_pid(self.item["id"], self.asset_key)
-        except KeyError as e:
-            logging.error("Missing 'id' in item for asset PID: %s", e)
-            raise ValueError("Missing required 'id' field") from e
+    @property
+    def parent(self) -> str:
+        return self._parent
 
-    def _extract_url(self) -> str:
-        prefix = config.get("handle", {}).get("prefix", "")
-        lp_url = config.get("cmip6", {}).get("landing_page_url", "")
-        return f"{lp_url}/{prefix}/{self.pid}"
+    @property
+    def pid(self) -> str:
+        return self._pid
 
-    def _extract_download_url(self) -> str:
-        try:
-            return self.asset["href"]
-        except KeyError as e:
-            logging.error(f"Missing 'href' in asset: {e}")
-            raise ValueError("Missing required 'href' field in asset") from e
+    @property
+    def url(self) -> str:
+        return f"{self.lp_url}/{self.prefix}/{self.pid}"
 
-    def _extract_filename(self) -> str:
+    @property
+    def filename(self) -> str:
         try:
             return PurePosixPath(self.asset["href"]).name
         except KeyError as e:
             logging.error(f"Missing 'href' in asset: {e}")
             raise ValueError("Missing required 'href' field in asset") from e
 
-    def _extract_checksum(self) -> str | None:
+    @property
+    def checksum(self) -> str | None:
         return self.asset.get("checksum")
 
-    def _extract_size(self) -> int | None:
+    @property
+    def size(self) -> int | None:
         try:
             return int(self.asset["size"])
         except (KeyError, ValueError, TypeError):
             logging.debug("Size not available or invalid in asset")
             return None
 
-    @cached_property
-    def parent(self) -> str:
-        return self._build_handle(self._extract_parent_pid())
-
-    @cached_property
-    def pid(self) -> str:
-        return self._extract_pid()
-
-    @cached_property
-    def url(self) -> str:
-        return self._extract_url()
-
-    @cached_property
-    def filename(self) -> str:
-        return self._extract_filename()
-
-    @cached_property
-    def checksum(self) -> str | None:
-        return self._extract_checksum()
-
-    @cached_property
-    def size(self) -> int | None:
-        return self._extract_size()
-
-    @cached_property
+    @property
     def download_url(self) -> str:
-        return self._extract_download_url()
+        try:
+            return self.asset["href"]
+        except KeyError as e:
+            logging.error(f"Missing 'href' in asset: {e}")
+            raise ValueError("Missing required 'href' field in asset") from e
 
     def as_handle_model(self) -> CMIP6FileModel:
         return CMIP6FileModel(
@@ -116,7 +92,9 @@ class CMIP6FileRecord(BaseRecord):
 def extract_asset_records(
     item: dict[str, Any], exclude_keys: list[str], strict: bool
 ) -> list[CMIP6FileRecord]:
-    """Return a list of CMIP6FileRecord instances for all assets except those in exclude_keys."""
+    """Given a CMIP6 STAC item, return a list of CMIP6FileRecord instances
+    for all asset keys except those in exclude_keys.
+    """
     exclude_keys = set(exclude_keys or [])
     assets = item.get("assets", {})
 

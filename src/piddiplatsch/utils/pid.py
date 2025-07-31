@@ -1,5 +1,12 @@
 from uuid import NAMESPACE_URL, uuid3
 
+from piddiplatsch.config import config
+
+
+def build_handle(pid: str) -> str:
+    prefix = config.get("handle", {}).get("prefix", "")
+    return f"{prefix}/{pid}"
+
 
 def item_pid(item_id: str) -> str:
     """Return a deterministic UUIDv3 PID for the given STAC item ID."""
