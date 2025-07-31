@@ -4,11 +4,11 @@ from typing import Any
 
 from piddiplatsch.config import config
 from piddiplatsch.models import CMIP6FileModel
-from piddiplatsch.records.utils import drop_empty
+from piddiplatsch.records.base import BaseRecord
 from piddiplatsch.utils.pid import asset_pid, item_pid
 
 
-class CMIP6FileRecord:
+class CMIP6FileRecord(BaseRecord):
     """Wraps a CMIP6 STAC asset and prepares Handle record for a file."""
 
     def __init__(self, item: dict[str, Any], asset_key: str):
@@ -130,12 +130,6 @@ class CMIP6FileRecord:
             FILE_SIZE=self.size,
             DOWNLOAD_URL=self.download_url,
         )
-
-    def as_record(self) -> dict:
-        return drop_empty(self.as_handle_model().model_dump(mode="json"))
-
-    def as_json(self) -> str:
-        return self.as_handle_model().model_dump_json(mode="json")
 
 
 def extract_asset_records(

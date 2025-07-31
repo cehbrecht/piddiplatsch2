@@ -7,12 +7,12 @@ from jsonschema import ValidationError, validate
 
 from piddiplatsch.config import config
 from piddiplatsch.models import CMIP6DatasetModel, HostingNode
-from piddiplatsch.records.utils import drop_empty
+from piddiplatsch.records.base import BaseRecord
 from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
 from piddiplatsch.utils.pid import asset_pid, item_pid
 
 
-class CMIP6DatasetRecord:
+class CMIP6DatasetRecord(BaseRecord):
     """Wraps a validated CMIP6 STAC item and prepares Handle records."""
 
     def __init__(self, item: dict[str, Any], strict: bool, exclude_keys: list[str]):
@@ -211,11 +211,3 @@ class CMIP6DatasetRecord:
             UNPUBLISHED_REPLICAS=self.unpublished_replicas,
             UNPUBLISHED_HOSTS=self.unpublished_hosts,
         )
-
-    def as_record(self) -> dict:
-        """Return the handle model as a cleaned dictionary."""
-        return drop_empty(self.as_handle_model().model_dump())
-
-    def as_json(self) -> str:
-        """Return the handle model as a JSON string."""
-        return self.as_handle_model().model_dump_json()
