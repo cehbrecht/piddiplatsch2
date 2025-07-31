@@ -2,12 +2,12 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from dateutil.parser import isoparse
 from jsonschema import ValidationError, validate
 
 from piddiplatsch.config import config
 from piddiplatsch.models import CMIP6DatasetModel, HostingNode
 from piddiplatsch.records.base import BaseRecord
+from piddiplatsch.records.utils import parse_datetime
 from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
 from piddiplatsch.utils.pid import asset_pid, item_pid
 
@@ -96,16 +96,6 @@ class CMIP6DatasetRecord(BaseRecord):
         return None
 
     @staticmethod
-    def _parse_datetime(value: str | None) -> datetime | None:
-        if not value:
-            return None
-        try:
-            return isoparse(value)
-        except Exception:
-            logging.warning(f"Failed to parse datetime: {value}")
-            return None
-
-    @staticmethod
     def _extract_hosting_node(item: dict[str, Any]) -> HostingNode:
         assets = item.get("assets", {})
         ref_node = assets.get("reference_file", {}).get("alternate:name")
@@ -122,9 +112,7 @@ class CMIP6DatasetRecord(BaseRecord):
         if not pub_on:
             pub_on = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
-        return HostingNode(
-            host=host, published_on=CMIP6DatasetRecord._parse_datetime(pub_on)
-        )
+        return HostingNode(host=host, published_on=parse_datetime(pub_on))
 
     @staticmethod
     def _extract_replica_nodes(item: dict[str, Any]) -> list[HostingNode]:
@@ -134,7 +122,7 @@ class CMIP6DatasetRecord(BaseRecord):
             locations = [locations]
         for loc in locations:
             host = loc.get("host")
-            pub_on = CMIP6DatasetRecord._parse_datetime(loc.get("publishedOn"))
+            pub_on = parse_datetime(loc.get("publishedOn"))
             if host:
                 nodes.append(HostingNode(host=host, published_on=pub_on))
         return nodes
@@ -143,9 +131,7 @@ class CMIP6DatasetRecord(BaseRecord):
     def _extract_unpublished_host(item: dict[str, Any]) -> HostingNode:
         host = item.get("unpublished_hosts", {}).get("host", "unknown")
         pub_on = item.get("unpublished_hosts", {}).get("published_on", "")
-        return HostingNode(
-            host=host, published_on=CMIP6DatasetRecord._parse_datetime(pub_on)
-        )
+        return HostingNode(host=host, published_on=parse_datetime(pub_on))
 
     @staticmethod
     def _extract_unpublished_replicas(item: dict[str, Any]) -> list[HostingNode]:
@@ -155,7 +141,7 @@ class CMIP6DatasetRecord(BaseRecord):
             data = [data]
         for entry in data:
             host = entry.get("host", "unknown")
-            pub_on = CMIP6DatasetRecord._parse_datetime(entry.get("published_on", ""))
+            pub_on = parse_datetime(entry.get("published_on", ""))
             replicas.append(HostingNode(host=host, published_on=pub_on))
         return replicas
 
