@@ -71,7 +71,7 @@ class CMIP6Processor:
 
         # Iterate over file assets and register them as well
         asset_records = extract_asset_records(
-            item, exclude_keys=self.EXCLUDED_ASSET_KEYS
+            item, exclude_keys=self.EXCLUDED_ASSET_KEYS, strict=self.strict
         )
         if not asset_records:
             logging.warning(f"No file assets found for item PID {record.pid}")

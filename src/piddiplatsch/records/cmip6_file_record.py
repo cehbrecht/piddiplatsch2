@@ -4,121 +4,78 @@ from typing import Any
 
 from piddiplatsch.config import config
 from piddiplatsch.models import CMIP6FileModel
-from piddiplatsch.records.utils import drop_empty
-from piddiplatsch.utils.pid import asset_pid, item_pid
+from piddiplatsch.records.base import BaseRecord
+from piddiplatsch.utils.pid import asset_pid, build_handle, item_pid
 
 
-class CMIP6FileRecord:
+class CMIP6FileRecord(BaseRecord):
     """Wraps a CMIP6 STAC asset and prepares Handle record for a file."""
 
-    def __init__(self, item: dict[str, Any], asset_key: str):
-        self.item = item
+    def __init__(self, item: dict[str, Any], asset_key: str, strict: bool):
+        super().__init__(item, strict=strict)
         self.asset_key = asset_key
-        self.asset = self._get_asset(item, asset_key)
+        self.asset = self._get_asset(asset_key)
 
-        # config
         self.prefix = config.get("handle", {}).get("prefix", "")
         self.lp_url = config.get("cmip6", {}).get("landing_page_url", "")
 
-        self._parent = self._build_handle(self._extract_parent_pid(item))
-        self._pid = self._extract_pid(item, asset_key)
-        self._url = self._extract_url()
-        self._filename = self._extract_filename(self.asset)
-        self._checksum = self._extract_checksum(self.asset)
-        self._size = self._extract_size(self.asset)
-        self._download_url = self._extract_download_url(self.asset)
+        self._parent = build_handle(item_pid(self.item_id))
+        self._pid = asset_pid(self.item_id, self.asset_key)
 
-    @staticmethod
-    def _get_asset(item: dict[str, Any], asset_key: str) -> dict[str, Any]:
+    def _get_asset(self, asset_key: str) -> dict[str, Any]:
         try:
-            return item["assets"][asset_key]
+            return self.item["assets"][asset_key]
         except KeyError as e:
             logging.error(f"Missing asset '{asset_key}' in item: {e}")
             raise ValueError(f"Asset key '{asset_key}' not found") from e
 
-    @staticmethod
-    def _build_handle(pid):
-        """Build a full handle by combining the prefix and the PID."""
-        # TODO: duplicate of handle_client.build_handle
-        prefix = config.get("handle", "prefix")
-        return f"{prefix}/{pid}"
-
-    @staticmethod
-    def _extract_parent_pid(item: dict[str, Any]) -> str:
+    @property
+    def item_id(self) -> str:
         try:
-            return item_pid(item["id"])
+            return self.item["id"]
         except KeyError as e:
-            logging.error("Missing 'id' in item for parent PID: %s", e)
+            logging.error("Missing 'id' in item: %s", e)
             raise ValueError("Missing required 'id' field") from e
 
-    @staticmethod
-    def _extract_pid(item: dict[str, Any], asset_key: str) -> str:
-        try:
-            return asset_pid(item["id"], asset_key)
-        except KeyError as e:
-            logging.error("Missing 'id' in item for asset PID: %s", e)
-            raise ValueError("Missing required 'id' field") from e
+    @property
+    def parent(self) -> str:
+        return self._parent
 
-    def _extract_url(self) -> str:
-        url = f"{self.lp_url}/{self.prefix}/{self.pid}"
-        return url
+    @property
+    def pid(self) -> str:
+        return self._pid
 
-    @staticmethod
-    def _extract_download_url(asset: dict[str, Any]) -> str:
+    @property
+    def url(self) -> str:
+        return f"{self.lp_url}/{self.prefix}/{self.pid}"
+
+    @property
+    def filename(self) -> str:
         try:
-            return asset["href"]
+            return PurePosixPath(self.asset["href"]).name
         except KeyError as e:
             logging.error(f"Missing 'href' in asset: {e}")
             raise ValueError("Missing required 'href' field in asset") from e
 
-    @staticmethod
-    def _extract_filename(asset: dict[str, Any]) -> str:
-        try:
-            href = asset["href"]
-            return PurePosixPath(href).name
-        except KeyError as e:
-            logging.error(f"Missing 'href' in asset: {e}")
-            raise ValueError("Missing required 'href' field in asset") from e
+    @property
+    def checksum(self) -> str | None:
+        return self.asset.get("checksum")
 
-    @staticmethod
-    def _extract_checksum(asset: dict[str, Any]) -> str | None:
-        return asset.get("checksum")
-
-    @staticmethod
-    def _extract_size(asset: dict[str, Any]) -> int | None:
+    @property
+    def size(self) -> int | None:
         try:
-            return int(asset["size"])
+            return int(self.asset["size"])
         except (KeyError, ValueError, TypeError):
             logging.debug("Size not available or invalid in asset")
             return None
 
     @property
-    def parent(self) -> Any:
-        return self._parent
-
-    @property
-    def pid(self) -> Any:
-        return self._pid
-
-    @property
-    def url(self) -> str:
-        return self._url
-
-    @property
-    def filename(self) -> str:
-        return self._filename
-
-    @property
-    def checksum(self) -> str | None:
-        return self._checksum
-
-    @property
-    def size(self) -> int | None:
-        return self._size
-
-    @property
     def download_url(self) -> str:
-        return self._download_url
+        try:
+            return self.asset["href"]
+        except KeyError as e:
+            logging.error(f"Missing 'href' in asset: {e}")
+            raise ValueError("Missing required 'href' field in asset") from e
 
     def as_handle_model(self) -> CMIP6FileModel:
         return CMIP6FileModel(
@@ -131,26 +88,12 @@ class CMIP6FileRecord:
             DOWNLOAD_URL=self.download_url,
         )
 
-    def as_record(self) -> dict:
-        return drop_empty(self.as_handle_model().model_dump(mode="json"))
-
-    def as_json(self) -> str:
-        return self.as_handle_model().model_dump_json(mode="json")
-
 
 def extract_asset_records(
-    item: dict[str, Any], exclude_keys: list[str]
+    item: dict[str, Any], exclude_keys: list[str], strict: bool
 ) -> list[CMIP6FileRecord]:
-    """Given a CMIP6 STAC item, return a list of CMIP6AssetRecord instances
+    """Given a CMIP6 STAC item, return a list of CMIP6FileRecord instances
     for all asset keys except those in exclude_keys.
-
-    Args:
-        item: A CMIP6 STAC item as a dict.
-        exclude_keys: Optional list of asset keys to ignore (e.g., ["thumbnail", "quicklook"]).
-
-    Returns:
-        A list of CMIP6AssetRecord objects.
-
     """
     exclude_keys = set(exclude_keys or [])
     assets = item.get("assets", {})
@@ -160,9 +103,7 @@ def extract_asset_records(
         if key in exclude_keys:
             continue
         try:
-            record = CMIP6FileRecord(item, key)
-            records.append(record)
+            records.append(CMIP6FileRecord(item, key, strict))
         except ValueError as e:
-            # Log and skip problematic assets
             logging.warning(f"Skipping asset '{key}': {e}")
     return records

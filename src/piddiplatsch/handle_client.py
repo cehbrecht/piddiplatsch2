@@ -9,6 +9,7 @@ from pyhandle.clientcredentials import PIDClientCredentials
 from pyhandle.handleexceptions import HandleAlreadyExistsException
 
 from piddiplatsch.config import config
+from piddiplatsch.utils.pid import build_handle
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -87,13 +88,9 @@ class HandleClient:
             password=config.get("handle", "password"),
         )
 
-    def build_handle(self, pid: str):
-        """Build a full handle by combining the prefix and the PID."""
-        return f"{self.prefix}/{pid}"
-
     def add_record(self, pid: str, record: dict[str, Any]):
         """Add a new PID to the Handle Service."""
-        handle = self.build_handle(pid)
+        handle = build_handle(pid)
 
         try:
             handle_data = _prepare_handle_data(record)
@@ -117,7 +114,7 @@ class HandleClient:
 
     def get_record(self, pid: str) -> dict | None:
         """Retrieve a PID record as a dict of {type: value}. Returns None if not found."""
-        handle = self.build_handle(pid)
+        handle = build_handle(pid)
 
         try:
             response = self.client.retrieve_handle_record_json(handle)
