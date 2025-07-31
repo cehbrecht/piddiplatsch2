@@ -21,7 +21,7 @@ def _prepare_handle_data(record: dict[str, Any]) -> dict[str, str]:
             continue
         if isinstance(value, datetime):
             value = value.isoformat()
-        elif isinstance(value, (list, dict)):
+        elif isinstance(value, (list | dict)):
             # Recursively convert datetimes inside lists/dicts
             def serialize(obj):
                 if isinstance(obj, datetime):
