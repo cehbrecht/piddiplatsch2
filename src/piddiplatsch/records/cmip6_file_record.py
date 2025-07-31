@@ -5,7 +5,6 @@ from typing import Any
 from piddiplatsch.config import config
 from piddiplatsch.models import CMIP6FileModel
 from piddiplatsch.records.base import BaseRecord
-from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
 from piddiplatsch.utils.pid import asset_pid, item_pid
 
 
@@ -13,7 +12,7 @@ class CMIP6FileRecord(BaseRecord):
     """Wraps a CMIP6 STAC asset and prepares Handle record for a file."""
 
     def __init__(self, item: dict[str, Any], asset_key: str, strict: bool):
-        super().__init__(item, schema=SCHEMA, strict=strict)
+        super().__init__(item, strict=strict)
         self.asset_key = asset_key
         self.asset = self._get_asset(item, asset_key)
 

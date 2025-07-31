@@ -6,7 +6,6 @@ from piddiplatsch.config import config
 from piddiplatsch.models import CMIP6DatasetModel, HostingNode
 from piddiplatsch.records.base import BaseRecord
 from piddiplatsch.records.utils import parse_datetime
-from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
 from piddiplatsch.utils.pid import asset_pid, item_pid
 
 
@@ -14,7 +13,7 @@ class CMIP6DatasetRecord(BaseRecord):
     """Wraps a validated CMIP6 STAC item and prepares Handle records."""
 
     def __init__(self, item: dict[str, Any], strict: bool, exclude_keys: list[str]):
-        super().__init__(item, schema=SCHEMA, strict=strict)
+        super().__init__(item, strict=strict)
         self.exclude_keys = exclude_keys
 
         # config
