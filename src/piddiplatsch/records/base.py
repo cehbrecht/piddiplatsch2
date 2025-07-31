@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from functools import cached_property
 from typing import Any
 
 from pydantic import BaseModel, ValidationError
@@ -16,19 +17,21 @@ class BaseRecord(ABC):
         """Return a Pydantic model representing the handle record."""
         ...
 
+    @cached_property
+    def model(self) -> BaseModel:
+        return self.as_handle_model()
+
     def validate(self):
-        """Validate the Pydantic model constructed from item."""
         try:
-            self.as_handle_model()
+            _ = self.model
         except ValidationError as e:
-            # Log or raise as needed
             raise ValueError(f"Pydantic validation failed: {e}") from e
 
     def as_record(self) -> dict:
-        return drop_empty(self.as_handle_model().model_dump())
+        return drop_empty(self.model.model_dump())
 
     def as_json(self) -> str:
-        return self.as_handle_model().model_dump_json()
+        return self.model.model_dump_json()
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} id={self.item.get('id', None)}>"
+        return f"<{self.__class__.__name__} id={self.item.get('id', 'UNKNOWN')}>"
