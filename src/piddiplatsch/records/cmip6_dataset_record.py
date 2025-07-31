@@ -165,11 +165,11 @@ class CMIP6DatasetRecord(BaseRecord):
         return self._replica_nodes
 
     @property
-    def unpublished_replicas(self) -> list[str]:
+    def unpublished_replicas(self) -> list[HostingNode]:
         return self._unpublished_replicas
 
     @property
-    def unpublished_hosts(self) -> list[str]:
+    def unpublished_hosts(self) -> HostingNode:
         return self._unpublished_hosts
 
     def as_handle_model(self) -> CMIP6DatasetModel:
