@@ -26,7 +26,6 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
 
         # Precompute properties
         self._pid = self._extract_pid()
-        self._url = self._extract_url()
         self._is_part_of = self._extract_is_part_of()
         self._has_parts = self._extract_has_parts()
         self._dataset_id = self._extract_dataset_id()
@@ -42,9 +41,6 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
         except KeyError as e:
             logging.error("Missing 'id' in item: %s", e)
             raise ValueError("Missing required 'id' field") from e
-
-    def _extract_url(self) -> str:
-        return f"{self._lp_url}/{self._prefix}/{self._pid}"
 
     def _extract_dataset_id(self) -> str:
         id_str = self.item.get("id", "")
@@ -129,14 +125,6 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
             pub_on = parse_datetime(entry.get("published_on", ""))
             replicas.append(HostingNode(host=host, published_on=pub_on))
         return replicas
-
-    @property
-    def pid(self) -> str:
-        return self._pid
-
-    @property
-    def url(self) -> str:
-        return self._url
 
     @property
     def dataset_id(self) -> str:

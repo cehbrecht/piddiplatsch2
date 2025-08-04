@@ -44,3 +44,13 @@ class BaseCMIP6Record(BaseRecord):
 
         self._prefix = config.get("handle", {}).get("prefix", "")
         self._lp_url = config.get("cmip6", {}).get("landing_page_url", "")
+
+        self._pid = None
+
+    @property
+    def pid(self) -> str:
+        return self._pid
+
+    @property
+    def url(self) -> str:
+        return f"{self._lp_url}/{self._prefix}/{self.pid}"

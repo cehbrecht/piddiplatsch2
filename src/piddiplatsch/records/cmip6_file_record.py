@@ -38,14 +38,6 @@ class CMIP6FileRecord(BaseCMIP6Record):
         return self._parent
 
     @property
-    def pid(self) -> str:
-        return self._pid
-
-    @property
-    def url(self) -> str:
-        return f"{self._lp_url}/{self._prefix}/{self.pid}"
-
-    @property
     def filename(self) -> str:
         try:
             return PurePosixPath(self.asset["href"]).name
