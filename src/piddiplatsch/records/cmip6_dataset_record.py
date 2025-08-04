@@ -25,45 +25,34 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
 
     @cached_property
     def pid(self) -> str:
-        try:
-            return item_pid(self.item["id"])
-        except KeyError as e:
-            logging.error("Missing 'id' in item: %s", e)
-            raise ValueError("Missing required 'id' field") from e
+        return item_pid(self.item_id)
 
     @cached_property
     def dataset_id(self) -> str:
-        id_str = self.item.get("id", "")
-        parts = id_str.rsplit(".", 1)
+        parts = self.item_id.rsplit(".", 1)
         if len(parts) < 2:
-            logging.warning(f"Unable to parse dataset ID from: {id_str}")
-            return id_str
+            logging.warning(f"Unable to parse dataset ID from: {self.item_id}")
+            return self.item_id
         return parts[0]
 
     @cached_property
     def dataset_version(self) -> str:
-        id_str = self.item.get("id", "")
-        parts = id_str.rsplit(".", 1)
+        parts = self.item_id.rsplit(".", 1)
         if len(parts) < 2:
-            logging.warning(f"No version found in ID: {id_str}")
+            logging.warning(f"No version found in ID: {self.item_id}")
             return ""
         return parts[1]
 
     @cached_property
     def has_parts(self) -> list[str]:
         parts = []
-        item_id = self.item.get("id")
-        if not item_id:
-            logging.warning("Missing item 'id'; cannot compute HAS_PARTS")
-            return parts
-
-        for key in self.item.get("assets", {}).keys():
+        for key in self.assets.keys():
             if key in self.exclude_keys:
                 continue
             if self.max_parts > -1 and len(parts) >= self.max_parts:
                 logging.debug(f"Reached limit of {self.max_parts} assets.")
                 break
-            parts.append(asset_pid(item_id, key))
+            parts.append(asset_pid(self.item_id, key))
         return parts
 
     @cached_property
@@ -73,14 +62,14 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
 
     @cached_property
     def hosting_node(self) -> HostingNode:
-        assets = self.item.get("assets", {})
-        ref_node = assets.get("reference_file", {}).get("alternate:name")
-        data_node = assets.get("data0001", {}).get("alternate:name")
+        ref_node = self.get_asset_property("reference_file", "alternate:name")
+        data_node = self.get_asset_property("data0001", "alternate:name")
+
         host = ref_node or data_node or "unknown"
 
         published_on = None
         for key in ("reference_file", "data0001"):
-            published_on = assets.get(key, {}).get("published_on")
+            published_on = self.get_asset_property(key, "published_on")
             if published_on:
                 break
 
