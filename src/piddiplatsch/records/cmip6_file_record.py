@@ -1,81 +1,54 @@
 import logging
+from functools import cached_property
 from pathlib import PurePosixPath
 from typing import Any
 
-from piddiplatsch.config import config
 from piddiplatsch.models import CMIP6FileModel
-from piddiplatsch.records.base import BaseRecord
+from piddiplatsch.records.base import BaseCMIP6Record
 from piddiplatsch.utils.pid import asset_pid, build_handle, item_pid
 
 
-class CMIP6FileRecord(BaseRecord):
+class CMIP6FileRecord(BaseCMIP6Record):
     """Wraps a CMIP6 STAC asset and prepares Handle record for a file."""
 
     def __init__(self, item: dict[str, Any], asset_key: str, strict: bool):
         super().__init__(item, strict=strict)
         self.asset_key = asset_key
-        self.asset = self._get_asset(asset_key)
 
-        self.prefix = config.get("handle", {}).get("prefix", "")
-        self.lp_url = config.get("cmip6", {}).get("landing_page_url", "")
+    @cached_property
+    def asset(self) -> dict[str, Any]:
+        return self.item["assets"][self.asset_key]
 
-        self._parent = build_handle(item_pid(self.item_id))
-        self._pid = asset_pid(self.item_id, self.asset_key)
-
-    def _get_asset(self, asset_key: str) -> dict[str, Any]:
-        try:
-            return self.item["assets"][asset_key]
-        except KeyError as e:
-            logging.error(f"Missing asset '{asset_key}' in item: {e}")
-            raise ValueError(f"Asset key '{asset_key}' not found") from e
-
-    @property
+    @cached_property
     def item_id(self) -> str:
-        try:
-            return self.item["id"]
-        except KeyError as e:
-            logging.error("Missing 'id' in item: %s", e)
-            raise ValueError("Missing required 'id' field") from e
+        return self.item["id"]
 
-    @property
-    def parent(self) -> str:
-        return self._parent
-
-    @property
+    @cached_property
     def pid(self) -> str:
-        return self._pid
+        return asset_pid(self.item_id, self.asset_key)
 
-    @property
-    def url(self) -> str:
-        return f"{self.lp_url}/{self.prefix}/{self.pid}"
+    @cached_property
+    def parent(self) -> str:
+        return build_handle(item_pid(self.item_id))
 
-    @property
+    @cached_property
     def filename(self) -> str:
-        try:
-            return PurePosixPath(self.asset["href"]).name
-        except KeyError as e:
-            logging.error(f"Missing 'href' in asset: {e}")
-            raise ValueError("Missing required 'href' field in asset") from e
+        return PurePosixPath(self.asset["href"]).name
 
-    @property
+    @cached_property
     def checksum(self) -> str | None:
         return self.asset.get("checksum")
 
-    @property
+    @cached_property
     def size(self) -> int | None:
         try:
-            return int(self.asset["size"])
-        except (KeyError, ValueError, TypeError):
-            logging.debug("Size not available or invalid in asset")
+            return int(self.asset.get("size"))
+        except (ValueError, TypeError):
             return None
 
-    @property
+    @cached_property
     def download_url(self) -> str:
-        try:
-            return self.asset["href"]
-        except KeyError as e:
-            logging.error(f"Missing 'href' in asset: {e}")
-            raise ValueError("Missing required 'href' field in asset") from e
+        return self.asset["href"]
 
     def as_handle_model(self) -> CMIP6FileModel:
         return CMIP6FileModel(
@@ -103,7 +76,10 @@ def extract_asset_records(
         if key in exclude_keys:
             continue
         try:
-            records.append(CMIP6FileRecord(item, key, strict))
+            record = CMIP6FileRecord(item, key, strict)
+            if strict:
+                record.validate()
+            records.append(record)
         except ValueError as e:
             logging.warning(f"Skipping asset '{key}': {e}")
     return records
