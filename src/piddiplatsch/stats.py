@@ -1,6 +1,5 @@
 import json
 import logging
-from collections import Counter
 from datetime import datetime
 
 from piddiplatsch.config import config
@@ -11,7 +10,6 @@ class StatsTracker:
         self.messages_processed = 0
         self.handles_created = 0
         self.failures = 0
-        self.counter = Counter()
         self.logger = logging.getLogger(__name__)
         self.summary_interval = config.get("consumer", {}).get(
             "stats_summary_interval", 100
@@ -29,7 +27,6 @@ class StatsTracker:
     def record_success(self, key: str, num_handles: int, elapsed: float):
         self.messages_processed += 1
         self.handles_created += num_handles
-        self.counter["success"] += 1
 
         self._log_json(
             "info",
@@ -49,7 +46,6 @@ class StatsTracker:
 
     def record_failure(self, key: str, error: str):
         self.failures += 1
-        self.counter["failure"] += 1
 
         self._log_json(
             "error",
@@ -65,7 +61,6 @@ class StatsTracker:
             "messages_processed": self.messages_processed,
             "handles_created": self.handles_created,
             "failures": self.failures,
-            "counters": dict(self.counter),
         }
 
     def log_summary(self):
