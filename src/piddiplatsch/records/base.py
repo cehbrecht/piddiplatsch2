@@ -34,6 +34,10 @@ class BaseRecord(ABC):
     def as_json(self) -> str:
         return self.model.model_dump_json()
 
+    @property
+    def is_strict(self) -> bool:
+        return self.strict
+
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} id={self.item.get('id', 'UNKNOWN')}>"
 
@@ -45,14 +49,19 @@ class BaseCMIP6Record(BaseRecord):
     def __init__(self, item: dict[str, Any], strict: bool):
         super().__init__(item, strict=strict)
 
-        self._prefix = config.get("handle", {}).get("prefix", "")
-        self._lp_url = config.get("cmip6", {}).get("landing_page_url", "")
+    @cached_property
+    def prefix(self) -> str:
+        return config.get("handle", {}).get("prefix", "")
+
+    @cached_property
+    def landing_page_url(self) -> str:
+        return config.get("cmip6", {}).get("landing_page_url", "")
 
     @abstractmethod
     def pid(self) -> str:
-        """Return PID of dataset of file"""
+        """Return the persistent identifier (PID) for this CMIP6 file or dataset record."""
         ...
 
     @cached_property
     def url(self) -> str:
-        return f"{self._lp_url}/{self._prefix}/{self.pid}"
+        return f"{self.landing_page_url}/{self.prefix}/{self.pid}"
