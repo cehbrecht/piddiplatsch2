@@ -25,11 +25,7 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
 
     @cached_property
     def pid(self) -> str:
-        try:
-            return item_pid(self.item["id"])
-        except KeyError as e:
-            logging.error("Missing 'id' in item: %s", e)
-            raise ValueError("Missing required 'id' field") from e
+        return item_pid(self.item_id)
 
     @cached_property
     def dataset_id(self) -> str:

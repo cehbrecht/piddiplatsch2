@@ -57,6 +57,10 @@ class BaseCMIP6Record(BaseRecord):
     def landing_page_url(self) -> str:
         return config.get("cmip6", {}).get("landing_page_url", "")
 
+    @cached_property
+    def item_id(self) -> str:
+        return self.item["id"]
+
     @abstractmethod
     def pid(self) -> str:
         """Return the persistent identifier (PID) for this CMIP6 file or dataset record."""
