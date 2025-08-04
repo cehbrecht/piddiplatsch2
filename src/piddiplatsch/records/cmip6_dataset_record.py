@@ -29,37 +29,30 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
 
     @cached_property
     def dataset_id(self) -> str:
-        id_str = self.item.get("id", "")
-        parts = id_str.rsplit(".", 1)
+        parts = self.item_id.rsplit(".", 1)
         if len(parts) < 2:
-            logging.warning(f"Unable to parse dataset ID from: {id_str}")
-            return id_str
+            logging.warning(f"Unable to parse dataset ID from: {self.item_id}")
+            return self.item_id
         return parts[0]
 
     @cached_property
     def dataset_version(self) -> str:
-        id_str = self.item.get("id", "")
-        parts = id_str.rsplit(".", 1)
+        parts = self.item_id.rsplit(".", 1)
         if len(parts) < 2:
-            logging.warning(f"No version found in ID: {id_str}")
+            logging.warning(f"No version found in ID: {self.item_id}")
             return ""
         return parts[1]
 
     @cached_property
     def has_parts(self) -> list[str]:
         parts = []
-        item_id = self.item.get("id")
-        if not item_id:
-            logging.warning("Missing item 'id'; cannot compute HAS_PARTS")
-            return parts
-
         for key in self.item.get("assets", {}).keys():
             if key in self.exclude_keys:
                 continue
             if self.max_parts > -1 and len(parts) >= self.max_parts:
                 logging.debug(f"Reached limit of {self.max_parts} assets.")
                 break
-            parts.append(asset_pid(item_id, key))
+            parts.append(asset_pid(self.item_id, key))
         return parts
 
     @cached_property
