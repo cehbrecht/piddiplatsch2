@@ -21,7 +21,7 @@ class CMIP6FileRecord(BaseCMIP6Record):
 
     @cached_property
     def item_id(self) -> str:
-        return self.item.get("id")
+        return self.item["id"]
 
     @cached_property
     def pid(self) -> str:
@@ -76,7 +76,10 @@ def extract_asset_records(
         if key in exclude_keys:
             continue
         try:
-            records.append(CMIP6FileRecord(item, key, strict))
+            record = CMIP6FileRecord(item, key, strict)
+            if strict:
+                record.validate()
+            records.append(record)
         except ValueError as e:
             logging.warning(f"Skipping asset '{key}': {e}")
     return records
