@@ -39,7 +39,8 @@ class BaseRecord(ABC):
         return self.strict
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} id={self.item.get('id', 'UNKNOWN')}>"
+        pid = getattr(self, "pid", lambda: "UNKNOWN")
+        return f"<{self.__class__.__name__} id={self.item.get('id', 'UNKNOWN')} pid={pid()}>"
 
     def __str__(self):
         return self.__repr__()
@@ -55,10 +56,12 @@ class BaseCMIP6Record(BaseRecord):
 
     @cached_property
     def landing_page_url(self) -> str:
-        return config.get("cmip6", {}).get("landing_page_url", "")
+        return config.get("cmip6", {}).get("landing_page_url", "").rstrip("/")
 
     @cached_property
     def item_id(self) -> str:
+        if "id" not in self.item:
+            raise KeyError("Missing 'id' in item")
         return self.item["id"]
 
     @abstractmethod
