@@ -1,4 +1,5 @@
 import logging
+from functools import cached_property
 from pathlib import PurePosixPath
 from typing import Any
 
@@ -13,19 +14,16 @@ class CMIP6FileRecord(BaseCMIP6Record):
     def __init__(self, item: dict[str, Any], asset_key: str, strict: bool):
         super().__init__(item, strict=strict)
         self.asset_key = asset_key
-        self.asset = self._get_asset(asset_key)
 
-        self._parent = build_handle(item_pid(self.item_id))
-        self._pid = asset_pid(self.item_id, self.asset_key)
-
-    def _get_asset(self, asset_key: str) -> dict[str, Any]:
+    @cached_property
+    def asset(self) -> dict[str, Any]:
         try:
-            return self.item["assets"][asset_key]
+            return self.item["assets"][self.asset_key]
         except KeyError as e:
-            logging.error(f"Missing asset '{asset_key}' in item: {e}")
-            raise ValueError(f"Asset key '{asset_key}' not found") from e
+            logging.error(f"Missing asset '{self.asset_key}' in item: {e}")
+            raise ValueError(f"Asset key '{self.asset_key}' not found") from e
 
-    @property
+    @cached_property
     def item_id(self) -> str:
         try:
             return self.item["id"]
@@ -33,11 +31,15 @@ class CMIP6FileRecord(BaseCMIP6Record):
             logging.error("Missing 'id' in item: %s", e)
             raise ValueError("Missing required 'id' field") from e
 
-    @property
-    def parent(self) -> str:
-        return self._parent
+    @cached_property
+    def pid(self) -> str:
+        return asset_pid(self.item_id, self.asset_key)
 
-    @property
+    @cached_property
+    def parent(self) -> str:
+        return build_handle(item_pid(self.item_id))
+
+    @cached_property
     def filename(self) -> str:
         try:
             return PurePosixPath(self.asset["href"]).name
@@ -45,11 +47,11 @@ class CMIP6FileRecord(BaseCMIP6Record):
             logging.error(f"Missing 'href' in asset: {e}")
             raise ValueError("Missing required 'href' field in asset") from e
 
-    @property
+    @cached_property
     def checksum(self) -> str | None:
         return self.asset.get("checksum")
 
-    @property
+    @cached_property
     def size(self) -> int | None:
         try:
             return int(self.asset["size"])
@@ -57,7 +59,7 @@ class CMIP6FileRecord(BaseCMIP6Record):
             logging.debug("Size not available or invalid in asset")
             return None
 
-    @property
+    @cached_property
     def download_url(self) -> str:
         try:
             return self.asset["href"]
@@ -67,7 +69,7 @@ class CMIP6FileRecord(BaseCMIP6Record):
 
     def as_handle_model(self) -> CMIP6FileModel:
         return CMIP6FileModel(
-            URL=self.url,
+            URL=self.url,  # from BaseCMIP6Record using self.pid
             AGGREGATION_LEVEL="FILE",
             IS_PART_OF=self.parent,
             FILE_NAME=self.filename,
