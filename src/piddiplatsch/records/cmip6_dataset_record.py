@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timezone
+from functools import cached_property
 from typing import Any
 
 from piddiplatsch.config import config
@@ -25,7 +26,6 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
         self.max_parts = config.get("cmip6", {}).get("max_parts", -1)
 
         # Precompute properties
-        self._pid = self._extract_pid()
         self._is_part_of = self._extract_is_part_of()
         self._has_parts = self._extract_has_parts()
         self._dataset_id = self._extract_dataset_id()
@@ -35,7 +35,8 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
         self._unpublished_replicas = self._extract_unpublished_replicas()
         self._unpublished_hosts = self._extract_unpublished_hosts()
 
-    def _extract_pid(self) -> str:
+    @cached_property
+    def pid(self) -> str:
         try:
             return item_pid(self.item["id"])
         except KeyError as e:
