@@ -64,6 +64,10 @@ class BaseCMIP6Record(BaseRecord):
             raise KeyError("Missing 'id' in item")
         return self.item["id"]
 
+    @cached_property
+    def assets(self) -> dict[str, Any]:
+        return self.item.get("assets", {})
+
     @abstractmethod
     def pid(self) -> str:
         """Return the persistent identifier (PID) for this CMIP6 file or dataset record."""

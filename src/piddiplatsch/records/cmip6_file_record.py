@@ -17,7 +17,7 @@ class CMIP6FileRecord(BaseCMIP6Record):
 
     @cached_property
     def asset(self) -> dict[str, Any]:
-        return self.item["assets"][self.asset_key]
+        return self.assets.get(self.asset_key)
 
     @cached_property
     def pid(self) -> str:

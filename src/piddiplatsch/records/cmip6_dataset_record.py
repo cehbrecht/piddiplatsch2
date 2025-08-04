@@ -46,7 +46,7 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
     @cached_property
     def has_parts(self) -> list[str]:
         parts = []
-        for key in self.item.get("assets", {}).keys():
+        for key in self.assets.keys():
             if key in self.exclude_keys:
                 continue
             if self.max_parts > -1 and len(parts) >= self.max_parts:
@@ -62,14 +62,13 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
 
     @cached_property
     def hosting_node(self) -> HostingNode:
-        assets = self.item.get("assets", {})
-        ref_node = assets.get("reference_file", {}).get("alternate:name")
-        data_node = assets.get("data0001", {}).get("alternate:name")
+        ref_node = self.assets.get("reference_file", {}).get("alternate:name")
+        data_node = self.assets.get("data0001", {}).get("alternate:name")
         host = ref_node or data_node or "unknown"
 
         published_on = None
         for key in ("reference_file", "data0001"):
-            published_on = assets.get(key, {}).get("published_on")
+            published_on = self.assets.get(key, {}).get("published_on")
             if published_on:
                 break
 
