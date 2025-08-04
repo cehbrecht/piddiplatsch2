@@ -2,7 +2,6 @@ import logging
 from pathlib import PurePosixPath
 from typing import Any
 
-from piddiplatsch.config import config
 from piddiplatsch.models import CMIP6FileModel
 from piddiplatsch.records.base import BaseCMIP6Record
 from piddiplatsch.utils.pid import asset_pid, build_handle, item_pid
@@ -15,9 +14,6 @@ class CMIP6FileRecord(BaseCMIP6Record):
         super().__init__(item, strict=strict)
         self.asset_key = asset_key
         self.asset = self._get_asset(asset_key)
-
-        self.prefix = config.get("handle", {}).get("prefix", "")
-        self.lp_url = config.get("cmip6", {}).get("landing_page_url", "")
 
         self._parent = build_handle(item_pid(self.item_id))
         self._pid = asset_pid(self.item_id, self.asset_key)
@@ -47,7 +43,7 @@ class CMIP6FileRecord(BaseCMIP6Record):
 
     @property
     def url(self) -> str:
-        return f"{self.lp_url}/{self.prefix}/{self.pid}"
+        return f"{self._lp_url}/{self._prefix}/{self.pid}"
 
     @property
     def filename(self) -> str:

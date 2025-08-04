@@ -4,12 +4,12 @@ from typing import Any
 
 from piddiplatsch.config import config
 from piddiplatsch.models import CMIP6DatasetModel, HostingNode
-from piddiplatsch.records.base import BaseRecord
+from piddiplatsch.records.base import BaseCMIP6Record
 from piddiplatsch.records.utils import parse_datetime
 from piddiplatsch.utils.pid import asset_pid, item_pid
 
 
-class CMIP6DatasetRecord(BaseRecord):
+class CMIP6DatasetRecord(BaseCMIP6Record):
     """Wraps a validated CMIP6 STAC item and prepares Handle records."""
 
     def __init__(
@@ -22,8 +22,6 @@ class CMIP6DatasetRecord(BaseRecord):
         self.exclude_keys = set(exclude_keys or [])
 
         # Config
-        self.prefix = config.get("handle", {}).get("prefix", "")
-        self.lp_url = config.get("cmip6", {}).get("landing_page_url", "")
         self.max_parts = config.get("cmip6", {}).get("max_parts", -1)
 
         # Precompute properties
@@ -46,7 +44,7 @@ class CMIP6DatasetRecord(BaseRecord):
             raise ValueError("Missing required 'id' field") from e
 
     def _extract_url(self) -> str:
-        return f"{self.lp_url}/{self.prefix}/{self._pid}"
+        return f"{self._lp_url}/{self._prefix}/{self._pid}"
 
     def _extract_dataset_id(self) -> str:
         id_str = self.item.get("id", "")

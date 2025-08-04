@@ -4,6 +4,7 @@ from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
+from piddiplatsch.config import config
 from piddiplatsch.records.utils import drop_empty
 
 
@@ -38,4 +39,8 @@ class BaseRecord(ABC):
 
 
 class BaseCMIP6Record(BaseRecord):
-    pass
+    def __init__(self, item: dict[str, Any], strict: bool):
+        super().__init__(item, strict=strict)
+
+        self._prefix = config.get("handle", {}).get("prefix", "")
+        self._lp_url = config.get("cmip6", {}).get("landing_page_url", "")
