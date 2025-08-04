@@ -68,6 +68,14 @@ class BaseCMIP6Record(BaseRecord):
     def assets(self) -> dict[str, Any]:
         return self.item.get("assets", {})
 
+    def get_asset(self, key: str) -> dict[str, Any]:
+        """Return the asset dictionary for a given key."""
+        return self.assets.get(key, {})
+
+    def get_asset_property(self, key: str, prop: str, default: Any = None) -> Any:
+        """Return a property value from an asset, or a default if missing."""
+        return self.get_asset(key).get(prop, default)
+
     @abstractmethod
     def pid(self) -> str:
         """Return the persistent identifier (PID) for this CMIP6 file or dataset record."""

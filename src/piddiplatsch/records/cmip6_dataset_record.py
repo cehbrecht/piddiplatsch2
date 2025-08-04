@@ -62,13 +62,14 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
 
     @cached_property
     def hosting_node(self) -> HostingNode:
-        ref_node = self.assets.get("reference_file", {}).get("alternate:name")
-        data_node = self.assets.get("data0001", {}).get("alternate:name")
+        ref_node = self.get_asset_property("reference_file", "alternate:name")
+        data_node = self.get_asset_property("data0001", "alternate:name")
+
         host = ref_node or data_node or "unknown"
 
         published_on = None
         for key in ("reference_file", "data0001"):
-            published_on = self.assets.get(key, {}).get("published_on")
+            published_on = self.get_asset_property(key, "published_on")
             if published_on:
                 break
 
