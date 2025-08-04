@@ -4,11 +4,11 @@ from typing import Any
 
 from piddiplatsch.config import config
 from piddiplatsch.models import CMIP6FileModel
-from piddiplatsch.records.base import BaseRecord
+from piddiplatsch.records.base import BaseCMIP6Record
 from piddiplatsch.utils.pid import asset_pid, build_handle, item_pid
 
 
-class CMIP6FileRecord(BaseRecord):
+class CMIP6FileRecord(BaseCMIP6Record):
     """Wraps a CMIP6 STAC asset and prepares Handle record for a file."""
 
     def __init__(self, item: dict[str, Any], asset_key: str, strict: bool):

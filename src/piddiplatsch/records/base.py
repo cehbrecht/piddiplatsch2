@@ -35,3 +35,7 @@ class BaseRecord(ABC):
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} id={self.item.get('id', 'UNKNOWN')}>"
+
+
+class BaseCMIP6Record(BaseRecord):
+    pass
