@@ -17,19 +17,11 @@ class CMIP6FileRecord(BaseCMIP6Record):
 
     @cached_property
     def asset(self) -> dict[str, Any]:
-        try:
-            return self.item["assets"][self.asset_key]
-        except KeyError as e:
-            logging.error(f"Missing asset '{self.asset_key}' in item: {e}")
-            raise ValueError(f"Asset key '{self.asset_key}' not found") from e
+        return self.item["assets"][self.asset_key]
 
     @cached_property
     def item_id(self) -> str:
-        try:
-            return self.item["id"]
-        except KeyError as e:
-            logging.error("Missing 'id' in item: %s", e)
-            raise ValueError("Missing required 'id' field") from e
+        return self.item.get("id")
 
     @cached_property
     def pid(self) -> str:
@@ -41,11 +33,7 @@ class CMIP6FileRecord(BaseCMIP6Record):
 
     @cached_property
     def filename(self) -> str:
-        try:
-            return PurePosixPath(self.asset["href"]).name
-        except KeyError as e:
-            logging.error(f"Missing 'href' in asset: {e}")
-            raise ValueError("Missing required 'href' field in asset") from e
+        return PurePosixPath(self.asset["href"]).name
 
     @cached_property
     def checksum(self) -> str | None:
@@ -54,22 +42,17 @@ class CMIP6FileRecord(BaseCMIP6Record):
     @cached_property
     def size(self) -> int | None:
         try:
-            return int(self.asset["size"])
-        except (KeyError, ValueError, TypeError):
-            logging.debug("Size not available or invalid in asset")
+            return int(self.asset.get("size"))
+        except (ValueError, TypeError):
             return None
 
     @cached_property
     def download_url(self) -> str:
-        try:
-            return self.asset["href"]
-        except KeyError as e:
-            logging.error(f"Missing 'href' in asset: {e}")
-            raise ValueError("Missing required 'href' field in asset") from e
+        return self.asset["href"]
 
     def as_handle_model(self) -> CMIP6FileModel:
         return CMIP6FileModel(
-            URL=self.url,  # from BaseCMIP6Record using self.pid
+            URL=self.url,
             AGGREGATION_LEVEL="FILE",
             IS_PART_OF=self.parent,
             FILE_NAME=self.filename,
