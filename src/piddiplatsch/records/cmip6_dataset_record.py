@@ -7,7 +7,7 @@ from piddiplatsch.config import config
 from piddiplatsch.models import CMIP6DatasetModel, HostingNode
 from piddiplatsch.records.base import BaseCMIP6Record
 from piddiplatsch.records.utils import parse_datetime, parse_pid
-from piddiplatsch.utils.pid import asset_pid, item_pid
+from piddiplatsch.utils.pid import asset_pid, build_handle, item_pid
 
 
 class CMIP6DatasetRecord(BaseCMIP6Record):
@@ -62,7 +62,9 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
             if self.max_parts > -1 and len(parts) >= self.max_parts:
                 logging.debug(f"Reached limit of {self.max_parts} assets.")
                 break
-            parts.append(asset_pid(self.item_id, key))
+            pid = asset_pid(self.item_id, key)
+            handle = build_handle(pid, as_uri=True)
+            parts.append(handle)
         return parts
 
     @cached_property
