@@ -33,12 +33,12 @@ class CMIP6FileRecord(BaseCMIP6Record):
 
     @cached_property
     def checksum(self) -> str | None:
-        return self.asset.get("checksum")
+        return self.asset.get("file:checksum")
 
     @cached_property
     def size(self) -> int | None:
         try:
-            return int(self.asset.get("size"))
+            return int(self.asset.get("file:size"))
         except (ValueError, TypeError):
             return None
 

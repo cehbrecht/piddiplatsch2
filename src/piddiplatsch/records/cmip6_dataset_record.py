@@ -25,7 +25,10 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
 
     @cached_property
     def pid(self) -> str:
-        return item_pid(self.item_id)
+        pid_ = self.item.get("pid")
+        if not pid_:
+            pid_ = item_pid(self.item_id)
+        return pid_
 
     @cached_property
     def dataset_id(self) -> str:
