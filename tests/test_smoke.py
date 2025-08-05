@@ -97,8 +97,8 @@ def test_send_invalid_file(runner):
 @pytest.mark.online
 def test_send_valid_cmip6_mpi_day_dc2(runner, testfile, handle_client):
     path = testfile(
-        "CMIP6",
         "data_challenge_02",
+        "CMIP6",
         "CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710.json",
     )
 
@@ -119,8 +119,8 @@ def test_send_valid_cmip6_mpi_day_dc2(runner, testfile, handle_client):
 @pytest.mark.online
 def test_send_valid_cmip6_mpi_mon_dc2(runner, testfile, handle_client):
     path = testfile(
-        "CMIP6",
         "data_challenge_02",
+        "CMIP6",
         "CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.Amon.tasmin.gn.v20190710.json",
     )
     send_message(runner, path)
@@ -140,6 +140,7 @@ def test_send_valid_cmip6_mpi_mon_dc2(runner, testfile, handle_client):
 @pytest.mark.online
 def test_send_invalid_cmip6_mpi_mon(runner, testfile):
     path = testfile(
+        "data_challenge_02",
         "CMIP6_invalid",
         "CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710.json",
     )
