@@ -1,216 +1,212 @@
 {
-    "key": "CMIP6.HighResMIP.MRI.MRI-AGCM3-2-H.highresSST-present.r1i1p1f1.6hrPlevPt.psl.gn.v20190820",
-    "value": {
-        "metadata": {
-            "auth": {
-                "auth_policy_id": null,
-                "requester_data": {
-                    "client_id": "ec5f07c0-7ed8-4f2b-94f2-ddb6f8fc91a3",
-                    "iss": "https://auth.globus.org",
-                    "sub": "a511c7bc-d274-11e5-9aea-4bedf3cb22c7"
-                }
-            },
-            "event_id": "e001d72139464d07a013180606654f41",
-            "publisher": {
-                "package": "",
-                "version": ""
-            },
-            "request_id": "891d04fe073f41e7be68a9eafcc78d3a",
-            "time": "2025-08-05T11:35:48.537252",
-            "schema_version": "1.0.0"
+    "metadata": {
+        "auth": {
+            "auth_policy_id": null,
+            "requester_data": {
+                "client_id": "ec5f07c0-7ed8-4f2b-94f2-ddb6f8fc91a3",
+                "iss": "https://auth.globus.org",
+                "sub": "a511c7bc-d274-11e5-9aea-4bedf3cb22c7"
+            }
         },
-        "data": {
-            "type": "STAC",
-            "payload": {
-                "method": "POST",
-                "collection_id": "CMIP6",
-                "item": {
-                    "type": "Feature",
-                    "stac_version": "1.0.0",
-                    "stac_extensions": [
-                        "http://host.docker.internal/cmip6/v2.0.1/schema.json",
-                        "https://stac-extensions.github.io/alternate-assets/v1.2.0/schema.json",
-                        "https://stac-extensions.github.io/file/v2.1.0/schema.json"
-                    ],
-                    "id": "CMIP6.HighResMIP.MRI.MRI-AGCM3-2-H.highresSST-present.r1i1p1f1.6hrPlevPt.psl.gn.v20190820",
-                    "geometry": {
-                        "type": "Polygon",
-                        "coordinates": [
+        "event_id": "e001d72139464d07a013180606654f41",
+        "publisher": {
+            "package": "",
+            "version": ""
+        },
+        "request_id": "891d04fe073f41e7be68a9eafcc78d3a",
+        "time": "2025-08-05T11:35:48.537252",
+        "schema_version": "1.0.0"
+    },
+    "data": {
+        "type": "STAC",
+        "payload": {
+            "method": "POST",
+            "collection_id": "CMIP6",
+            "item": {
+                "type": "Feature",
+                "stac_version": "1.0.0",
+                "stac_extensions": [
+                    "http://host.docker.internal/cmip6/v2.0.1/schema.json",
+                    "https://stac-extensions.github.io/alternate-assets/v1.2.0/schema.json",
+                    "https://stac-extensions.github.io/file/v2.1.0/schema.json"
+                ],
+                "id": "CMIP6.HighResMIP.MRI.MRI-AGCM3-2-H.highresSST-present.r1i1p1f1.6hrPlevPt.psl.gn.v20190820",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
                             [
-                                [
-                                    0.0,
-                                    -89.57009
-                                ],
-                                [
-                                    359.4375,
-                                    -89.57009
-                                ],
-                                [
-                                    359.4375,
-                                    89.57009
-                                ],
-                                [
-                                    0.0,
-                                    89.57009
-                                ],
-                                [
-                                    0.0,
-                                    -89.57009
-                                ]
+                                0.0,
+                                -89.57009
+                            ],
+                            [
+                                359.4375,
+                                -89.57009
+                            ],
+                            [
+                                359.4375,
+                                89.57009
+                            ],
+                            [
+                                0.0,
+                                89.57009
+                            ],
+                            [
+                                0.0,
+                                -89.57009
                             ]
                         ]
+                    ]
+                },
+                "bbox": [
+                    0.0,
+                    -89.57009,
+                    359.4375,
+                    89.57009
+                ],
+                "collection": "CMIP6",
+                "links": [
+                    {
+                        "rel": "self",
+                        "type": "application/json",
+                        "href": "https://api.stac.esgf-west.org/collections/CMIP6/items/CMIP6.HighResMIP.MRI.MRI-AGCM3-2-H.highresSST-present.r1i1p1f1.6hrPlevPt.psl.gn.v20190820"
                     },
-                    "bbox": [
-                        0.0,
-                        -89.57009,
-                        359.4375,
-                        89.57009
-                    ],
-                    "collection": "CMIP6",
-                    "links": [
-                        {
-                            "rel": "self",
-                            "type": "application/json",
-                            "href": "https://api.stac.esgf-west.org/collections/CMIP6/items/CMIP6.HighResMIP.MRI.MRI-AGCM3-2-H.highresSST-present.r1i1p1f1.6hrPlevPt.psl.gn.v20190820"
-                        },
-                        {
-                            "rel": "parent",
-                            "type": "application/json",
-                            "href": "https://api.stac.esgf-west.org/collections/CMIP6"
-                        },
-                        {
-                            "rel": "collection",
-                            "type": "application/json",
-                            "href": "https://api.stac.esgf-west.org/collections/CMIP6"
-                        },
-                        {
-                            "rel": "root",
-                            "type": "application/json",
-                            "href": "https://api.stac.esgf-west.org/collections"
-                        }
-                    ],
-                    "properties": {
-                        "datetime": null,
-                        "start_datetime": "1950-01-01T00:00:00Z",
-                        "end_datetime": "1975-01-02T00:00:00Z",
-                        "access": [
-                            "HTTPServer",
-                            "OPENDAP"
-                        ],
-                        "pid": "hdl:21.14100/b06058a6-1077-35cb-9500-1ccbd341d309",
-                        "project": "CMIP6",
-                        "version": "20190820",
-                        "retracted": false,
-                        "cmip6:activity_id": "HighResMIP",
-                        "cmip6:cf_standard_name": "air_pressure_at_sea_level",
-                        "cmip6:citation_url": "http://cera-www.dkrz.de/WDCC/meta/CMIP6/CMIP6.HighResMIP.MRI.MRI-AGCM3-2-H.highresSST-present.r1i1p1f1.6hrPlevPt.psl.gn.v20190820.json",
-                        "cmip6:data_specs_version": "01.00.23",
-                        "cmip6:experiment_id": "highresSST-present",
-                        "cmip6:experiment_title": "forced atmosphere experiment for 1950-2014",
-                        "cmip6:frequency": "6hrPt",
-                        "cmip6:further_info_url": "https://furtherinfo.es-doc.org/CMIP6.MRI.MRI-AGCM3-2-H.highresSST-present.none.r1i1p1f1",
-                        "cmip6:grid": "native atmosphere TL959 gaussian grid (1920x960 latxlon)",
-                        "cmip6:grid_label": "gn",
-                        "cmip6:institution_id": "MRI",
-                        "cmip6:member_id": "r1i1p1f1",
-                        "cmip6:mip_era": "CMIP6",
-                        "cmip6:nominal_resolution": "25 km",
-                        "cmip6:product": "model-output",
-                        "cmip6:realm": [
-                            "atmos"
-                        ],
-                        "cmip6:source_id": "MRI-AGCM3-2-H",
-                        "cmip6:source_type": [
-                            "AGCM"
-                        ],
-                        "cmip6:table_id": "6hrPlevPt",
-                        "cmip6:variable": "psl",
-                        "cmip6:variable_long_name": "Sea Level Pressure",
-                        "cmip6:variable_units": "Pa",
-                        "cmip6:variant_label": "r1i1p1f1"
+                    {
+                        "rel": "parent",
+                        "type": "application/json",
+                        "href": "https://api.stac.esgf-west.org/collections/CMIP6"
                     },
-                    "assets": {
-                        "data0000": {
-                            "href": "http://esgf-data03.diasjp.net/thredds/fileServer/esg_dataroot/CMIP6/HighResMIP/MRI/MRI-AGCM3-2-H/highresSST-present/r1i1p1f1/6hrPlevPt/psl/gn/v20190820/psl_6hrPlevPt_MRI-AGCM3-2-H_highresSST-present_r1i1p1f1_gn_195001010000-195912311800.nc",
-                            "description": "HTTPServer Link",
-                            "type": "application/netcdf",
-                            "roles": [
-                                "data"
-                            ],
-                            "alternate:name": "esgf-data03.diasjp.net",
-                            "file:size": 6046567354,
-                            "file:checksum": "12205e2ccce818126a752feee5b573514870359be4b6835287d5a8c511333731861e"
-                        },
-                        "data0001": {
-                            "href": "http://esgf-data03.diasjp.net/thredds/fileServer/esg_dataroot/CMIP6/HighResMIP/MRI/MRI-AGCM3-2-H/highresSST-present/r1i1p1f1/6hrPlevPt/psl/gn/v20190820/psl_6hrPlevPt_MRI-AGCM3-2-H_highresSST-present_r1i1p1f1_gn_196001010000-196912311800.nc",
-                            "description": "HTTPServer Link",
-                            "type": "application/netcdf",
-                            "roles": [
-                                "data"
-                            ],
-                            "alternate:name": "esgf-data03.diasjp.net",
-                            "file:size": 6048142854,
-                            "file:checksum": "1220410406ace965afc99ae33849389186ed03f02c852424dd098aee66442d2a05a7"
-                        },
-                        "data0002": {
-                            "href": "http://esgf-data03.diasjp.net/thredds/fileServer/esg_dataroot/CMIP6/HighResMIP/MRI/MRI-AGCM3-2-H/highresSST-present/r1i1p1f1/6hrPlevPt/psl/gn/v20190820/psl_6hrPlevPt_MRI-AGCM3-2-H_highresSST-present_r1i1p1f1_gn_197001010000-197912311800.nc",
-                            "description": "HTTPServer Link",
-                            "type": "application/netcdf",
-                            "roles": [
-                                "data"
-                            ],
-                            "alternate:name": "esgf-data03.diasjp.net",
-                            "file:size": 6046526140,
-                            "file:checksum": "1220bc7350fafcbddb2f69c3459be8d559763aba23a627b8889e0791db9a0c34050b"
-                        },
-                        "data0003": {
-                            "href": "http://esgf-data03.diasjp.net/thredds/fileServer/esg_dataroot/CMIP6/HighResMIP/MRI/MRI-AGCM3-2-H/highresSST-present/r1i1p1f1/6hrPlevPt/psl/gn/v20190820/psl_6hrPlevPt_MRI-AGCM3-2-H_highresSST-present_r1i1p1f1_gn_198001010000-198912311800.nc",
-                            "description": "HTTPServer Link",
-                            "type": "application/netcdf",
-                            "roles": [
-                                "data"
-                            ],
-                            "alternate:name": "esgf-data03.diasjp.net",
-                            "file:size": 6046935337,
-                            "file:checksum": "1220e74b30e4472af6e0f3bac9427c3a2ccd24b71d05a019bdc09ccf2d5e309174e8"
-                        },
-                        "data0004": {
-                            "href": "http://esgf-data03.diasjp.net/thredds/fileServer/esg_dataroot/CMIP6/HighResMIP/MRI/MRI-AGCM3-2-H/highresSST-present/r1i1p1f1/6hrPlevPt/psl/gn/v20190820/psl_6hrPlevPt_MRI-AGCM3-2-H_highresSST-present_r1i1p1f1_gn_199001010000-199912311800.nc",
-                            "description": "HTTPServer Link",
-                            "type": "application/netcdf",
-                            "roles": [
-                                "data"
-                            ],
-                            "alternate:name": "esgf-data03.diasjp.net",
-                            "file:size": 6048879833,
-                            "file:checksum": "1220078be5cc24139af078782a0080aed1c3d86827532987bd6cfed12db5889135c3"
-                        },
-                        "data0005": {
-                            "href": "http://esgf-data03.diasjp.net/thredds/fileServer/esg_dataroot/CMIP6/HighResMIP/MRI/MRI-AGCM3-2-H/highresSST-present/r1i1p1f1/6hrPlevPt/psl/gn/v20190820/psl_6hrPlevPt_MRI-AGCM3-2-H_highresSST-present_r1i1p1f1_gn_200001010000-200912311800.nc",
-                            "description": "HTTPServer Link",
-                            "type": "application/netcdf",
-                            "roles": [
-                                "data"
-                            ],
-                            "alternate:name": "esgf-data03.diasjp.net",
-                            "file:size": 6049402300,
-                            "file:checksum": "122037889d9cb16f2d4210058d8bc03f0b219d23e5c751a1352f3a9ddc9738f50270"
-                        },
-                        "data0006": {
-                            "href": "http://esgf-data03.diasjp.net/thredds/fileServer/esg_dataroot/CMIP6/HighResMIP/MRI/MRI-AGCM3-2-H/highresSST-present/r1i1p1f1/6hrPlevPt/psl/gn/v20190820/psl_6hrPlevPt_MRI-AGCM3-2-H_highresSST-present_r1i1p1f1_gn_201001010000-201412311800.nc",
-                            "description": "HTTPServer Link",
-                            "type": "application/netcdf",
-                            "roles": [
-                                "data"
-                            ],
-                            "alternate:name": "esgf-data03.diasjp.net",
-                            "file:size": 3022803595,
-                            "file:checksum": "1220db3802b212cc8e95da69dff7000df5a4d51ce2be0f8401693fa90a7e4a2a682e"
-                        }
+                    {
+                        "rel": "collection",
+                        "type": "application/json",
+                        "href": "https://api.stac.esgf-west.org/collections/CMIP6"
+                    },
+                    {
+                        "rel": "root",
+                        "type": "application/json",
+                        "href": "https://api.stac.esgf-west.org/collections"
+                    }
+                ],
+                "properties": {
+                    "datetime": null,
+                    "start_datetime": "1950-01-01T00:00:00Z",
+                    "end_datetime": "1975-01-02T00:00:00Z",
+                    "access": [
+                        "HTTPServer",
+                        "OPENDAP"
+                    ],
+                    "pid": "hdl:21.14100/b06058a6-1077-35cb-9500-1ccbd341d309",
+                    "project": "CMIP6",
+                    "version": "20190820",
+                    "retracted": false,
+                    "cmip6:activity_id": "HighResMIP",
+                    "cmip6:cf_standard_name": "air_pressure_at_sea_level",
+                    "cmip6:citation_url": "http://cera-www.dkrz.de/WDCC/meta/CMIP6/CMIP6.HighResMIP.MRI.MRI-AGCM3-2-H.highresSST-present.r1i1p1f1.6hrPlevPt.psl.gn.v20190820.json",
+                    "cmip6:data_specs_version": "01.00.23",
+                    "cmip6:experiment_id": "highresSST-present",
+                    "cmip6:experiment_title": "forced atmosphere experiment for 1950-2014",
+                    "cmip6:frequency": "6hrPt",
+                    "cmip6:further_info_url": "https://furtherinfo.es-doc.org/CMIP6.MRI.MRI-AGCM3-2-H.highresSST-present.none.r1i1p1f1",
+                    "cmip6:grid": "native atmosphere TL959 gaussian grid (1920x960 latxlon)",
+                    "cmip6:grid_label": "gn",
+                    "cmip6:institution_id": "MRI",
+                    "cmip6:member_id": "r1i1p1f1",
+                    "cmip6:mip_era": "CMIP6",
+                    "cmip6:nominal_resolution": "25 km",
+                    "cmip6:product": "model-output",
+                    "cmip6:realm": [
+                        "atmos"
+                    ],
+                    "cmip6:source_id": "MRI-AGCM3-2-H",
+                    "cmip6:source_type": [
+                        "AGCM"
+                    ],
+                    "cmip6:table_id": "6hrPlevPt",
+                    "cmip6:variable": "psl",
+                    "cmip6:variable_long_name": "Sea Level Pressure",
+                    "cmip6:variable_units": "Pa",
+                    "cmip6:variant_label": "r1i1p1f1"
+                },
+                "assets": {
+                    "data0000": {
+                        "href": "http://esgf-data03.diasjp.net/thredds/fileServer/esg_dataroot/CMIP6/HighResMIP/MRI/MRI-AGCM3-2-H/highresSST-present/r1i1p1f1/6hrPlevPt/psl/gn/v20190820/psl_6hrPlevPt_MRI-AGCM3-2-H_highresSST-present_r1i1p1f1_gn_195001010000-195912311800.nc",
+                        "description": "HTTPServer Link",
+                        "type": "application/netcdf",
+                        "roles": [
+                            "data"
+                        ],
+                        "alternate:name": "esgf-data03.diasjp.net",
+                        "file:size": 6046567354,
+                        "file:checksum": "12205e2ccce818126a752feee5b573514870359be4b6835287d5a8c511333731861e"
+                    },
+                    "data0001": {
+                        "href": "http://esgf-data03.diasjp.net/thredds/fileServer/esg_dataroot/CMIP6/HighResMIP/MRI/MRI-AGCM3-2-H/highresSST-present/r1i1p1f1/6hrPlevPt/psl/gn/v20190820/psl_6hrPlevPt_MRI-AGCM3-2-H_highresSST-present_r1i1p1f1_gn_196001010000-196912311800.nc",
+                        "description": "HTTPServer Link",
+                        "type": "application/netcdf",
+                        "roles": [
+                            "data"
+                        ],
+                        "alternate:name": "esgf-data03.diasjp.net",
+                        "file:size": 6048142854,
+                        "file:checksum": "1220410406ace965afc99ae33849389186ed03f02c852424dd098aee66442d2a05a7"
+                    },
+                    "data0002": {
+                        "href": "http://esgf-data03.diasjp.net/thredds/fileServer/esg_dataroot/CMIP6/HighResMIP/MRI/MRI-AGCM3-2-H/highresSST-present/r1i1p1f1/6hrPlevPt/psl/gn/v20190820/psl_6hrPlevPt_MRI-AGCM3-2-H_highresSST-present_r1i1p1f1_gn_197001010000-197912311800.nc",
+                        "description": "HTTPServer Link",
+                        "type": "application/netcdf",
+                        "roles": [
+                            "data"
+                        ],
+                        "alternate:name": "esgf-data03.diasjp.net",
+                        "file:size": 6046526140,
+                        "file:checksum": "1220bc7350fafcbddb2f69c3459be8d559763aba23a627b8889e0791db9a0c34050b"
+                    },
+                    "data0003": {
+                        "href": "http://esgf-data03.diasjp.net/thredds/fileServer/esg_dataroot/CMIP6/HighResMIP/MRI/MRI-AGCM3-2-H/highresSST-present/r1i1p1f1/6hrPlevPt/psl/gn/v20190820/psl_6hrPlevPt_MRI-AGCM3-2-H_highresSST-present_r1i1p1f1_gn_198001010000-198912311800.nc",
+                        "description": "HTTPServer Link",
+                        "type": "application/netcdf",
+                        "roles": [
+                            "data"
+                        ],
+                        "alternate:name": "esgf-data03.diasjp.net",
+                        "file:size": 6046935337,
+                        "file:checksum": "1220e74b30e4472af6e0f3bac9427c3a2ccd24b71d05a019bdc09ccf2d5e309174e8"
+                    },
+                    "data0004": {
+                        "href": "http://esgf-data03.diasjp.net/thredds/fileServer/esg_dataroot/CMIP6/HighResMIP/MRI/MRI-AGCM3-2-H/highresSST-present/r1i1p1f1/6hrPlevPt/psl/gn/v20190820/psl_6hrPlevPt_MRI-AGCM3-2-H_highresSST-present_r1i1p1f1_gn_199001010000-199912311800.nc",
+                        "description": "HTTPServer Link",
+                        "type": "application/netcdf",
+                        "roles": [
+                            "data"
+                        ],
+                        "alternate:name": "esgf-data03.diasjp.net",
+                        "file:size": 6048879833,
+                        "file:checksum": "1220078be5cc24139af078782a0080aed1c3d86827532987bd6cfed12db5889135c3"
+                    },
+                    "data0005": {
+                        "href": "http://esgf-data03.diasjp.net/thredds/fileServer/esg_dataroot/CMIP6/HighResMIP/MRI/MRI-AGCM3-2-H/highresSST-present/r1i1p1f1/6hrPlevPt/psl/gn/v20190820/psl_6hrPlevPt_MRI-AGCM3-2-H_highresSST-present_r1i1p1f1_gn_200001010000-200912311800.nc",
+                        "description": "HTTPServer Link",
+                        "type": "application/netcdf",
+                        "roles": [
+                            "data"
+                        ],
+                        "alternate:name": "esgf-data03.diasjp.net",
+                        "file:size": 6049402300,
+                        "file:checksum": "122037889d9cb16f2d4210058d8bc03f0b219d23e5c751a1352f3a9ddc9738f50270"
+                    },
+                    "data0006": {
+                        "href": "http://esgf-data03.diasjp.net/thredds/fileServer/esg_dataroot/CMIP6/HighResMIP/MRI/MRI-AGCM3-2-H/highresSST-present/r1i1p1f1/6hrPlevPt/psl/gn/v20190820/psl_6hrPlevPt_MRI-AGCM3-2-H_highresSST-present_r1i1p1f1_gn_201001010000-201412311800.nc",
+                        "description": "HTTPServer Link",
+                        "type": "application/netcdf",
+                        "roles": [
+                            "data"
+                        ],
+                        "alternate:name": "esgf-data03.diasjp.net",
+                        "file:size": 3022803595,
+                        "file:checksum": "1220db3802b212cc8e95da69dff7000df5a4d51ce2be0f8401693fa90a7e4a2a682e"
                     }
                 }
             }
         }
-    },
-    "timestamp": "2025-08-05T11:45:36.398219+00:00"
+    }
 }
