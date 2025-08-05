@@ -27,3 +27,11 @@ def parse_datetime(value: str | None) -> datetime | None:
     except Exception:
         logging.warning(f"Failed to parse datetime: {value}")
         return None
+
+
+def parse_pid(value: str) -> str:
+    if value and "/" in value:
+        pid_ = value.split("/")[1]
+    else:
+        pid_ = value
+    return pid_

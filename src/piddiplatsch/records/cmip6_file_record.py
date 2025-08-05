@@ -5,6 +5,7 @@ from typing import Any
 
 from piddiplatsch.models import CMIP6FileModel
 from piddiplatsch.records.base import BaseCMIP6Record
+from piddiplatsch.records.utils import parse_pid
 from piddiplatsch.utils.pid import asset_pid, build_handle, item_pid
 
 
@@ -20,8 +21,22 @@ class CMIP6FileRecord(BaseCMIP6Record):
         return self.get_asset(self.asset_key)
 
     @cached_property
+    def tracking_id(self) -> str:
+        return self.asset.get("tracking_id")
+
+    @cached_property
     def pid(self) -> str:
-        return asset_pid(self.item_id, self.asset_key)
+        pid_ = parse_pid(self.tracking_id)
+        if not pid_:
+            pid_ = asset_pid(self.item_id, self.asset_key)
+            logging.warning(
+                f"Creating new file pid: pid={pid_}, asset={self.asset_key}"
+            )
+        else:
+            logging.warning(
+                f"Using existing file pid: pid={pid_}, asset={self.asset_key}"
+            )
+        return pid_
 
     @cached_property
     def parent(self) -> str:
@@ -33,12 +48,12 @@ class CMIP6FileRecord(BaseCMIP6Record):
 
     @cached_property
     def checksum(self) -> str | None:
-        return self.asset.get("checksum")
+        return self.asset.get("file:checksum")
 
     @cached_property
     def size(self) -> int | None:
         try:
-            return int(self.asset.get("size"))
+            return int(self.asset.get("file:size"))
         except (ValueError, TypeError):
             return None
 

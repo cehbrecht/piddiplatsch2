@@ -6,7 +6,7 @@ from typing import Any
 from piddiplatsch.config import config
 from piddiplatsch.models import CMIP6DatasetModel, HostingNode
 from piddiplatsch.records.base import BaseCMIP6Record
-from piddiplatsch.records.utils import parse_datetime
+from piddiplatsch.records.utils import parse_datetime, parse_pid
 from piddiplatsch.utils.pid import asset_pid, item_pid
 
 
@@ -25,7 +25,17 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
 
     @cached_property
     def pid(self) -> str:
-        return item_pid(self.item_id)
+        pid_ = parse_pid(self.get_property("pid"))
+        if not pid_:
+            pid_ = item_pid(self.item_id)
+            logging.warning(
+                f"Creating new dataset pid: pid={pid_}, ds_id={self.item_id}"
+            )
+        else:
+            logging.warning(
+                f"Using existing dataset pid: pid={pid_}, ds_id={self.item_id}"
+            )
+        return pid_
 
     @cached_property
     def dataset_id(self) -> str:

@@ -95,8 +95,9 @@ def test_send_invalid_file(runner):
 
 
 @pytest.mark.online
-def test_send_valid_cmip6_mpi_day(runner, testfile, handle_client):
+def test_send_valid_cmip6_mpi_day_dc2(runner, testfile, handle_client):
     path = testfile(
+        "data_challenge_02",
         "CMIP6",
         "CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710.json",
     )
@@ -116,8 +117,9 @@ def test_send_valid_cmip6_mpi_day(runner, testfile, handle_client):
 
 
 @pytest.mark.online
-def test_send_valid_cmip6_mpi_mon(runner, testfile, handle_client):
+def test_send_valid_cmip6_mpi_mon_dc2(runner, testfile, handle_client):
     path = testfile(
+        "data_challenge_02",
         "CMIP6",
         "CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.Amon.tasmin.gn.v20190710.json",
     )
@@ -136,10 +138,51 @@ def test_send_valid_cmip6_mpi_mon(runner, testfile, handle_client):
 
 
 @pytest.mark.online
-def test_send_invalid_cmip6_mpi_mon(runner, testfile):
+def test_send_invalid_cmip6_mpi_mon_dc2(runner, testfile):
     path = testfile(
+        "data_challenge_02",
         "CMIP6_invalid",
         "CMIP6.ScenarioMIP.MPI-M.MPI-ESM1-2-LR.ssp126.r1i1p1f1.day.tasmin.gn.v20190710.json",
     )
 
     send_message(runner, path)
+
+
+@pytest.mark.online
+def test_send_valid_cmip6_mri_6hr_dc4(runner, testfile, handle_client):
+    path = testfile(
+        "data_challenge_04",
+        "CMIP6",
+        "CMIP6.HighResMIP.MRI.MRI-AGCM3-2-H.highresSST-present.r1i1p1f1.6hrPlevPt.psl.gn.v20190820.json",
+    )
+    send_message(runner, path)
+
+    pid = "b06058a6-1077-35cb-9500-1ccbd341d309"
+    pids = [
+        "7afa385c-faa4-3a5f-85e6-79da95ef3add",
+        "d58dc83b-a23a-308f-aada-1b2b7779d99a",
+        "19d85ef9-bf10-3712-9ad5-c2e9cf124c7e",
+        "321fff12-488d-3605-8e56-c1c4e75f4561",
+        "1e032121-8899-3fd0-9d81-380083338a29",
+        "0b469be3-c851-3c37-96fd-f0f30dd90809",
+        "4764e73c-ee61-38d7-aed5-4e35b8c1b39b",
+    ]
+
+    assert_record(handle_client, pid, pids)
+
+
+@pytest.mark.online
+def test_send_valid_cmip6_ipsl_mon_dc4(runner, testfile, handle_client):
+    path = testfile(
+        "data_challenge_04",
+        "CMIP6",
+        "CMIP6.ScenarioMIP.IPSL.IPSL-CM6A-LR.ssp245.r1i1p1f1.Amon.pr.gr.v20190119.json",
+    )
+    send_message(runner, path)
+
+    pid = "11da5bd1-157f-3158-b775-ba42ed4e193b"
+    pids = [
+        "d1e2181e-1066-3d33-b56a-f45bf7a40ab5",
+    ]
+
+    assert_record(handle_client, pid, pids)
