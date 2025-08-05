@@ -76,6 +76,14 @@ class BaseCMIP6Record(BaseRecord):
         """Return a property value from an asset, or a default if missing."""
         return self.get_asset(key).get(prop, default)
 
+    @cached_property
+    def properties(self) -> dict[str, Any]:
+        return self.item.get("properties", {})
+
+    def get_property(self, key: str, default: Any = None) -> Any:
+        """Return the property for a given key, or a default if missing."""
+        return self.properties.get(key, default)
+
     @abstractmethod
     def pid(self) -> str:
         """Return the persistent identifier (PID) for this CMIP6 file or dataset record."""
