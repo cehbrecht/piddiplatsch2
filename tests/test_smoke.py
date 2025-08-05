@@ -169,3 +169,20 @@ def test_send_valid_cmip6_mri_6hr_dc4(runner, testfile, handle_client):
     ]
 
     assert_record(handle_client, pid, pids)
+
+
+@pytest.mark.online
+def test_send_valid_cmip6_ipsl_mon_dc4(runner, testfile, handle_client):
+    path = testfile(
+        "data_challenge_04",
+        "CMIP6",
+        "CMIP6.ScenarioMIP.IPSL.IPSL-CM6A-LR.ssp245.r1i1p1f1.Amon.pr.gr.v20190119.json",
+    )
+    send_message(runner, path)
+
+    pid = "11da5bd1-157f-3158-b775-ba42ed4e193b"
+    pids = [
+        "d1e2181e-1066-3d33-b56a-f45bf7a40ab5",
+    ]
+
+    assert_record(handle_client, pid, pids)
