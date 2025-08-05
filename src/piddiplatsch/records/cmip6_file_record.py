@@ -40,7 +40,7 @@ class CMIP6FileRecord(BaseCMIP6Record):
 
     @cached_property
     def parent(self) -> str:
-        return build_handle(item_pid(self.item_id))
+        return build_handle(item_pid(self.item_id), as_uri=True)
 
     @cached_property
     def filename(self) -> str:

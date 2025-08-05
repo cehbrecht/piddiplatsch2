@@ -15,7 +15,8 @@ class DumpRecorder:
         now = datetime.now(timezone.utc)
         dated_filename = f"dump_messages_{now.date()}.jsonl"
         dump_file = DumpRecorder.DUMP_DIR / dated_filename
-        record = {"key": key, "value": data, "timestamp": now.isoformat()}
+        # record = {"key": key, "value": data, "timestamp": now.isoformat()}
+        record = data
         with dump_file.open("a", encoding="utf-8") as f:
             json.dump(record, f)
             f.write("\n")

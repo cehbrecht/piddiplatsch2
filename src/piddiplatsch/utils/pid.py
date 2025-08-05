@@ -3,9 +3,14 @@ from uuid import NAMESPACE_URL, uuid3
 from piddiplatsch.config import config
 
 
-def build_handle(pid: str) -> str:
+def build_handle(pid: str, as_uri: bool = False) -> str:
+    scheme = "hdl"
     prefix = config.get("handle", {}).get("prefix", "")
-    return f"{prefix}/{pid}"
+    if as_uri:
+        handle = f"{scheme}:{prefix}/{pid}"
+    else:
+        handle = f"{prefix}/{pid}"
+    return handle
 
 
 def item_pid(item_id: str) -> str:
