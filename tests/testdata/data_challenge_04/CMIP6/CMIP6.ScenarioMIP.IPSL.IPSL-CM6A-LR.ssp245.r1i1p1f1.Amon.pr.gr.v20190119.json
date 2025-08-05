@@ -1,0 +1,190 @@
+{
+    "key": "CMIP6.ScenarioMIP.IPSL.IPSL-CM6A-LR.ssp245.r1i1p1f1.Amon.pr.gr.v20190119",
+    "value": {
+        "data": {
+            "type": "STAC",
+            "payload": {
+                "collection_id": "CMIP6",
+                "method": "POST",
+                "item": {
+                    "bbox": [
+                        -180.0,
+                        -90.0,
+                        177.5,
+                        90.0
+                    ],
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [
+                            [
+                                [
+                                    -180.0,
+                                    -90.0
+                                ],
+                                [
+                                    177.5,
+                                    -90.0
+                                ],
+                                [
+                                    177.5,
+                                    90.0
+                                ],
+                                [
+                                    -180.0,
+                                    90.0
+                                ],
+                                [
+                                    -180.0,
+                                    -90.0
+                                ]
+                            ]
+                        ]
+                    },
+                    "properties": {
+                        "title": "CMIP6.ScenarioMIP.IPSL.IPSL-CM6A-LR.ssp245.r1i1p1f1.Amon.pr.gr.v20190119",
+                        "description": null,
+                        "datetime": null,
+                        "created": null,
+                        "updated": null,
+                        "start_datetime": "2015-01-16T12:00:00Z",
+                        "end_datetime": "2100-12-16T12:00:00Z",
+                        "license": null,
+                        "providers": null,
+                        "platform": null,
+                        "instruments": null,
+                        "constellation": null,
+                        "mission": null,
+                        "gsd": null,
+                        "access": [
+                            "HTTPServer"
+                        ],
+                        "retracted": false,
+                        "project": "CMIP6",
+                        "citation_url": "http://cera-www.dkrz.de/WDCC/meta/CMIP6/CMIP6.ScenarioMIP.IPSL.IPSL-CM6A-LR.ssp245.r1i1p1f1.Amon.pr.gr.v20190119.json",
+                        "variable": "precipitation_flux",
+                        "variable_long_name": "Precipitation",
+                        "variable_units": "kg m-2 s-1",
+                        "cf_standard_name": "precipitation_flux",
+                        "instance_id": "CMIP6.ScenarioMIP.IPSL.IPSL-CM6A-LR.Amon.pr.",
+                        "cmip6:activity_id": "ScenarioMIP",
+                        "cmip6:data_specs_version": "01.00.28",
+                        "cmip6:frequency": "mon",
+                        "cmip6:further_info_url": "https://furtherinfo.es-doc.org/CMIP6.IPSL.IPSL-CM6A-LR.ssp245.none.r1i1p1f1",
+                        "cmip6:grid": "regridded data reported on the data provider's preferred target grid",
+                        "cmip6:grid_label": "gr",
+                        "cmip6:institution_id": "IPSL",
+                        "cmip6:mip_era": "CMIP6",
+                        "cmip6:source_id": "IPSL-CM6A-LR",
+                        "cmip6:source_type": "AOGCM",
+                        "cmip6:experiment_id": "ssp245",
+                        "cmip6:sub_experiment_id": "none",
+                        "cmip6:nominal_resolution": "250km",
+                        "cmip6:table_id": "Amon",
+                        "cmip6:variable_id": "pr",
+                        "cmip6:variant_label": "r1i1p1f1",
+                        "cmip6:realm": "atmos",
+                        "cmip6:Conventions": "CF-1.7 CMIP-6.2",
+                        "cmip6:creation_date": "2018-12-05T17:25:50Z",
+                        "cmip6:experiment": "Future scenario with medium radiative forcing by the end of century. Following approximately RCP4.5 global forcing pathway but with new forcing based on SSP2. Concentration-driven",
+                        "cmip6:forcing_index": 1,
+                        "cmip6:initialization_index": 1,
+                        "cmip6:realization_index": 1,
+                        "cmip6:physics_index": 1,
+                        "cmip6:institution": "Institut Pierre Simon Laplace, Paris 75252, France",
+                        "cmip6:license": "cc0_1.0",
+                        "cmip6:source": "IPSL-CM6A-LR",
+                        "cmip6:sub_experiment": "none",
+                        "cmip6:tracking_id": "hdl:21.14100/0f6cc6b0-dc08-4ce4-9afa-3701a4c60108"
+                    },
+                    "id": "CMIP6.ScenarioMIP.IPSL.IPSL-CM6A-LR.ssp245.r1i1p1f1.Amon.pr.gr.v20190119",
+                    "stac_version": "1.1.0",
+                    "assets": {
+                        "reference_file": {
+                            "href": "https://dap.ceda.ac.uk/badc/cmip6/metadata/kerchunk/pipeline1/ScenarioMIP/IPSL/IPSL-CM6A-LR/kr1.0/CMIP6_ScenarioMIP_IPSL_IPSL-CM6A-LR_ssp245_r1i1p1f1_Amon_pr_gr_v20190119_kr1.0.json",
+                            "type": "application/zstd",
+                            "title": null,
+                            "description": "HTTPServer Link",
+                            "roles": [
+                                "reference",
+                                "data"
+                            ],
+                            "alternate:name": "ceda.ac.uk",
+                            "name": "reference",
+                            "open_zarr_kwargs": {
+                                "decode_times": true
+                            }
+                        },
+                        "data0001": {
+                            "href": "https://dap.ceda.ac.uk/badc/cmip6/data/CMIP6/ScenarioMIP/IPSL/IPSL-CM6A-LR/ssp245/r1i1p1f1/Amon/pr/gr/v20190119/pr_Amon_IPSL-CM6A-LR_ssp245_r1i1p1f1_gr_201501-210012.nc",
+                            "type": "application/netcdf",
+                            "title": null,
+                            "description": "HTTPServer Link",
+                            "roles": [
+                                "data"
+                            ],
+                            "file:size": 67953667,
+                            "file:checksum": "d5100b2f08a46b0e10979560480e85db777e",
+                            "alternate:name": "ceda.ac.uk"
+                        }
+                    },
+                    "links": [
+                        {
+                            "href": "https://api.stac.esgf.ceda.ac.uk/collections/CMIP6/items/CMIP6.ScenarioMIP.IPSL.IPSL-CM6A-LR.ssp245.r1i1p1f1.Amon.pr.gr.v20190119",
+                            "rel": "self",
+                            "type": "application/geo+json",
+                            "title": null,
+                            "label": null
+                        },
+                        {
+                            "href": "https://api.stac.esgf.ceda.ac.uk/collections/CMIP6",
+                            "rel": "parent",
+                            "type": "application/json",
+                            "title": null,
+                            "label": null
+                        },
+                        {
+                            "href": "https://api.stac.esgf.ceda.ac.uk/collections/CMIP6",
+                            "rel": "collection",
+                            "type": "application/json",
+                            "title": null,
+                            "label": null
+                        },
+                        {
+                            "href": "https://api.stac.esgf.ceda.ac.uk",
+                            "rel": "root",
+                            "type": "application/json",
+                            "title": null,
+                            "label": null
+                        }
+                    ],
+                    "stac_extensions": [
+                        "https://stac-extensions.github.io/alternate-assets/v1.2.0/schema.json",
+                        "https://stac-extensions.github.io/file/v2.1.0/schema.json",
+                        "https://stac-extensions.github.io/cmip6/v2.0.0/schema.json"
+                    ],
+                    "collection": "CMIP6"
+                }
+            }
+        },
+        "metadata": {
+            "auth": {
+                "auth_policy_id": null,
+                "requester_data": {
+                    "client_id": "esgf-east-transaction-api",
+                    "iss": "https://aai-demo.egi.eu/auth/realms/egi",
+                    "sub": "c96feaaedb498e90448294073bff3acd6544b111c8b3f744202de16cf68893f3@egi.eu"
+                }
+            },
+            "event_id": "9926176eff3245228af860a9494b74ed",
+            "publisher": {
+                "package": "",
+                "version": ""
+            },
+            "request_id": "da5b2f3ea00842a19dc8d8d84f3d6b42",
+            "time": "2025-08-01T15:15:12.441125",
+            "schema_version": "1.0.0"
+        }
+    },
+    "timestamp": "2025-08-05T11:43:17.126378+00:00"
+}
