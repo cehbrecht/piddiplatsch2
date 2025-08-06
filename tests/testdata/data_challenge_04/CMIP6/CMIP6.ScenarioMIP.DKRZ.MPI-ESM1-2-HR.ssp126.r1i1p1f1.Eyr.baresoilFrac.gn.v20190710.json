@@ -1,0 +1,159 @@
+{
+    "metadata": {
+        "auth": {
+            "auth_policy_id": null,
+            "requester_data": {
+                "client_id": "ec5f07c0-7ed8-4f2b-94f2-ddb6f8fc91a3",
+                "iss": "https://auth.globus.org",
+                "sub": "a511c7bc-d274-11e5-9aea-4bedf3cb22c7"
+            }
+        },
+        "event_id": "f400fc87939c4cf8b8cd2f165d0a2aec",
+        "publisher": {
+            "package": "",
+            "version": ""
+        },
+        "request_id": "040bf1d4eceb48a28d6710d1ceb5d040",
+        "time": "2025-08-05T11:24:50.703065",
+        "schema_version": "1.0.0"
+    },
+    "data": {
+        "type": "STAC",
+        "payload": {
+            "method": "POST",
+            "collection_id": "CMIP6",
+            "item": {
+                "type": "Feature",
+                "stac_version": "1.0.0",
+                "stac_extensions": [
+                    "http://host.docker.internal/cmip6/v2.0.1/schema.json",
+                    "https://stac-extensions.github.io/alternate-assets/v1.2.0/schema.json",
+                    "https://stac-extensions.github.io/file/v2.1.0/schema.json"
+                ],
+                "id": "CMIP6.ScenarioMIP.DKRZ.MPI-ESM1-2-HR.ssp126.r1i1p1f1.Eyr.baresoilFrac.gn.v20190710",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [
+                                0.0,
+                                -89.284225
+                            ],
+                            [
+                                359.0625,
+                                -89.284225
+                            ],
+                            [
+                                359.0625,
+                                89.284225
+                            ],
+                            [
+                                0.0,
+                                89.284225
+                            ],
+                            [
+                                0.0,
+                                -89.284225
+                            ]
+                        ]
+                    ]
+                },
+                "bbox": [
+                    0.0,
+                    -89.284225,
+                    359.0625,
+                    89.284225
+                ],
+                "collection": "CMIP6",
+                "links": [
+                    {
+                        "rel": "self",
+                        "type": "application/json",
+                        "href": "https://api.stac.esgf-west.org/collections/CMIP6/items/CMIP6.ScenarioMIP.DKRZ.MPI-ESM1-2-HR.ssp126.r1i1p1f1.Eyr.baresoilFrac.gn.v20190710"
+                    },
+                    {
+                        "rel": "parent",
+                        "type": "application/json",
+                        "href": "https://api.stac.esgf-west.org/collections/CMIP6"
+                    },
+                    {
+                        "rel": "collection",
+                        "type": "application/json",
+                        "href": "https://api.stac.esgf-west.org/collections/CMIP6"
+                    },
+                    {
+                        "rel": "root",
+                        "type": "application/json",
+                        "href": "https://api.stac.esgf-west.org/collections"
+                    }
+                ],
+                "properties": {
+                    "datetime": null,
+                    "start_datetime": "2015-07-02T12:00:00Z",
+                    "end_datetime": "1975-01-02T00:00:00Z",
+                    "access": [
+                        "HTTPServer",
+                        "GridFTP",
+                        "OPENDAP",
+                        "Globus"
+                    ],
+                    "pid": 5.4,
+                    "project": "CMIP6",
+                    "version": "20190710",
+                    "retracted": false,
+                    "cmip6:activity_id": "ScenarioMIP",
+                    "cmip6:cf_standard_name": "area_fraction",
+                    "cmip6:citation_url": "http://cera-www.dkrz.de/WDCC/meta/CMIP6/CMIP6.ScenarioMIP.DKRZ.MPI-ESM1-2-HR.ssp126.r1i1p1f1.Eyr.baresoilFrac.gn.v20190710.json",
+                    "cmip6:data_specs_version": "01.00.30",
+                    "cmip6:experiment_id": "ssp126",
+                    "cmip6:experiment_title": "update of RCP2.6 based on SSP1",
+                    "cmip6:frequency": "yr",
+                    "cmip6:further_info_url": "https://furtherinfo.es-doc.org/CMIP6.DKRZ.MPI-ESM1-2-HR.ssp126.none.r1i1p1f1",
+                    "cmip6:grid": "gn",
+                    "cmip6:grid_label": "gn",
+                    "cmip6:institution_id": "DKRZ",
+                    "cmip6:member_id": "r1i1p1f1",
+                    "cmip6:mip_era": "CMIP6",
+                    "cmip6:nominal_resolution": "100 km",
+                    "cmip6:product": "model-output",
+                    "cmip6:realm": [
+                        "land"
+                    ],
+                    "cmip6:source_id": "MPI-ESM1-2-HR",
+                    "cmip6:source_type": [
+                        "AOGCM"
+                    ],
+                    "cmip6:table_id": "Eyr",
+                    "cmip6:variable": "baresoilFrac",
+                    "cmip6:variable_long_name": "Bare Soil Percentage Area Coverage",
+                    "cmip6:variable_units": "%",
+                    "cmip6:variant_label": "r1i1p1f1"
+                },
+                "assets": {
+                    "globus": {
+                        "href": "https://app.globus.org/file-manager?origin_id=415a6320-e49c-11e5-9798-22000b9da45e&origin_path=/css03_data/CMIP6/ScenarioMIP/DKRZ/MPI-ESM1-2-HR/ssp126/r1i1p1f1/Eyr/baresoilFrac/gn/v20190710/",
+                        "description": "Globus Web App Link",
+                        "type": "text/html",
+                        "roles": [
+                            "data"
+                        ],
+                        "alternate:name": "aims3.llnl.gov"
+                    },
+                    "data0000": {
+                        "href": "http://aims3.llnl.gov/thredds/fileServer/css03_data/CMIP6/ScenarioMIP/DKRZ/MPI-ESM1-2-HR/ssp126/r1i1p1f1/Eyr/baresoilFrac/gn/v20190710/baresoilFrac_Eyr_MPI-ESM1-2-HR_ssp126_r1i1p1f1_gn_2015-2015.nc",
+                        "description": "HTTPServer Link",
+                        "type": "application/netcdf",
+                        "roles": [
+                            "data"
+                        ],
+                        "alternate:name": "aims3.llnl.gov",
+                        "file:size": 130921,
+                        "file:checksum": "122063632a941f9f320b4322e78409ccd8a51efb71ca51db385dd65d1c131d1d8ef8"
+                    }
+                }
+            }
+        }
+    },
+    "failure_timestamp": "2025-08-05T14:45:52+00:00",
+    "retries": 0
+}
