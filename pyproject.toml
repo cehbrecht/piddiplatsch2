@@ -22,7 +22,8 @@ dependencies = [
     "pluggy",
     "jsonschema",
     "pydantic >=2.11",
-    "python-dateutil"
+    "python-dateutil",
+    "tqdm"
 ]
 
 [project.optional-dependencies]
@@ -36,8 +37,7 @@ dev = [
   "wheel >=0.40.0",
   "black >=25.1.0",
   "isort >=6.0.1",
-  "pre-commit >=3.5.0",
-  "tqdm"
+  "pre-commit >=3.5.0"
 ]
 
 [project.scripts]
