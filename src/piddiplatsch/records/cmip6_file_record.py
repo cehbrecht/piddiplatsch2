@@ -62,7 +62,7 @@ class CMIP6FileRecord(BaseCMIP6Record):
         return self.asset["href"]
 
     def as_handle_model(self) -> CMIP6FileModel:
-        return CMIP6FileModel(
+        fm = CMIP6FileModel(
             URL=self.url,
             AGGREGATION_LEVEL="FILE",
             IS_PART_OF=self.parent,
@@ -71,6 +71,8 @@ class CMIP6FileRecord(BaseCMIP6Record):
             FILE_SIZE=self.size,
             DOWNLOAD_URL=self.download_url,
         )
+        fm.set_pid(self.pid)
+        return fm
 
 
 def extract_asset_records(

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, PrivateAttr, model_validator
 
 
 class HostingNode(BaseModel):
@@ -11,8 +12,27 @@ class HostingNode(BaseModel):
 
 
 class BaseCMIP6Model(BaseModel):
+    _pid: str | None = PrivateAttr(default=None)
+
     ESGF: str = "ESGF2 TEST"
     URL: str
+
+    def set_pid(self, value: str | uuid.UUID) -> None:
+        """Set and validate the PID (must be a valid UUID or UUID string)."""
+        if isinstance(value, uuid.UUID):
+            self._pid = str(value)
+        elif isinstance(value, str):
+            try:
+                self._pid = str(uuid.UUID(value))
+            except ValueError:
+                raise ValueError(f"Invalid PID string: {value} is not a valid UUID.")
+        else:
+            raise TypeError(
+                f"PID must be a UUID or UUID string, got {type(value).__name__}"
+            )
+
+    def get_pid(self) -> str | None:
+        return self._pid
 
 
 class CMIP6DatasetModel(BaseCMIP6Model):
