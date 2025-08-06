@@ -10,6 +10,8 @@ from piddiplatsch.dump import DumpRecorder
 from piddiplatsch.plugin_loader import load_single_plugin
 from piddiplatsch.recovery import FailureRecovery
 from piddiplatsch.stats import StatsTracker
+from piddiplatsch.utils.rate_tracker import get_rate_tracker
+from piddiplatsch.config import config 
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +24,12 @@ class Consumer:
 
     def consume(self):
         """Yield messages from Kafka."""
+        # Read from config (or fallback to False)
+        use_tqdm = config.get("consumer", {}).get("tqdm", False)
+
+        message_tracker = get_rate_tracker("messages", use_tqdm)
+        handle_tracker = get_rate_tracker("handles", use_tqdm)
+
         try:
             while True:
                 msg = self.consumer.poll(timeout=1.0)
@@ -37,9 +45,14 @@ class Consumer:
                     logger.error(f"Failed to decode message: {e}")
                     continue
 
+                message_tracker.tick()
+                handle_tracker.tick()
+
                 yield key, value
         finally:
             self.consumer.close()
+            message_tracker.close()
+            handle_tracker.close()
 
 
 class ConsumerPipeline:

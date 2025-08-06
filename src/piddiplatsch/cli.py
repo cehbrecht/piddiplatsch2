@@ -48,7 +48,8 @@ def init():
 
 @cli.command()
 @click.option("--dump", is_flag=True, help="Dump all consumed messages to JSONL files.")
-def consume(dump):
+@click.option("--tqdm/--no-tqdm", default=None, help="Enable tqdm progress bars")
+def consume(dump, tqdm):
     """Start the Kafka consumer."""
     topic = config.get("consumer", "topic")
     kafka_cfg = config.get("kafka")
