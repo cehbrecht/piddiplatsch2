@@ -28,7 +28,7 @@ class Consumer:
         use_tqdm = config.get("consumer", {}).get("tqdm", False)
 
         message_tracker = get_rate_tracker("messages", use_tqdm)
-        handle_tracker = get_rate_tracker("handles", use_tqdm)
+        # handle_tracker = get_rate_tracker("handles", use_tqdm)
 
         try:
             while True:
@@ -46,13 +46,13 @@ class Consumer:
                     continue
 
                 message_tracker.tick()
-                handle_tracker.tick()
+                # handle_tracker.tick()
 
                 yield key, value
         finally:
             self.consumer.close()
             message_tracker.close()
-            handle_tracker.close()
+            # handle_tracker.close()
 
 
 class ConsumerPipeline:
