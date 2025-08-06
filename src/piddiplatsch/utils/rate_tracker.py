@@ -1,8 +1,10 @@
-import time
 import logging
+import time
+
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
+
 
 class BaseRateTracker:
     def tick(self, n=1):

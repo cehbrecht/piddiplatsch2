@@ -6,12 +6,12 @@ import sys
 from confluent_kafka import Consumer as ConfluentConsumer
 from confluent_kafka import KafkaException
 
+from piddiplatsch.config import config
 from piddiplatsch.dump import DumpRecorder
 from piddiplatsch.plugin_loader import load_single_plugin
 from piddiplatsch.recovery import FailureRecovery
 from piddiplatsch.stats import StatsTracker
 from piddiplatsch.utils.rate_tracker import get_rate_tracker
-from piddiplatsch.config import config 
 
 logger = logging.getLogger(__name__)
 
