@@ -1,4 +1,5 @@
 import logging
+import traceback
 from datetime import datetime
 from typing import Any
 
@@ -17,7 +18,7 @@ hookimpl = pluggy.HookimplMarker("piddiplatsch")
 class CMIP6Processor:
     """Pluggy processor for CMIP6 STAC items."""
 
-    EXCLUDED_ASSET_KEYS = ["reference_file", "thumbnail", "quicklook"]
+    EXCLUDED_ASSET_KEYS = ["reference_file", "globus", "thumbnail", "quicklook"]
 
     def __init__(self, strict: bool = False):
         self.strict = strict
@@ -40,6 +41,8 @@ class CMIP6Processor:
                 success=True,
             )
         except Exception as e:
+            stack = "".join(traceback.format_stack())
+            logging.debug(f"Procssing of {key} failed: {stack}")
             return ProcessingResult(key=key, success=False, error=str(e))
 
     def _do_process(self, value: dict[str, Any]) -> int:
@@ -63,9 +66,9 @@ class CMIP6Processor:
             item, strict=self.strict, exclude_keys=self.EXCLUDED_ASSET_KEYS
         )
 
-        logging.debug(
-            f"Register item record for PID {record.pid}: {record.as_record()}"
-        )
+        record.validate()
+
+        logging.debug(f"Register item record for PID {record.pid}")
         self.handle_client.add_record(record.pid, record.as_record())
         num_handles += 1
 

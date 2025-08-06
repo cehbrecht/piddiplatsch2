@@ -123,7 +123,7 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
         return replicas
 
     def as_handle_model(self) -> CMIP6DatasetModel:
-        return CMIP6DatasetModel(
+        dsm = CMIP6DatasetModel(
             URL=self.url,
             DATASET_ID=self.dataset_id,
             DATASET_VERSION=self.dataset_version,
@@ -134,3 +134,6 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
             UNPUBLISHED_REPLICAS=self.unpublished_replicas,
             UNPUBLISHED_HOSTS=self.unpublished_hosts,
         )
+
+        dsm.set_pid(self.pid)
+        return dsm

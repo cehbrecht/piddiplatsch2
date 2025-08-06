@@ -30,7 +30,7 @@ def parse_datetime(value: str | None) -> datetime | None:
 
 
 def parse_pid(value: str) -> str:
-    if value and "/" in value:
+    if value and isinstance(value, str) and "/" in value:
         pid_ = value.split("/")[1]
     else:
         pid_ = value

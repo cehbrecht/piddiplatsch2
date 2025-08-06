@@ -66,7 +66,6 @@ class ConsumerPipeline:
             if self.dump_messages:
                 DumpRecorder.record_item(key, value)
             result = self.processor.process(key, value)
-            logger.debug(f"Processing message ... done: {key}")
 
             if result.success:
                 self.stats.record_success(
