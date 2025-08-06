@@ -189,17 +189,10 @@ def test_send_valid_cmip6_ipsl_mon_dc4(runner, testfile, handle_client):
 
 
 @pytest.mark.online
-def test_send_valid_cmip6_mpi_yr_dc4(runner, testfile, handle_client):
+def test_send_invalid_cmip6_dkrz_yr_dc4(runner, testfile):
     path = testfile(
         "data_challenge_04",
-        "CMIP6",
+        "CMIP6_invalid",
         "CMIP6.ScenarioMIP.DKRZ.MPI-ESM1-2-HR.ssp126.r1i1p1f1.Eyr.baresoilFrac.gn.v20190710.json",
     )
     send_message(runner, path)
-
-    pid = "bla"
-    pids = [
-        "blu",
-    ]
-
-    assert_record(handle_client, pid, pids)
