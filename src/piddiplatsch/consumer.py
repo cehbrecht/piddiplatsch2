@@ -7,10 +7,9 @@ from confluent_kafka import Consumer as ConfluentConsumer
 from confluent_kafka import KafkaException
 
 from piddiplatsch.dump import DumpRecorder
-from piddiplatsch.monitoring import MetricsTracker
+from piddiplatsch.monitoring import MetricsTracker, get_rate_tracker
 from piddiplatsch.plugin_loader import load_single_plugin
 from piddiplatsch.recovery import FailureRecovery
-from piddiplatsch.utils.rate_tracker import get_rate_tracker
 
 logger = logging.getLogger(__name__)
 
