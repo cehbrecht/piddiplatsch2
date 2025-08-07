@@ -1,5 +1,88 @@
 # README Handle/PIDs
 
+## stac schema
+
+GeoJSON spec
+https://datatracker.ietf.org/doc/html/rfc7946#section-3
+
+STAC Item spec
+https://github.com/radiantearth/stac-spec/blob/master/item-spec/item-spec.md
+
+STAC Common Metadata
+https://github.com/radiantearth/stac-spec/blob/master/commons/common-metadata.md
+
+STAC Assets
+https://github.com/radiantearth/stac-spec/blob/master/commons/assets.md
+
+CMIP6 Extension
+https://github.com/stac-extensions/cmip6
+
+File Extension
+https://github.com/stac-extensions/file
+
+
+
+## esgf docs
+
+esgf docu:
+* https://github.com/ESGF/esgf-roadmap/blob/main/status/20250701-ESGF-NG.md#data-challenges
+
+stac schema doc:
+https://docs.google.com/document/d/1O7CsCFpvoUhvw3LKH8PJz24O-oqF3DtQMi2hNhn9nPU/edit?tab=t.0
+
+## esgf stac schema notes
+
+### replica
+
+GL: Regarding the replica: true/false field, I would suggest we align with the STAC specification by using the roles property of each asset to indicate whether it is a reference (master) or a replica. Specifically, we could adopt the following convention: roles: ["data", "reference"] for the canonical version of the dataset (as proposed in the JSON example) and roles: ["data", "replica"] for secondary copies. So the replica field will be dropped. Do we agree on this?
+
+### size, checksum
+
+GL: Yes, as the file:size will be handled by the file STAC extension, it’s better to have another field for the dataset size. I propose simply size as it cannot be confused with the assets sizes in the schema. Do we agree on this ?
+
+
+### publication timestamp
+
+SA can you confirm the publication timestamp is automatically set up and does not need to be validated by the STAC extension?
+
+
+ "metadata": {
+        "auth": {
+            "auth_policy_id": null,
+            "requester_data": {
+                "client_id": "ec5f07c0-7ed8-4f2b-94f2-ddb6f8fc91a3",
+                "iss": "https://auth.globus.org",
+                "sub": "a511c7bc-d274-11e5-9aea-4bedf3cb22c7"
+            }
+        },
+        "event_id": "932bda79fec7461abb82f17d7d951072",
+        "publisher": {
+            "package": "test_client",
+            "version": "0.1.0"
+        },
+        "request_id": "25fce4cc536847cea76418b2fba5b8ed",
+        "time": "2025-08-06T16:16:37.933751",
+        "schema_version": "1.0.0"
+    },
+
+### tracking_id
+
+part of file asset ...
+
+"data0001": {
+      "href": "https://dap.ceda.ac.uk/badc/cmip6/data/CMIP6/ScenarioMIP/THU/CIESM/ssp585/r1i1p1f1/Amon/rsus/gr/v20200806/rsus_Amon_CIESM_ssp585_r1i1p1f1_gr_402901-411412.nc",
+      "type": "application/netcdf",
+      "file:checksum": "90e402107a7f2588a85362b9beea2a12d4514d45",
+      "tracking_id": "hdl:21.14100/7a8097a5-3ebb-4491-8640-01843dbdecd2",
+      "roles": [
+        "data"
+      ]
+    }
+
+
+
+
+
 ## check official PID
 
 https://hdl.handle.net/21.T14995/3bc78243-6735-30fb-80c0-d6382f89a1b8?noredirect

@@ -22,7 +22,8 @@ dependencies = [
     "pluggy",
     "jsonschema",
     "pydantic >=2.11",
-    "python-dateutil"
+    "python-dateutil",
+    "tqdm"
 ]
 
 [project.optional-dependencies]
