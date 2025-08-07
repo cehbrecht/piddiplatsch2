@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime, timezone
 from functools import cached_property
 from typing import Any
 
@@ -18,8 +17,9 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
         item: dict[str, Any],
         strict: bool,
         exclude_keys: list[str] | None = None,
+        additional_attributes: dict[str, Any] | None = None,
     ):
-        super().__init__(item, strict=strict)
+        super().__init__(item, additional_attributes, strict=strict)
         self.exclude_keys = set(exclude_keys or [])
         self.max_parts = config.get("cmip6", {}).get("max_parts", -1)
 
@@ -86,7 +86,7 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
                 break
 
         if not published_on:
-            published_on = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+            published_on = self.default_publication_time
 
         return HostingNode(host=host, published_on=parse_datetime(published_on))
 

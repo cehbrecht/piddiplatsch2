@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime, timezone
 from functools import cached_property
 from typing import Any
 
@@ -47,8 +48,14 @@ class BaseRecord(ABC):
 
 
 class BaseCMIP6Record(BaseRecord):
-    def __init__(self, item: dict[str, Any], strict: bool):
+    def __init__(
+        self,
+        item: dict[str, Any],
+        additional_attributes: dict[str, Any] | None = None,
+        strict: bool = False,
+    ):
         super().__init__(item, strict=strict)
+        self.additional_attributes = additional_attributes or {}
 
     @cached_property
     def prefix(self) -> str:
@@ -57,6 +64,13 @@ class BaseCMIP6Record(BaseRecord):
     @cached_property
     def landing_page_url(self) -> str:
         return config.get("cmip6", {}).get("landing_page_url", "").rstrip("/")
+
+    @cached_property
+    def default_publication_time(self) -> str:
+        published_on = self.additional_attributes.get("publication_time")
+        if not published_on:
+            published_on = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        return published_on
 
     @cached_property
     def item_id(self) -> str:
