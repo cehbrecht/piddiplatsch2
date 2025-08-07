@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 from datetime import datetime
 
 from piddiplatsch.config import config
@@ -10,6 +11,8 @@ class StatsTracker:
         self.messages_processed = 0
         self.handles_created = 0
         self.failures = 0
+        self.start_time = time.time()
+
         self.logger = logging.getLogger(__name__)
         self.summary_interval = config.get("consumer", {}).get(
             "stats_summary_interval", 100
@@ -57,10 +60,18 @@ class StatsTracker:
         )
 
     def summary(self):
+        elapsed = time.time() - self.start_time
         return {
             "messages_processed": self.messages_processed,
             "handles_created": self.handles_created,
             "failures": self.failures,
+            "elapsed_sec": round(elapsed, 1),
+            "messages_per_min": (
+                round((self.messages_processed / elapsed) * 60, 2) if elapsed > 0 else 0
+            ),
+            "handles_per_min": (
+                round((self.handles_created / elapsed) * 60, 2) if elapsed > 0 else 0
+            ),
         }
 
     def log_summary(self):
