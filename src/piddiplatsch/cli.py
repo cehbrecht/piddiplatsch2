@@ -48,13 +48,13 @@ def init():
 
 @cli.command()
 @click.option("--dump", is_flag=True, help="Dump all consumed messages to JSONL files.")
-@click.option("--tqdm/--no-tqdm", default=None, help="Enable tqdm progress bars")
-def consume(dump, tqdm):
+@click.option("--verbose", is_flag=True, help="Show progress bar.")
+def consume(dump, verbose):
     """Start the Kafka consumer."""
     topic = config.get("consumer", "topic")
     kafka_cfg = config.get("kafka")
     processor = config.get("plugin", "processor")
-    start_consumer(topic, kafka_cfg, processor, dump_messages=dump)
+    start_consumer(topic, kafka_cfg, processor, dump_messages=dump, verbose=verbose)
 
 
 # retry command

@@ -6,7 +6,6 @@ import sys
 from confluent_kafka import Consumer as ConfluentConsumer
 from confluent_kafka import KafkaException
 
-from piddiplatsch.config import config
 from piddiplatsch.dump import DumpRecorder
 from piddiplatsch.plugin_loader import load_single_plugin
 from piddiplatsch.recovery import FailureRecovery
@@ -24,11 +23,6 @@ class Consumer:
 
     def consume(self):
         """Yield messages from Kafka."""
-        # Read from config (or fallback to False)
-        use_tqdm = config.get("consumer", {}).get("tqdm", False)
-
-        message_tracker = get_rate_tracker("messages", use_tqdm)
-        # handle_tracker = get_rate_tracker("handles", use_tqdm)
 
         try:
             while True:
@@ -45,32 +39,41 @@ class Consumer:
                     logger.error(f"Failed to decode message: {e}")
                     continue
 
-                message_tracker.tick()
-                # handle_tracker.tick()
-
                 yield key, value
         finally:
             self.consumer.close()
-            message_tracker.close()
-            # handle_tracker.close()
 
 
 class ConsumerPipeline:
     """Encapsulates the Kafka consumer, processor, and handle client."""
 
     def __init__(
-        self, topic: str, kafka_cfg: dict, processor: str, dump_messages: bool = False
+        self,
+        topic: str,
+        kafka_cfg: dict,
+        processor: str,
+        dump_messages: bool = False,
+        verbose: bool = False,
     ):
         self.consumer = Consumer(topic, kafka_cfg)
         self.processor = load_single_plugin(processor)
         self.dump_messages = dump_messages
+        self.verbose = verbose
         self.stats = StatsTracker()
+
+        if self.verbose:
+            use_tqdm = True
+        else:
+            use_tqdm = False
+
+        self.message_tracker = get_rate_tracker("messages", use_tqdm)
 
     def run(self):
         """Consume and process messages indefinitely."""
         logger.info("Starting consumer pipeline...")
         for key, value in self.consumer.consume():
             self.process_message(key, value)
+            self.message_tracker.tick()
 
     def process_message(self, key: str, value: dict):
         """Process a single message."""
@@ -98,13 +101,19 @@ class ConsumerPipeline:
         logger.warning("Stopping consumer...")
         # Any other cleanup logic can be added here if needed.
         self.stats.log_summary()
+        # Stop tracker
+        self.message_tracker.close()
 
 
 def start_consumer(
-    topic: str, kafka_cfg: dict, processor: str, dump_messages: bool = False
+    topic: str,
+    kafka_cfg: dict,
+    processor: str,
+    dump_messages: bool = False,
+    verbose: bool = False,
 ):
     pipeline = ConsumerPipeline(
-        topic, kafka_cfg, processor, dump_messages=dump_messages
+        topic, kafka_cfg, processor, dump_messages=dump_messages, verbose=verbose
     )
 
     # Handle graceful shutdown
