@@ -45,6 +45,26 @@ GL: Yes, as the file:size will be handled by the file STAC extension, it’s bet
 
 SA can you confirm the publication timestamp is automatically set up and does not need to be validated by the STAC extension?
 
+
+ "metadata": {
+        "auth": {
+            "auth_policy_id": null,
+            "requester_data": {
+                "client_id": "ec5f07c0-7ed8-4f2b-94f2-ddb6f8fc91a3",
+                "iss": "https://auth.globus.org",
+                "sub": "a511c7bc-d274-11e5-9aea-4bedf3cb22c7"
+            }
+        },
+        "event_id": "932bda79fec7461abb82f17d7d951072",
+        "publisher": {
+            "package": "test_client",
+            "version": "0.1.0"
+        },
+        "request_id": "25fce4cc536847cea76418b2fba5b8ed",
+        "time": "2025-08-06T16:16:37.933751",
+        "schema_version": "1.0.0"
+    },
+
 ### tracking_id
 
 part of file asset ...
