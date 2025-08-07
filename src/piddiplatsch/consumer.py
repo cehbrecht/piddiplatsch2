@@ -58,15 +58,9 @@ class ConsumerPipeline:
         self.consumer = Consumer(topic, kafka_cfg)
         self.processor = load_single_plugin(processor)
         self.dump_messages = dump_messages
-        self.verbose = verbose
         self.stats = StatsTracker()
 
-        if self.verbose:
-            use_tqdm = True
-        else:
-            use_tqdm = False
-
-        self.message_tracker = get_rate_tracker("messages", use_tqdm)
+        self.message_tracker = get_rate_tracker("messages", use_tqdm=verbose)
 
     def run(self):
         """Consume and process messages indefinitely."""
