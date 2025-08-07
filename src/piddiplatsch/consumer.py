@@ -7,10 +7,9 @@ from confluent_kafka import Consumer as ConfluentConsumer
 from confluent_kafka import KafkaException
 
 from piddiplatsch.dump import DumpRecorder
+from piddiplatsch.monitoring import MetricsTracker, get_rate_tracker
 from piddiplatsch.plugin_loader import load_single_plugin
 from piddiplatsch.recovery import FailureRecovery
-from piddiplatsch.stats import StatsTracker
-from piddiplatsch.utils.rate_tracker import get_rate_tracker
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +57,7 @@ class ConsumerPipeline:
         self.consumer = Consumer(topic, kafka_cfg)
         self.processor = load_single_plugin(processor)
         self.dump_messages = dump_messages
-        self.stats = StatsTracker()
+        self.metrics = MetricsTracker()
 
         self.message_tracker = get_rate_tracker("messages", use_tqdm=verbose)
 
@@ -78,11 +77,11 @@ class ConsumerPipeline:
             result = self.processor.process(key, value)
 
             if result.success:
-                self.stats.record_success(
+                self.metrics.record_success(
                     result.key, result.num_handles, elapsed=result.elapsed
                 )
             else:
-                self.stats.record_failure(result.key, result.error)
+                self.metrics.record_failure(result.key, result.error)
                 raise Exception(result.error)
 
         except Exception as e:
@@ -94,7 +93,7 @@ class ConsumerPipeline:
         """Gracefully stop the consumer."""
         logger.warning("Stopping consumer...")
         # Any other cleanup logic can be added here if needed.
-        self.stats.log_summary()
+        self.metrics.log_summary()
         # Stop tracker
         self.message_tracker.close()
 
