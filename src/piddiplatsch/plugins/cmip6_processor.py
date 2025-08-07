@@ -53,6 +53,16 @@ class CMIP6Processor:
             )
             raise ValueError(f"Invalid CMIP6 STAC item: {e.message}") from e
 
+    def _get_additional_attributes(self, value: dict[str, any]) -> dict[str, any]:
+        """
+        Extract additional attributes from the raw Kafka message.
+        Extend this method if you need more attributes in future.
+        """
+        publication_time = value.get("metadata", {}).get("time")
+        return {
+            "publication_time": publication_time,
+        }
+
     def _do_process(self, value: dict[str, Any]) -> int:
         num_handles = 0
 
@@ -64,8 +74,13 @@ class CMIP6Processor:
 
         self._validate_item(item)
 
+        additional_attrs = self._get_additional_attributes(value)
+
         record = CMIP6DatasetRecord(
-            item, strict=self.strict, exclude_keys=self.EXCLUDED_ASSET_KEYS
+            item,
+            strict=self.strict,
+            exclude_keys=self.EXCLUDED_ASSET_KEYS,
+            additional_attributes=additional_attrs,
         )
 
         record.validate()
