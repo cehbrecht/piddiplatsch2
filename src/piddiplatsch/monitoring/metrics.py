@@ -10,6 +10,7 @@ class MetricsTracker:
         self.messages_processed = 0
         self.handles_created = 0
         self.failures = 0
+        self.patches = 0
         self.start_time = datetime.now(timezone.utc)
 
         self.logger = logging.getLogger(__name__)
