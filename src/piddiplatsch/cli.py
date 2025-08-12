@@ -21,13 +21,15 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     help="Path to custom config TOML file.",
 )
 @click.option("--debug", is_flag=True, help="Enable debug logging.")
+@click.option("-v", "--verbose", is_flag=True, help="Show progress bar.")
 @click.option(
     "--logfile", type=click.Path(), help="Write logs to file instead of console."
 )
 @click.pass_context
-def cli(ctx, config_file, debug, logfile):
+def cli(ctx, config_file, debug, verbose, logfile):
     """CLI to interact with Kafka and Handle Service."""
     ctx.ensure_object(dict)
+    ctx.obj["verbose"] = verbose
     config.load_user_config(config_file)
     config.configure_logging(debug=debug, logfile=logfile)
 
@@ -48,13 +50,15 @@ def init():
 
 @cli.command()
 @click.option("--dump", is_flag=True, help="Dump all consumed messages to JSONL files.")
-@click.option("--verbose", is_flag=True, help="Show progress bar.")
-def consume(dump, verbose):
+@click.pass_context
+def consume(ctx, dump):
     """Start the Kafka consumer."""
     topic = config.get("consumer", "topic")
     kafka_cfg = config.get("kafka")
     processor = config.get("plugin", "processor")
-    start_consumer(topic, kafka_cfg, processor, dump_messages=dump, verbose=verbose)
+    start_consumer(
+        topic, kafka_cfg, processor, dump_messages=dump, verbose=ctx.obj["verbose"]
+    )
 
 
 # retry command
