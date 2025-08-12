@@ -59,9 +59,17 @@ class CMIP6FileModel(BaseCMIP6Model):
     AGGREGATION_LEVEL: str = "FILE"
     FILE_NAME: str
     IS_PART_OF: str
-    CHECKSUM: str | None = None
+    CHECKSUM: str
     CHECKSUM_METHOD: str | None = None
-    FILE_SIZE: int | None = None
+    FILE_SIZE: int
     FILE_VERSION: str | None = None
     DOWNLOAD_URL: str
     DOWNLOAD_URL_REPLICA: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_required(self) -> CMIP6FileModel:
+        if not self.FILE_SIZE:
+            raise ValueError("FILE_SIZE is required.")
+        if not self.CHECKSUM:
+            raise ValueError("CHECKSUM is required.")
+        return self
