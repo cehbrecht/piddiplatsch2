@@ -38,20 +38,26 @@ class Config:
             value = cfg
         return value
 
-    def configure_logging(self, debug: bool = False, logfile: str | None = None):
+    def configure_logging(self, debug: bool = False, log: str | None = None):
         log_level = logging.DEBUG if debug else logging.INFO
 
         handlers = []
-        if logfile:
-            handlers.append(logging.FileHandler(logfile))
+
+        if not log or log == "-":
+            console = True
         else:
+            console = False
+
+        if console:
             handlers.append(RichHandler(rich_tracebacks=True))
+        else:
+            handlers.append(logging.FileHandler(log))
 
         logging.basicConfig(
             level=log_level,
             format=(
                 "%(message)s"
-                if not logfile
+                if console
                 else "%(asctime)s - %(levelname)s - %(message)s"
             ),
             datefmt="[%X]",

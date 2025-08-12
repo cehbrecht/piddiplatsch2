@@ -23,15 +23,20 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.option("--debug", is_flag=True, help="Enable debug logging.")
 @click.option("-v", "--verbose", is_flag=True, help="Show progress bar.")
 @click.option(
-    "--logfile", type=click.Path(), help="Write logs to file instead of console."
+    "-l",
+    "--log",
+    type=click.Path(dir_okay=False, writable=True, resolve_path=True),
+    default="pid.log",
+    show_default=True,
+    help="Log file path, or '-' for console",
 )
 @click.pass_context
-def cli(ctx, config_file, debug, verbose, logfile):
+def cli(ctx, config_file, debug, verbose, log):
     """CLI to interact with Kafka and Handle Service."""
     ctx.ensure_object(dict)
     ctx.obj["verbose"] = verbose
     config.load_user_config(config_file)
-    config.configure_logging(debug=debug, logfile=logfile)
+    config.configure_logging(debug=debug, log=log)
 
 
 # init command
