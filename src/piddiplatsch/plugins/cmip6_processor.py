@@ -25,9 +25,7 @@ class CMIP6Processor:
 
     @hookimpl
     def process(self, key: str, value: dict[str, Any]) -> ProcessingResult:
-        """Process a Kafka message for a CMIP6 STAC item and register it in the Handle Service."""
         logging.debug(f"CMIP6 plugin processing key: {key}")
-
         start = datetime.now()
 
         try:
@@ -41,33 +39,30 @@ class CMIP6Processor:
             )
         except Exception as e:
             logging.exception(f"Processing of {key} failed with error: {e}")
-            return ProcessingResult(key=key, success=False, error=str(e))
-
-    def _validate_item(self, item: dict[str, Any]) -> None:
-        """Validate the STAC item against the CMIP6 schema."""
-        try:
-            validate(instance=item, schema=SCHEMA)
-        except ValidationError as e:
-            logging.error(
-                f"Schema validation failed at {list(e.absolute_path)}: {e.message}"
+            return ProcessingResult(
+                key=key,
+                success=False,
+                error=str(e),
             )
-            raise ValueError(f"Invalid CMIP6 STAC item: {e.message}") from e
-
-    def _get_additional_attributes(self, value: dict[str, any]) -> dict[str, any]:
-        """
-        Extract additional attributes from the raw Kafka message.
-        Extend this method if you need more attributes in future.
-        """
-        publication_time = value.get("metadata", {}).get("time")
-        return {
-            "publication_time": publication_time,
-        }
 
     def _do_process(self, value: dict[str, Any]) -> int:
-        num_handles = 0
+        payload = value.get("data", {}).get("payload", {})
 
+        if payload.get("method") == "PATCH":
+            return self._process_patch_message(payload)
+        else:
+            return self._process_item_message(payload, value)
+
+    def _process_patch_message(self, payload: dict[str, Any]) -> int:
+        logging.warning(f"PATCH message detected for item_id={payload.get('item_id')}")
+        raise NotImplementedError("PATCH messages are not implemented yet")
+
+    def _process_item_message(
+        self, payload: dict[str, Any], value: dict[str, Any]
+    ) -> int:
+        num_handles = 0
         try:
-            item = value["data"]["payload"]["item"]
+            item = payload["item"]
         except KeyError as e:
             logging.error(f"Missing 'item' in Kafka message: {e}")
             raise ValueError("Missing 'item' in Kafka message") from e
@@ -82,14 +77,12 @@ class CMIP6Processor:
             exclude_keys=self.EXCLUDED_ASSET_KEYS,
             additional_attributes=additional_attrs,
         )
-
         record.validate()
 
         logging.debug(f"Register item record for PID {record.pid}")
         self.handle_client.add_record(record.pid, record.as_record())
         num_handles += 1
 
-        # Iterate over file assets and register them as well
         asset_records = extract_asset_records(
             item, exclude_keys=self.EXCLUDED_ASSET_KEYS, strict=self.strict
         )
@@ -106,3 +99,18 @@ class CMIP6Processor:
             num_handles += 1
 
         return num_handles
+
+    def _validate_item(self, item: dict[str, Any]) -> None:
+        try:
+            validate(instance=item, schema=SCHEMA)
+        except ValidationError as e:
+            logging.error(
+                f"Schema validation failed at {list(e.absolute_path)}: {e.message}"
+            )
+            raise ValueError(f"Invalid CMIP6 STAC item: {e.message}") from e
+
+    def _get_additional_attributes(self, value: dict[str, Any]) -> dict[str, Any]:
+        publication_time = value.get("metadata", {}).get("time")
+        return {
+            "publication_time": publication_time,
+        }
