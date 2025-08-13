@@ -3,6 +3,7 @@ import logging
 from datetime import datetime, timezone
 
 from piddiplatsch.config import config
+from piddiplatsch.processing.result import ProcessingResult
 
 
 class MetricsTracker:
@@ -10,9 +11,7 @@ class MetricsTracker:
         self.messages_processed = 0
         self.handles_created = 0
         self.failures = 0
-        self.patches = 0
         self.start_time = datetime.now(timezone.utc)
-
         self.logger = logging.getLogger(__name__)
         self.summary_interval = config.get("consumer", {}).get(
             "stats_summary_interval", 100
@@ -24,39 +23,23 @@ class MetricsTracker:
             "timestamp": datetime.utcnow().isoformat() + "Z",
             **data,
         }
-        log_fn = getattr(self.logger, level)
-        log_fn(json.dumps(log_record))
+        getattr(self.logger, level)(json.dumps(log_record))
 
-    def record_success(self, key: str, num_handles: int, elapsed: float):
-        self.messages_processed += 1
-        self.handles_created += num_handles
-
-        self._log_json(
-            "info",
-            "success",
-            {
-                "key": key,
-                "handles": num_handles,
-                "elapsed_sec": round(elapsed, 3) if elapsed else None,
-            },
-        )
+    def record_result(self, result: ProcessingResult):
+        if result.success:
+            self.messages_processed += 1
+            self.handles_created += result.num_handles
+            self._log_json("info", "success", result.__dict__)
+        else:
+            self.failures += 1
+            self._log_json("error", "failure", result.__dict__)
 
         if (
-            self.summary_interval
+            result.success
+            and self.summary_interval
             and self.messages_processed % self.summary_interval == 0
         ):
             self.log_summary()
-
-    def record_failure(self, key: str, error: str):
-        self.failures += 1
-        self._log_json(
-            "error",
-            "failure",
-            {
-                "key": key,
-                "error": str(error),
-            },
-        )
 
     def summary(self):
         elapsed = (datetime.now(timezone.utc) - self.start_time).total_seconds() or 1

@@ -8,3 +8,8 @@ class ProcessingResult:
     success: bool = True
     error: str | None = None
     elapsed: float | None = None
+
+    # Detailed timings
+    schema_validation_time: float | None = None
+    record_validation_time: float | None = None
+    handle_processing_time: float | None = None

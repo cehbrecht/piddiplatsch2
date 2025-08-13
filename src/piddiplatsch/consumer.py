@@ -9,20 +9,22 @@ from confluent_kafka import KafkaException
 from piddiplatsch.dump import DumpRecorder
 from piddiplatsch.monitoring import MetricsTracker, get_rate_tracker
 from piddiplatsch.plugin_loader import load_single_plugin
+from piddiplatsch.processing.result import ProcessingResult  # dataclass
 from piddiplatsch.recovery import FailureRecovery
 
 logger = logging.getLogger(__name__)
 
 
 class Consumer:
+    """Thin wrapper around Kafka consumer."""
+
     def __init__(self, topic: str, kafka_cfg: dict):
         self.topic = topic
         self.consumer = ConfluentConsumer(kafka_cfg)
         self.consumer.subscribe([self.topic])
 
     def consume(self):
-        """Yield messages from Kafka."""
-
+        """Yield decoded Kafka messages."""
         try:
             while True:
                 msg = self.consumer.poll(timeout=1.0)
@@ -44,78 +46,68 @@ class Consumer:
 
 
 class ConsumerPipeline:
-    """Encapsulates the Kafka consumer, processor, and handle client."""
+    """Coordinates Kafka consumption, message processing, and metrics."""
 
     def __init__(
         self,
         topic: str,
         kafka_cfg: dict,
         processor: str,
-        dump_messages: bool = False,
-        verbose: bool = False,
+        *,
+        dump_messages=False,
+        verbose=False,
     ):
         self.consumer = Consumer(topic, kafka_cfg)
         self.processor = load_single_plugin(processor)
         self.dump_messages = dump_messages
         self.metrics = MetricsTracker()
-
         self.message_tracker = get_rate_tracker("messages", use_tqdm=verbose)
 
     def run(self):
         """Consume and process messages indefinitely."""
         logger.info("Starting consumer pipeline...")
         for key, value in self.consumer.consume():
-            self.process_message(key, value)
+            result = self._safe_process_message(key, value)
+            self.metrics.record_result(result)
             self.message_tracker.tick()
 
-    def process_message(self, key: str, value: dict):
-        """Process a single message."""
+    def _safe_process_message(self, key: str, value: dict) -> ProcessingResult:
+        """Process a single message with error handling."""
         try:
-            logger.info(f"Processing message: {key}")
+            logger.debug(f"Processing message: {key}")
+
             if self.dump_messages:
                 DumpRecorder.record_item(key, value)
-            result = self.processor.process(key, value)
 
-            if result.success:
-                self.metrics.record_success(
-                    result.key, result.num_handles, elapsed=result.elapsed
-                )
-            else:
-                self.metrics.record_failure(result.key, result.error)
-                raise Exception(result.error)
+            return self.processor.process(key, value)
 
         except Exception as e:
-            logger.error(f"Error processing message {key}: {e}")
+            logger.exception(f"Error processing message {key}")
             retries = value.get("retries", 0)
             FailureRecovery.record_failed_item(key, value, retries=retries)
+            return ProcessingResult(key=key, success=False, error=str(e))
 
     def stop(self):
-        """Gracefully stop the consumer."""
+        """Gracefully stop the pipeline."""
         logger.warning("Stopping consumer...")
-        # Any other cleanup logic can be added here if needed.
         self.metrics.log_summary()
-        # Stop tracker
         self.message_tracker.close()
 
 
 def start_consumer(
-    topic: str,
-    kafka_cfg: dict,
-    processor: str,
-    dump_messages: bool = False,
-    verbose: bool = False,
+    topic: str, kafka_cfg: dict, processor: str, *, dump_messages=False, verbose=False
 ):
+    """Entry point for running the consumer."""
     pipeline = ConsumerPipeline(
         topic, kafka_cfg, processor, dump_messages=dump_messages, verbose=verbose
     )
 
-    # Handle graceful shutdown
-    def sigint_handler(signal, frame):
+    def sigint_handler(sig, frame):
         logger.warning("Received SIGINT. Gracefully shutting down.")
         pipeline.stop()
         sys.exit(0)
 
-    signal.signal(signal.SIGINT, sigint_handler)  # Handle Ctrl+C (SIGINT)
+    signal.signal(signal.SIGINT, sigint_handler)
 
     try:
         pipeline.run()
