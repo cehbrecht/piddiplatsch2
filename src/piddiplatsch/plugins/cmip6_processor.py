@@ -30,24 +30,20 @@ class CMIP6Processor(BaseProcessor):
         self.logger.debug(f"CMIP6 plugin processing key={key}")
         start_total = time.perf_counter()
 
-        try:
-            num_handles, schema_time, record_time, handle_time = (
-                self._process_item_message(value, key)
-            )
-            elapsed_total = time.perf_counter() - start_total
+        num_handles, schema_time, record_time, handle_time = self._process_item_message(
+            value, key
+        )
+        elapsed_total = time.perf_counter() - start_total
 
-            return ProcessingResult(
-                key=key,
-                num_handles=num_handles,
-                success=True,
-                elapsed=elapsed_total,
-                schema_validation_time=schema_time,
-                record_validation_time=record_time,
-                handle_processing_time=handle_time,
-            )
-        except Exception as e:
-            self.logger.exception(f"Processing of key={key} failed")
-            return ProcessingResult(key=key, success=False, error=str(e))
+        return ProcessingResult(
+            key=key,
+            num_handles=num_handles,
+            success=True,
+            elapsed=elapsed_total,
+            schema_validation_time=schema_time,
+            record_validation_time=record_time,
+            handle_processing_time=handle_time,
+        )
 
     def _process_item_message(self, value, key):
         payload = value.get("data", {}).get("payload", {})

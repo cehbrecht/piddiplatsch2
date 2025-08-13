@@ -63,18 +63,10 @@ class MetricsTracker:
             "elapsed_sec": round(elapsed, 1),
             "messages_per_sec": round(self.messages_processed / elapsed, 2),
             "handles_per_sec": round(self.handles_created / elapsed, 2),
-            "total_schema_validation_time_sec": round(
-                self.total_schema_validation_time, 2
-            ),
-            "total_record_validation_time_sec": round(
-                self.total_record_validation_time, 2
+            "total_validation_time_sec": round(
+                self.total_schema_validation_time + self.total_record_validation_time, 2
             ),
             "total_handle_time_sec": round(self.total_handle_processing_time, 2),
-            "avg_validation_time_per_message": round(
-                (self.total_schema_validation_time + self.total_record_validation_time)
-                / max(self.messages_processed, 1),
-                4,
-            ),
             "avg_handle_time_per_message": round(
                 self.total_handle_processing_time / max(self.messages_processed, 1), 4
             ),
