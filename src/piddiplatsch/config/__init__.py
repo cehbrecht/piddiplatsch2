@@ -43,7 +43,7 @@ class Config:
 
         handlers = []
 
-        if not log or log == "-":
+        if not log:
             console = True
         else:
             console = False

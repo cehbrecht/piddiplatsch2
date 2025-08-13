@@ -28,7 +28,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     type=click.Path(dir_okay=False, writable=True, resolve_path=True),
     default="pid.log",
     show_default=True,
-    help="Log file path, or '-' for console",
+    help="Log file path.",
 )
 @click.pass_context
 def cli(ctx, config_file, debug, verbose, log):
