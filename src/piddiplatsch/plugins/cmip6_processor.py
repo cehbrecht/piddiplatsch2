@@ -1,116 +1,101 @@
-import logging
-from datetime import datetime
+import time
 from typing import Any
 
-import pluggy
-from jsonschema import ValidationError, validate
+from jsonschema import validate
+from pluggy import HookimplMarker
 
-from piddiplatsch.handle_client import HandleClient
+from piddiplatsch.config import config
+from piddiplatsch.processing import BaseProcessor, ProcessingResult
 from piddiplatsch.records import CMIP6DatasetRecord
 from piddiplatsch.records.cmip6_file_record import extract_asset_records
-from piddiplatsch.result import ProcessingResult
 from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
 
-hookimpl = pluggy.HookimplMarker("piddiplatsch")
+hookimpl = HookimplMarker("piddiplatsch")
 
 
-class CMIP6Processor:
-    """Pluggy processor for CMIP6 STAC items."""
+class CMIP6Processor(BaseProcessor):
+    """CMIP6-specific processor logic."""
 
     EXCLUDED_ASSET_KEYS = ["reference_file", "globus", "thumbnail", "quicklook"]
 
-    def __init__(self, strict: bool = False):
+    def __init__(self, strict=False, excluded_asset_keys=None, **kwargs):
+        super().__init__(**kwargs)
         self.strict = strict
-        self.handle_client = HandleClient.from_config()
+        self.excluded_asset_keys = excluded_asset_keys or config.get("cmip6", {}).get(
+            "excluded_asset_keys", self.EXCLUDED_ASSET_KEYS
+        )
 
     @hookimpl
-    def process(self, key: str, value: dict[str, Any]) -> ProcessingResult:
-        logging.debug(f"CMIP6 plugin processing key: {key}")
-        start = datetime.now()
+    def process(self, key: str, value: dict[str, Any]):
+        self.logger.debug(f"CMIP6 plugin processing key={key}")
+        start_total = time.perf_counter()
 
         try:
-            num_handles = self._do_process(value)
-            elapsed = (datetime.now() - start).total_seconds()
-            return ProcessingResult(
-                key=key,
-                num_handles=num_handles,
-                elapsed=elapsed,
-                success=True,
+            num_handles, schema_time, record_time, handle_time, skipped = (
+                self._process_item_message(value, key)
             )
-        except Exception as e:
-            logging.exception(f"Processing of {key} failed with error: {e}")
-            return ProcessingResult(
-                key=key,
-                success=False,
-                error=str(e),
-            )
+            # success = not skipped
+        except ValueError:
+            # consumer handles exceptions for recovery
+            raise
 
-    def _do_process(self, value: dict[str, Any]) -> int:
+        elapsed_total = time.perf_counter() - start_total
+
+        return ProcessingResult(
+            key=key,
+            num_handles=num_handles,
+            success=True,
+            elapsed=elapsed_total,
+            schema_validation_time=schema_time,
+            record_validation_time=record_time,
+            handle_processing_time=handle_time,
+            skipped=skipped,  # indicate skipped messages here
+        )
+
+    def _process_item_message(self, value, key):
+        skipped = False
         payload = value.get("data", {}).get("payload", {})
 
+        # Skip PATCH messages
         if payload.get("method") == "PATCH":
-            return self._process_patch_message(payload)
-        else:
-            return self._process_item_message(payload, value)
+            self.logger.warning(
+                f"[PATCH skipped] item_id={payload.get('item_id')} key={key}"
+            )
+            skipped = True
+            return 0, 0.0, 0.0, 0.0, skipped
 
-    def _process_patch_message(self, payload: dict[str, Any]) -> int:
-        logging.warning(f"PATCH message detected for item_id={payload.get('item_id')}")
-        raise NotImplementedError("PATCH messages are not implemented yet")
+        # Skip messages with missing item
+        if "item" not in payload:
+            self.logger.warning(f"[MISSING item skipped] key={key}")
+            skipped = True
+            return 0, 0.0, 0.0, 0.0, skipped
 
-    def _process_item_message(
-        self, payload: dict[str, Any], value: dict[str, Any]
-    ) -> int:
-        num_handles = 0
-        try:
-            item = payload["item"]
-        except KeyError as e:
-            logging.error(f"Missing 'item' in Kafka message: {e}")
-            raise ValueError("Missing 'item' in Kafka message") from e
+        item = payload["item"]
 
-        self._validate_item(item)
+        # schema validation
+        _, schema_time = self._time_function(validate, instance=item, schema=SCHEMA)
 
-        additional_attrs = self._get_additional_attributes(value)
-
+        # model validation
+        additional_attrs = {"publication_time": value.get("metadata", {}).get("time")}
         record = CMIP6DatasetRecord(
             item,
             strict=self.strict,
-            exclude_keys=self.EXCLUDED_ASSET_KEYS,
+            exclude_keys=self.excluded_asset_keys,
             additional_attributes=additional_attrs,
         )
-        record.validate()
+        _, record_time = self._time_function(record.validate)
 
-        logging.debug(f"Register item record for PID {record.pid}")
-        self.handle_client.add_record(record.pid, record.as_record())
-        num_handles += 1
+        # handle processing
+        def add_records():
+            self._safe_add_record(record)
+            num_handles = 1
+            for r in extract_asset_records(
+                item, exclude_keys=self.excluded_asset_keys, strict=self.strict
+            ):
+                self._safe_add_record(r)
+                num_handles += 1
+            return num_handles
 
-        asset_records = extract_asset_records(
-            item, exclude_keys=self.EXCLUDED_ASSET_KEYS, strict=self.strict
-        )
-        if not asset_records:
-            logging.warning(f"No file assets found for item PID {record.pid}")
-        else:
-            logging.debug(f"Found {len(asset_records)} asset records to register")
+        num_handles, handle_time = self._time_function(add_records)
 
-        for record in asset_records:
-            logging.debug(
-                f"Register asset record for PID {record.pid}: {record.as_record()}"
-            )
-            self.handle_client.add_record(record.pid, record.as_record())
-            num_handles += 1
-
-        return num_handles
-
-    def _validate_item(self, item: dict[str, Any]) -> None:
-        try:
-            validate(instance=item, schema=SCHEMA)
-        except ValidationError as e:
-            logging.error(
-                f"Schema validation failed at {list(e.absolute_path)}: {e.message}"
-            )
-            raise ValueError(f"Invalid CMIP6 STAC item: {e.message}") from e
-
-    def _get_additional_attributes(self, value: dict[str, Any]) -> dict[str, Any]:
-        publication_time = value.get("metadata", {}).get("time")
-        return {
-            "publication_time": publication_time,
-        }
+        return num_handles, schema_time, record_time, handle_time, skipped

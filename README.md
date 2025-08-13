@@ -73,11 +73,21 @@ piddiplatsch --config custom.toml
 piddiplatsch consume
 ```
 
-### With debug and log:
+### With verbose:
 
 ```bash
-piddiplatsch --debug --logfile consume.log consume
+piddiplatsch --verbose consume
 ```
+
+In verbose mode the consumer shows a performance message on the console.
+
+### Change logging
+
+```bash
+piddiplatsch --debug --log my.log consume
+```
+
+You can enable debug logging and also change the default log file (`pid.log`).
 
 ---
 
