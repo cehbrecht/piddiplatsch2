@@ -126,3 +126,13 @@ def test_send_invalid_cmip6_dkrz_yr_dc4(runner, testfile):
         "CMIP6.ScenarioMIP.DKRZ.MPI-ESM1-2-HR.ssp126.r1i1p1f1.Eyr.baresoilFrac.gn.v20190710.json",
     )
     send_message(runner, path)
+
+
+@pytest.mark.online
+def test_send_invalid_cmip6_ipsl_mon_dc4_missing_file_size(runner, testfile):
+    path = testfile(
+        "data_challenge_04",
+        "CMIP6_invalid",
+        "CMIP6.ScenarioMIP.IPSL.IPSL-CM6A-LR.ssp245.r1i1p1f1.Amon.pr.gr.v20190119_missing_file_size.json",
+    )
+    send_message(runner, path)
