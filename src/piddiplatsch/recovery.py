@@ -30,6 +30,7 @@ class FailureRecovery:
             **data,
             "failure_timestamp": timestamp,
             "retries": retries,
+            "reason": "TODO: add a reason here",
         }
 
         with failure_file.open("a", encoding="utf-8") as f:

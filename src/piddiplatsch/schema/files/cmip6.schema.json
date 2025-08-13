@@ -60,6 +60,12 @@
                     "properties": {
                         "alternate:name": {
                             "type": "string"
+                        },
+                        "file:size": {
+                            "type": "integer"
+                        },
+                        "file:checksum": {
+                            "type": "string"
                         }
                     }
                 }
