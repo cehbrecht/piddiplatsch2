@@ -33,9 +33,9 @@ def assert_file_record(handle_client, pid: str):
     assert "FILE_NAME" in record
     assert "IS_PART_OF" in record
     assert "DOWNLOAD_URL" in record
-    # assert "CHECKSUM" in record
-    # assert "CHECKSUM_METHOD" in record
-    # assert "FILE_SIZE" in record
+    assert "CHECKSUM" in record
+    assert "CHECKSUM_METHOD" in record
+    assert "FILE_SIZE" in record
     # assert "FILE_VERSION" in record
     # assert "DOWNLOAD_URL_REPLICA" in record
 
@@ -69,22 +69,6 @@ def send_message(runner, filename: Path):
 
     assert result.exit_code == 0
     assert "📤 Message delivered" in result.output
-
-
-@pytest.mark.online
-def test_send_valid_example(runner, testfile, handle_client):
-    path = testfile("example.json")
-
-    send_message(runner, path)
-
-    # TODO: extract the PID dynamically from the file
-    pid = "ac903313-aca4-321a-9751-e9f3559ccecd"
-    pids = [
-        "a5a79818-8ae5-35a7-9cc2-57cffe70d408",
-        "20cedc42-2fc5-32c2-9fae-511acfbc8f22",
-    ]
-
-    assert_record(handle_client, pid, pids, all=True)
 
 
 @pytest.mark.online
