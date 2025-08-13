@@ -7,6 +7,7 @@ class ProcessingResult:
     num_handles: int = 0
     success: bool = True
     error: str | None = None
+    skipped: bool = False
     elapsed: float | None = None
 
     # Detailed timings

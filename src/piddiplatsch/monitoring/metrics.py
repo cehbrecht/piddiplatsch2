@@ -11,6 +11,7 @@ class MetricsTracker:
         self.messages_processed = 0
         self.handles_created = 0
         self.failures = 0
+        self.skipped_messages = 0
         self.total_schema_validation_time = 0.0  # seconds
         self.total_record_validation_time = 0.0  # seconds
         self.total_handle_processing_time = 0.0  # seconds
@@ -29,6 +30,8 @@ class MetricsTracker:
         getattr(self.logger, level)(json.dumps(log_record))
 
     def record_result(self, result: ProcessingResult):
+        if result.skipped:
+            self.skipped_messages += 1
         if result.success:
             self.messages_processed += 1
             self.handles_created += result.num_handles
@@ -60,6 +63,7 @@ class MetricsTracker:
             "messages_processed": self.messages_processed,
             "handles_created": self.handles_created,
             "failures": self.failures,
+            "skipped": self.skipped_messages,
             "elapsed_sec": round(elapsed, 1),
             "messages_per_sec": round(self.messages_processed / elapsed, 2),
             "handles_per_sec": round(self.handles_created / elapsed, 2),

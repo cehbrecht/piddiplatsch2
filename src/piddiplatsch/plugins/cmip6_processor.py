@@ -30,9 +30,15 @@ class CMIP6Processor(BaseProcessor):
         self.logger.debug(f"CMIP6 plugin processing key={key}")
         start_total = time.perf_counter()
 
-        num_handles, schema_time, record_time, handle_time = self._process_item_message(
-            value, key
-        )
+        try:
+            num_handles, schema_time, record_time, handle_time, skipped = (
+                self._process_item_message(value, key)
+            )
+            # success = not skipped
+        except ValueError:
+            # consumer handles exceptions for recovery
+            raise
+
         elapsed_total = time.perf_counter() - start_total
 
         return ProcessingResult(
@@ -43,18 +49,26 @@ class CMIP6Processor(BaseProcessor):
             schema_validation_time=schema_time,
             record_validation_time=record_time,
             handle_processing_time=handle_time,
+            skipped=skipped,  # indicate skipped messages here
         )
 
     def _process_item_message(self, value, key):
+        skipped = False
         payload = value.get("data", {}).get("payload", {})
+
+        # Skip PATCH messages
         if payload.get("method") == "PATCH":
             self.logger.warning(
                 f"[PATCH skipped] item_id={payload.get('item_id')} key={key}"
             )
-            return 0, 0.0, 0.0, 0.0
+            skipped = True
+            return 0, 0.0, 0.0, 0.0, skipped
 
+        # Skip messages with missing item
         if "item" not in payload:
-            raise ValueError("Missing 'item' in Kafka message payload")
+            self.logger.warning(f"[MISSING item skipped] key={key}")
+            skipped = True
+            return 0, 0.0, 0.0, 0.0, skipped
 
         item = payload["item"]
 
@@ -84,4 +98,4 @@ class CMIP6Processor(BaseProcessor):
 
         num_handles, handle_time = self._time_function(add_records)
 
-        return num_handles, schema_time, record_time, handle_time
+        return num_handles, schema_time, record_time, handle_time, skipped
