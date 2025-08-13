@@ -1,6 +1,5 @@
 import logging
 import time
-from collections.abc import Sequence
 from typing import Any
 
 from piddiplatsch.handle_client import HandleClient
@@ -14,12 +13,10 @@ class BaseProcessor:
         self,
         handle_client: HandleClient | None = None,
         retries: int = 0,
-        excluded_asset_keys: Sequence[str] | None = None,
     ):
         self.handle_client = handle_client or HandleClient.from_config()
         self.retries = retries
         self.logger = logging.getLogger(__name__)
-        self.excluded_asset_keys = excluded_asset_keys or []
 
     def _safe_add_record(self, record) -> None:
         last_err = None

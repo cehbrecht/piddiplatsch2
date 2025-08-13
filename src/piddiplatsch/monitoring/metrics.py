@@ -3,7 +3,7 @@ import logging
 from datetime import datetime, timezone
 
 from piddiplatsch.config import config
-from piddiplatsch.processing.result import ProcessingResult
+from piddiplatsch.processing import ProcessingResult
 
 
 class MetricsTracker:

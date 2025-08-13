@@ -9,7 +9,7 @@ from confluent_kafka import KafkaException
 from piddiplatsch.dump import DumpRecorder
 from piddiplatsch.monitoring import MetricsTracker, get_rate_tracker
 from piddiplatsch.plugin_loader import load_single_plugin
-from piddiplatsch.processing.result import ProcessingResult  # dataclass
+from piddiplatsch.processing import ProcessingResult  # dataclass
 from piddiplatsch.recovery import FailureRecovery
 
 logger = logging.getLogger(__name__)
