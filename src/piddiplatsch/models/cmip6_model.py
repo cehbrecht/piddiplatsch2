@@ -60,7 +60,7 @@ class CMIP6FileModel(BaseCMIP6Model):
     FILE_NAME: str
     IS_PART_OF: str
     CHECKSUM: str
-    CHECKSUM_METHOD: str | None = None
+    CHECKSUM_METHOD: str = "SHA256"
     FILE_SIZE: int
     FILE_VERSION: str | None = None
     DOWNLOAD_URL: str
