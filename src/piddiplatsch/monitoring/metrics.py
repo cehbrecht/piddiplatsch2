@@ -71,9 +71,6 @@ class MetricsTracker:
                 self.total_schema_validation_time + self.total_record_validation_time, 2
             ),
             "total_handle_time_sec": round(self.total_handle_processing_time, 2),
-            "avg_handle_time_per_message": round(
-                self.total_handle_processing_time / max(self.messages_processed, 1), 4
-            ),
         }
 
     def log_summary(self):
