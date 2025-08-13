@@ -6,9 +6,9 @@ import pluggy
 from jsonschema import ValidationError, validate
 
 from piddiplatsch.handle_client import HandleClient
+from piddiplatsch.processing.result import ProcessingResult
 from piddiplatsch.records import CMIP6DatasetRecord
 from piddiplatsch.records.cmip6_file_record import extract_asset_records
-from piddiplatsch.result import ProcessingResult
 from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
 
 hookimpl = pluggy.HookimplMarker("piddiplatsch")

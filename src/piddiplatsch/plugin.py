@@ -1,6 +1,6 @@
 import pluggy
 
-from piddiplatsch.result import ProcessingResult
+from piddiplatsch.processing.result import ProcessingResult
 
 PLUGIN_NAMESPACE = "piddiplatsch"
 
