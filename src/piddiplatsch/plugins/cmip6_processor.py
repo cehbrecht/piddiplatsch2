@@ -4,6 +4,7 @@ from typing import Any
 from jsonschema import validate
 from pluggy import HookimplMarker
 
+from piddiplatsch.config import config
 from piddiplatsch.processing import BaseProcessor, ProcessingResult
 from piddiplatsch.records import CMIP6DatasetRecord
 from piddiplatsch.records.cmip6_file_record import extract_asset_records
@@ -20,7 +21,9 @@ class CMIP6Processor(BaseProcessor):
     def __init__(self, strict=False, excluded_asset_keys=None, **kwargs):
         super().__init__(**kwargs)
         self.strict = strict
-        self.excluded_asset_keys = excluded_asset_keys or self.EXCLUDED_ASSET_KEYS
+        self.excluded_asset_keys = excluded_asset_keys or config.get("cmip6", {}).get(
+            "excluded_asset_keys", self.EXCLUDED_ASSET_KEYS
+        )
 
     @hookimpl
     def process(self, key: str, value: dict[str, Any]):

@@ -22,3 +22,4 @@ password = "testpass"
 [cmip6]
 landing_page_url = "https://handle-esgf.dkrz.de/lp"
 max_parts = -1
+excluded_asset_keys = ["reference_file", "globus", "thumbnail", "quicklook"]
