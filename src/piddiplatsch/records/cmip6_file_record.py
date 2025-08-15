@@ -43,8 +43,41 @@ class CMIP6FileRecord(BaseCMIP6Record):
         return build_handle(item_pid(self.item_id), as_uri=True)
 
     @cached_property
+    def href(self) -> str:
+        """Resolved asset URL, preferring alternates when present."""
+        alternates = self.asset.get("alternate", {})
+        if alternates:
+            preferred_key = "ceda.ac.uk"
+            if preferred_key in alternates:
+                alt_href = alternates[preferred_key].get("href")
+                if alt_href:
+                    return alt_href
+            # Otherwise, pick first available
+            for alt in alternates.values():
+                if alt.get("href"):
+                    return alt["href"]
+
+        # Fallback: main href
+        return self.asset.get("href", "")
+
+    @cached_property
+    def download_url(self) -> str:
+        """Alias for href to keep external API consistent."""
+        return self.href
+
+    @cached_property
     def filename(self) -> str:
-        return PurePosixPath(self.asset["href"]).name
+        """
+        Filename derived from the resolved href,
+        falling back to the main href if alternate lacks a filename.
+        """
+        # Try filename from resolved href first
+        resolved_name = PurePosixPath(self.href).name
+        if resolved_name:
+            return resolved_name
+
+        # Fallback: derive from main href
+        return PurePosixPath(self.asset.get("href", "")).name
 
     @cached_property
     def checksum(self) -> str | None:
@@ -56,10 +89,6 @@ class CMIP6FileRecord(BaseCMIP6Record):
             return int(self.asset.get("file:size"))
         except (ValueError, TypeError):
             return None
-
-    @cached_property
-    def download_url(self) -> str:
-        return self.asset["href"]
 
     def as_handle_model(self) -> CMIP6FileModel:
         fm = CMIP6FileModel(
