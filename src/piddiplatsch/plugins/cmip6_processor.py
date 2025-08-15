@@ -29,7 +29,7 @@ class CMIP6Processor(BaseProcessor):
         self.stac_client = get_stac_client()
 
     @hookimpl
-    def process(self, key: str, value: dict[str, Any]):
+    def process(self, key: str, value: dict[str, Any]) -> ProcessingResult:
         self.logger.debug(f"CMIP6 plugin processing key={key}")
         start_total = time.perf_counter()
 
@@ -37,7 +37,8 @@ class CMIP6Processor(BaseProcessor):
             num_handles, schema_time, record_time, handle_time, skipped = (
                 self._do_process(value, key)
             )
-        except ValueError:
+        except ValueError as e:
+            self.logger.error(f"Processing error for key={key}: {e}")
             raise
 
         elapsed_total = time.perf_counter() - start_total
@@ -53,17 +54,21 @@ class CMIP6Processor(BaseProcessor):
             skipped=skipped,
         )
 
-    def _do_process(self, value, key):
-        payload = value.get("data", {}).get("payload", {})
+    def _do_process(
+        self, value: dict[str, Any], key: str
+    ) -> tuple[int, float, float, float, bool]:
+        """Check payload presence and delegate to payload processor."""
+        payload = value.get("data", {}).get("payload")
         if not payload:
-            self.logger.warning(f"[MISSING payload skipped] key={key}")
+            self._log_skipped(key, "MISSING payload")
             return 0, 0.0, 0.0, 0.0, True
 
-        return self._process_payload(payload, value.get("metadata", {}), key)
+        metadata = value.get("metadata", {})
+        return self._process_payload(payload, metadata, key)
 
     def _process_payload(
         self, payload: dict[str, Any], metadata: dict[str, Any], key: str
-    ):
+    ) -> tuple[int, float, float, float, bool]:
         """Decide how to process the payload: PATCH or full item."""
         skipped = False
 
@@ -73,18 +78,17 @@ class CMIP6Processor(BaseProcessor):
             except Exception as e:
                 self.logger.error(f"Failed to apply patch for key={key}: {e}")
                 return 0, 0.0, 0.0, 0.0, True
-
         elif "item" in payload:
             item = payload["item"]
         else:
-            self.logger.warning(f"[MISSING item skipped] key={key}")
+            self._log_skipped(key, "MISSING item")
             skipped = True
             return 0, 0.0, 0.0, 0.0, skipped
 
-        # schema validation
+        # Schema validation
         _, schema_time = self._time_function(validate, instance=item, schema=SCHEMA)
 
-        # model validation
+        # Model validation
         additional_attrs = {"publication_time": metadata.get("time")}
         record = CMIP6DatasetRecord(
             item,
@@ -94,7 +98,32 @@ class CMIP6Processor(BaseProcessor):
         )
         _, record_time = self._time_function(record.validate)
 
-        # handle processing
+        # Handle processing
+        num_handles, handle_time = self._add_records_from_item(record, item)
+
+        return num_handles, schema_time, record_time, handle_time, skipped
+
+    def _apply_patch_to_stac_item(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Fetch the STAC item and apply a JSON patch."""
+        collection_id = payload["collection_id"]
+        item_id = payload["item_id"]
+        patch_data = payload["patch"]
+
+        item = self.stac_client.get_item(collection_id, item_id)
+        if item is None:
+            raise ValueError(f"STAC item {collection_id}/{item_id} not found")
+
+        patch_obj = jsonpatch.JsonPatch(patch_data["operations"])
+        patched_item = patch_obj.apply(item)
+
+        self.logger.debug(f"Applied patch to STAC item {collection_id}/{item_id}")
+        return patched_item
+
+    def _add_records_from_item(
+        self, record: CMIP6DatasetRecord, item: dict[str, Any]
+    ) -> tuple[int, float]:
+        """Add main record and extracted asset records, measuring handle processing time."""
+
         def add_records():
             self._safe_add_record(record)
             num_handles = 1
@@ -106,18 +135,8 @@ class CMIP6Processor(BaseProcessor):
             return num_handles
 
         num_handles, handle_time = self._time_function(add_records)
+        return num_handles, handle_time
 
-        return num_handles, schema_time, record_time, handle_time, skipped
-
-    def _apply_patch_to_stac_item(self, payload: dict[str, Any]) -> dict[str, Any]:
-        """Fetch the STAC item and apply a JSON patch."""
-        collection_id = payload["collection_id"]
-        item_id = payload["item_id"]
-        patch_data = payload["patch"]
-
-        item = self.stac_client.get_item(collection_id, item_id)
-        patch_obj = jsonpatch.JsonPatch(patch_data["operations"])
-        patched_item = patch_obj.apply(item)
-
-        self.logger.debug(f"Applied patch to STAC item {collection_id}/{item_id}")
-        return patched_item
+    def _log_skipped(self, key: str, reason: str):
+        """Standardized logging for skipped messages."""
+        self.logger.warning(f"[{reason} skipped] key={key}")
