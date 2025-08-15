@@ -19,6 +19,10 @@ prefix = "21.TEST"
 username = "300:21.TEST/testuser"
 password = "testpass"
 
+[stac]
+base_url = "https://api.stac.esgf.ceda.ac.uk"
+timeout = 10
+
 [cmip6]
 landing_page_url = "https://handle-esgf.dkrz.de/lp"
 max_parts = -1
