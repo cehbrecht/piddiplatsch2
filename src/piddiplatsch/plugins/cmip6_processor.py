@@ -116,7 +116,7 @@ class CMIP6Processor(BaseProcessor):
         patch_obj = jsonpatch.JsonPatch(patch_data["operations"])
         patched_item = patch_obj.apply(item)
 
-        self.logger.debug(f"Applied patch to STAC item {collection_id}/{item_id}")
+        self.logger.info(f"Applied patch to STAC item {collection_id}/{item_id}")
         return patched_item
 
     def _add_records_from_item(
