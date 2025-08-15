@@ -1,6 +1,7 @@
 import time
 from typing import Any
 
+import jsonpatch
 from jsonschema import validate
 from pluggy import HookimplMarker
 
@@ -9,6 +10,7 @@ from piddiplatsch.processing import BaseProcessor, ProcessingResult
 from piddiplatsch.records import CMIP6DatasetRecord
 from piddiplatsch.records.cmip6_file_record import extract_asset_records
 from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
+from piddiplatsch.utils.stac import get_stac_client
 
 hookimpl = HookimplMarker("piddiplatsch")
 
@@ -34,7 +36,6 @@ class CMIP6Processor(BaseProcessor):
             num_handles, schema_time, record_time, handle_time, skipped = (
                 self._process_item_message(value, key)
             )
-            # success = not skipped
         except ValueError:
             # consumer handles exceptions for recovery
             raise
@@ -56,21 +57,35 @@ class CMIP6Processor(BaseProcessor):
         skipped = False
         payload = value.get("data", {}).get("payload", {})
 
-        # Skip PATCH messages
-        if payload.get("method") == "PATCH":
-            self.logger.warning(
-                f"[PATCH skipped] item_id={payload.get('item_id')} key={key}"
-            )
-            skipped = True
-            return 0, 0.0, 0.0, 0.0, skipped
+        stac_client = get_stac_client()
 
-        # Skip messages with missing item
-        if "item" not in payload:
+        if payload.get("method") == "PATCH":
+            # Lookup the full item from STAC
+            collection_id = payload["collection_id"]
+            item_id = payload["item_id"]
+            try:
+                item = stac_client.get_item(collection_id, item_id)
+            except Exception as e:
+                self.logger.error(
+                    f"Failed to fetch STAC item {collection_id}/{item_id}: {e}"
+                )
+                skipped = True
+                return 0, 0.0, 0.0, 0.0, skipped
+
+            # Apply the patch
+            patch = payload["patch"]
+            patch_obj = jsonpatch.JsonPatch(patch["operations"])
+            item = patch_obj.apply(item)
+
+            self.logger.debug(f"Applied STAC patch to item_id={item_id}")
+
+        elif "item" in payload:
+            # Normal full item message
+            item = payload["item"]
+        else:
             self.logger.warning(f"[MISSING item skipped] key={key}")
             skipped = True
             return 0, 0.0, 0.0, 0.0, skipped
-
-        item = payload["item"]
 
         # schema validation
         _, schema_time = self._time_function(validate, instance=item, schema=SCHEMA)
