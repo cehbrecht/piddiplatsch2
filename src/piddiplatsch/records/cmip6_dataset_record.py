@@ -122,6 +122,12 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
             replicas.append(HostingNode(host=host, published_on=pub_on))
         return replicas
 
+    @cached_property
+    def retracted(self) -> bool:
+        retracted_ = self.item.get("properties", {}).get("retracted", "false")
+        retracted_ = bool(retracted_)
+        return retracted_
+
     def as_handle_model(self) -> CMIP6DatasetModel:
         dsm = CMIP6DatasetModel(
             URL=self.url,
@@ -133,6 +139,7 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
             REPLICA_NODES=self.replica_nodes,
             UNPUBLISHED_REPLICAS=self.unpublished_replicas,
             UNPUBLISHED_HOSTS=self.unpublished_hosts,
+            RETRACTED=self.retracted,
         )
 
         dsm.set_pid(self.pid)
