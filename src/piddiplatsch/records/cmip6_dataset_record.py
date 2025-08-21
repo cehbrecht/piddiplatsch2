@@ -80,7 +80,7 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
         host = ref_node or data_node or "unknown"
 
         published_on = None
-        for key in ("reference_file", "data0001"):
+        for key in ("reference_file", "data0000", "data0001"):
             published_on = self.get_asset_property(key, "published_on")
             if published_on:
                 break
@@ -141,6 +141,9 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
             UNPUBLISHED_HOSTS=self.unpublished_hosts,
             RETRACTED=self.retracted,
         )
+
+        if self.retracted:
+            logging.warning(f"Dataset with id={self.dataset_id} was retracted!")
 
         dsm.set_pid(self.pid)
         return dsm
