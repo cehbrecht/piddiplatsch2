@@ -117,6 +117,7 @@ class CMIP6Processor(BaseProcessor):
         patched_item = patch_obj.apply(item)
 
         self.logger.info(f"Applied patch to STAC item {collection_id}/{item_id}")
+        self.logger.debug(f"patched item: {patched_item}")
         return patched_item
 
     def _add_records_from_item(

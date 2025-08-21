@@ -21,6 +21,21 @@ class CMIP6FileRecord(BaseCMIP6Record):
         return self.get_asset(self.asset_key)
 
     @cached_property
+    def alternates(self) -> dict[str, Any]:
+        return self.asset.get("alternate", {})
+
+    def get_value(self, key: str) -> Any:
+        value = self.asset.get(key, "")
+        # check alternates if not found
+        if not value and self.alternates:
+            # pick first available
+            for alt in self.alternates.values():
+                if alt.get(key):
+                    value = alt[key]
+                    break
+        return value
+
+    @cached_property
     def tracking_id(self) -> str:
         return self.asset.get("tracking_id")
 
@@ -44,21 +59,8 @@ class CMIP6FileRecord(BaseCMIP6Record):
 
     @cached_property
     def href(self) -> str:
-        """Resolved asset URL, preferring alternates when present."""
-        alternates = self.asset.get("alternate", {})
-        if alternates:
-            preferred_key = "ceda.ac.uk"
-            if preferred_key in alternates:
-                alt_href = alternates[preferred_key].get("href")
-                if alt_href:
-                    return alt_href
-            # Otherwise, pick first available
-            for alt in alternates.values():
-                if alt.get("href"):
-                    return alt["href"]
-
-        # Fallback: main href
-        return self.asset.get("href", "")
+        """Resolved asset URL."""
+        return self.get_value("href")
 
     @cached_property
     def download_url(self) -> str:
@@ -68,25 +70,20 @@ class CMIP6FileRecord(BaseCMIP6Record):
     @cached_property
     def filename(self) -> str:
         """
-        Filename derived from the resolved href,
-        falling back to the main href if alternate lacks a filename.
+        Filename derived from the resolved href.
         """
         # Try filename from resolved href first
         resolved_name = PurePosixPath(self.href).name
-        if resolved_name:
-            return resolved_name
-
-        # Fallback: derive from main href
-        return PurePosixPath(self.asset.get("href", "")).name
+        return resolved_name
 
     @cached_property
     def checksum(self) -> str | None:
-        return self.asset.get("file:checksum")
+        return self.get_value("file:checksum")
 
     @cached_property
     def size(self) -> int | None:
         try:
-            return int(self.asset.get("file:size"))
+            return int(self.get_value("file:size"))
         except (ValueError, TypeError):
             return None
 
