@@ -3,6 +3,7 @@ from typing import Any
 
 import jsonpatch
 from pluggy import HookimplMarker
+from pydantic import ValidationError
 
 from piddiplatsch.config import config
 from piddiplatsch.processing import BaseProcessor, ProcessingResult
@@ -33,6 +34,9 @@ class CMIP6Processor(BaseProcessor):
 
         try:
             num_handles, handle_time, skipped = self._do_process(value, key)
+        except ValidationError as e:
+            self.logger.error(f"Validation error for key={key}: {e}")
+            raise
         except ValueError as e:
             self.logger.error(f"Processing error for key={key}: {e}")
             raise
@@ -79,7 +83,7 @@ class CMIP6Processor(BaseProcessor):
             skipped = True
             return 0, 0.0, skipped
 
-        # Model validation
+        # Create record
         additional_attrs = {"publication_time": metadata.get("time")}
         record = CMIP6DatasetRecord(
             item,
@@ -87,7 +91,6 @@ class CMIP6Processor(BaseProcessor):
             exclude_keys=self.excluded_asset_keys,
             additional_attributes=additional_attrs,
         )
-        record.validate()
 
         # Handle processing
         num_handles, handle_time = self._add_records_from_item(record, item)
