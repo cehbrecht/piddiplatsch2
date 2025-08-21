@@ -45,6 +45,7 @@ class CMIP6DatasetModel(BaseCMIP6Model):
     REPLICA_NODES: list[HostingNode] = Field(default_factory=list)  # one per replica
     UNPUBLISHED_REPLICAS: list[str] = Field(default_factory=list)  # same as replica
     UNPUBLISHED_HOSTS: HostingNode | None = None
+    RETRACTED: bool = False
 
     @model_validator(mode="after")
     def validate_required(self) -> CMIP6DatasetModel:

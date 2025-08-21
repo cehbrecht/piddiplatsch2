@@ -95,3 +95,23 @@ uuid.uuid3(uuid.NAMESPACE_URL, "CMIP6.C4MIP.NOAA-GFDL.GFDL-ESM4.1pctCO2-bgc.r1i1
 cmip7 prefix: hdl:21.14107/
 
 test prefix: hdl:21.T14995/UUID
+
+## patches
+
+### retracted
+
+"patch": {"operations": [{"op": "add", "path": "/properties/retracted", "value": true}]}
+
+### add asset
+
+"patch": {"operations": [{"op": "add", "path": "/assets/globus"
+
+"patch": {"operations": [{"op": "add", "path": "/assets/data0000"
+
+### bbox
+
+"patch": {"operations": [{"path": "/bbox", "op": "add", "value": [-180.0, -45.0, 180, 90]}]}
+
+### variable name
+
+ "patch": {"operations": [{"path": "/properties/variable_long_name", "op": "add", "value": "Precipitation"}

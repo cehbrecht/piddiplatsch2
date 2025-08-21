@@ -34,6 +34,9 @@
                         "string",
                         "null"
                     ]
+                },
+                "retracted": {
+                    "type": "boolean"
                 }
             }
         },
@@ -43,9 +46,6 @@
             "properties": {
                 "reference_file": {
                     "type": "object",
-                    "required": [
-                        "alternate:name"
-                    ],
                     "properties": {
                         "alternate:name": {
                             "type": "string"
@@ -54,9 +54,6 @@
                 },
                 "data0001": {
                     "type": "object",
-                    "required": [
-                        "alternate:name"
-                    ],
                     "properties": {
                         "alternate:name": {
                             "type": "string"

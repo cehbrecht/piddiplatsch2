@@ -21,6 +21,21 @@ class CMIP6FileRecord(BaseCMIP6Record):
         return self.get_asset(self.asset_key)
 
     @cached_property
+    def alternates(self) -> dict[str, Any]:
+        return self.asset.get("alternate", {})
+
+    def get_value(self, key: str) -> Any:
+        value = self.asset.get(key, "")
+        # check alternates if not found
+        if not value and self.alternates:
+            # pick first available
+            for alt in self.alternates.values():
+                if alt.get(key):
+                    value = alt[key]
+                    break
+        return value
+
+    @cached_property
     def tracking_id(self) -> str:
         return self.asset.get("tracking_id")
 
@@ -43,23 +58,34 @@ class CMIP6FileRecord(BaseCMIP6Record):
         return build_handle(item_pid(self.item_id), as_uri=True)
 
     @cached_property
+    def href(self) -> str:
+        """Resolved asset URL."""
+        return self.get_value("href")
+
+    @cached_property
+    def download_url(self) -> str:
+        """Alias for href to keep external API consistent."""
+        return self.href
+
+    @cached_property
     def filename(self) -> str:
-        return PurePosixPath(self.asset["href"]).name
+        """
+        Filename derived from the resolved href.
+        """
+        # Try filename from resolved href first
+        resolved_name = PurePosixPath(self.href).name
+        return resolved_name
 
     @cached_property
     def checksum(self) -> str | None:
-        return self.asset.get("file:checksum")
+        return self.get_value("file:checksum")
 
     @cached_property
     def size(self) -> int | None:
         try:
-            return int(self.asset.get("file:size"))
+            return int(self.get_value("file:size"))
         except (ValueError, TypeError):
             return None
-
-    @cached_property
-    def download_url(self) -> str:
-        return self.asset["href"]
 
     def as_handle_model(self) -> CMIP6FileModel:
         fm = CMIP6FileModel(

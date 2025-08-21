@@ -23,7 +23,8 @@ dependencies = [
     "jsonschema",
     "pydantic >=2.11",
     "python-dateutil",
-    "tqdm"
+    "tqdm",
+    "jsonpatch >=1.33"
 ]
 
 [project.optional-dependencies]
