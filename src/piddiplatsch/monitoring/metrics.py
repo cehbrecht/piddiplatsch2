@@ -12,8 +12,6 @@ class MetricsTracker:
         self.handles_created = 0
         self.failures = 0
         self.skipped_messages = 0
-        self.total_schema_validation_time = 0.0  # seconds
-        self.total_record_validation_time = 0.0  # seconds
         self.total_handle_processing_time = 0.0  # seconds
         self.start_time = datetime.now(timezone.utc)
         self.logger = logging.getLogger(__name__)
@@ -36,12 +34,6 @@ class MetricsTracker:
             self.messages_processed += 1
             self.handles_created += result.num_handles
             # Aggregate timings if available
-            self.total_schema_validation_time += getattr(
-                result, "schema_validation_time", 0.0
-            )
-            self.total_record_validation_time += getattr(
-                result, "record_validation_time", 0.0
-            )
             self.total_handle_processing_time += getattr(
                 result, "handle_processing_time", 0.0
             )
@@ -67,9 +59,6 @@ class MetricsTracker:
             "elapsed_sec": round(elapsed, 1),
             "messages_per_sec": round(self.messages_processed / elapsed, 2),
             "handles_per_sec": round(self.handles_created / elapsed, 2),
-            "total_validation_time_sec": round(
-                self.total_schema_validation_time + self.total_record_validation_time, 2
-            ),
             "total_handle_time_sec": round(self.total_handle_processing_time, 2),
         }
 

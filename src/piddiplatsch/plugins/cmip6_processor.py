@@ -2,14 +2,13 @@ import time
 from typing import Any
 
 import jsonpatch
-from jsonschema import validate
 from pluggy import HookimplMarker
+from pydantic import ValidationError
 
 from piddiplatsch.config import config
 from piddiplatsch.processing import BaseProcessor, ProcessingResult
 from piddiplatsch.records import CMIP6DatasetRecord
 from piddiplatsch.records.cmip6_file_record import extract_asset_records
-from piddiplatsch.schema import CMIP6_SCHEMA as SCHEMA
 from piddiplatsch.utils.stac import get_stac_client
 
 hookimpl = HookimplMarker("piddiplatsch")
@@ -34,10 +33,11 @@ class CMIP6Processor(BaseProcessor):
         start_total = time.perf_counter()
 
         try:
-            num_handles, schema_time, record_time, handle_time, skipped = (
-                self._do_process(value, key)
-            )
-        except ValueError as e:
+            num_handles, handle_time, skipped = self._do_process(value, key)
+        except ValidationError as e:
+            self.logger.error(f"Validation error for key={key}: {e}")
+            raise
+        except Exception as e:
             self.logger.error(f"Processing error for key={key}: {e}")
             raise
 
@@ -48,8 +48,6 @@ class CMIP6Processor(BaseProcessor):
             num_handles=num_handles,
             success=True,
             elapsed=elapsed_total,
-            schema_validation_time=schema_time,
-            record_validation_time=record_time,
             handle_processing_time=handle_time,
             skipped=skipped,
         )
@@ -61,7 +59,7 @@ class CMIP6Processor(BaseProcessor):
         payload = value.get("data", {}).get("payload")
         if not payload:
             self._log_skipped(key, "MISSING payload")
-            return 0, 0.0, 0.0, 0.0, True
+            return 0, 0.0, True
 
         metadata = value.get("metadata", {})
         return self._process_payload(payload, metadata, key)
@@ -77,18 +75,15 @@ class CMIP6Processor(BaseProcessor):
                 item = self._apply_patch_to_stac_item(payload)
             except Exception as e:
                 self.logger.error(f"Failed to apply patch for key={key}: {e}")
-                return 0, 0.0, 0.0, 0.0, True
+                return 0, 0.0, True
         elif "item" in payload:
             item = payload["item"]
         else:
             self._log_skipped(key, "MISSING item")
             skipped = True
-            return 0, 0.0, 0.0, 0.0, skipped
+            return 0, 0.0, skipped
 
-        # Schema validation
-        _, schema_time = self._time_function(validate, instance=item, schema=SCHEMA)
-
-        # Model validation
+        # Create record
         additional_attrs = {"publication_time": metadata.get("time")}
         record = CMIP6DatasetRecord(
             item,
@@ -96,12 +91,17 @@ class CMIP6Processor(BaseProcessor):
             exclude_keys=self.excluded_asset_keys,
             additional_attributes=additional_attrs,
         )
-        _, record_time = self._time_function(record.validate)
+        # Validate record
+        try:
+            record.validate()
+        except Exception as e:
+            self.logger.error(f"Validation failed for key={key}: {e}")
+            raise
 
         # Handle processing
         num_handles, handle_time = self._add_records_from_item(record, item)
 
-        return num_handles, schema_time, record_time, handle_time, skipped
+        return num_handles, handle_time, skipped
 
     def _apply_patch_to_stac_item(self, payload: dict[str, Any]) -> dict[str, Any]:
         """Fetch the STAC item and apply a JSON patch."""
