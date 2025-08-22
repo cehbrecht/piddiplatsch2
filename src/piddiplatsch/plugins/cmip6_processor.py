@@ -37,7 +37,7 @@ class CMIP6Processor(BaseProcessor):
         except ValidationError as e:
             self.logger.error(f"Validation error for key={key}: {e}")
             raise
-        except ValueError as e:
+        except Exception as e:
             self.logger.error(f"Processing error for key={key}: {e}")
             raise
 
@@ -91,6 +91,12 @@ class CMIP6Processor(BaseProcessor):
             exclude_keys=self.excluded_asset_keys,
             additional_attributes=additional_attrs,
         )
+        # Validate record
+        try:
+            record.validate()
+        except Exception as e:
+            self.logger.error(f"Validation failed for key={key}: {e}")
+            raise
 
         # Handle processing
         num_handles, handle_time = self._add_records_from_item(record, item)
