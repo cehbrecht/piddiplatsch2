@@ -73,12 +73,19 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
         return None
 
     @cached_property
-    def hosting_node(self) -> HostingNode:
-        ref_node = self.get_asset_property("reference_file", "alternate:name")
-        data_node = self.get_asset_property("data0001", "alternate:name")
+    def host(self) -> str:
+        host = None
+        for key in ("reference_file", "data0000", "data0001"):
+            host = self.get_asset_property(key, "alternate:name")
+            if host:
+                break
 
-        host = ref_node or data_node or "unknown"
+        host = host or "unknown"
 
+        return host
+
+    @cached_property
+    def published_on(self) -> str:
         published_on = None
         for key in ("reference_file", "data0000", "data0001"):
             published_on = self.get_asset_property(key, "published_on")
@@ -88,39 +95,26 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
         if not published_on:
             published_on = self.default_publication_time
 
-        return HostingNode(host=host, published_on=parse_datetime(published_on))
+        return parse_datetime(published_on)
+
+    @cached_property
+    def hosting_node(self) -> HostingNode:
+        return HostingNode(host=self.host, published_on=self.published_on)
 
     @cached_property
     def replica_nodes(self) -> list[HostingNode]:
         nodes = []
-        locations = self.item.get("locations", {}).get("location", [])
-        if isinstance(locations, dict):
-            locations = [locations]
-        for loc in locations:
-            host = loc.get("host")
-            pub_on = parse_datetime(loc.get("publishedOn"))
-            if host:
-                nodes.append(HostingNode(host=host, published_on=pub_on))
+        known_hosts = []
+        for key in ("reference_file", "data0000", "data0001"):
+            alternates = self.get_asset_property(key, "alternate", {})
+            for host, values in alternates.items():
+                published_on = values.get("published_on")
+                if not published_on:
+                    published_on = self.published_on
+                if host not in known_hosts:
+                    known_hosts.append(host)
+                    nodes.append(HostingNode(host=host, published_on=published_on))
         return nodes
-
-    @cached_property
-    def unpublished_hosts(self) -> HostingNode:
-        unpublished = self.item.get("unpublished_hosts", {})
-        host = unpublished.get("host", "unknown")
-        pub_on = unpublished.get("published_on", "")
-        return HostingNode(host=host, published_on=parse_datetime(pub_on))
-
-    @cached_property
-    def unpublished_replicas(self) -> list[HostingNode]:
-        replicas = []
-        data = self.item.get("unpublished_replicas", [])
-        if isinstance(data, dict):
-            data = [data]
-        for entry in data:
-            host = entry.get("host", "unknown")
-            pub_on = parse_datetime(entry.get("published_on", ""))
-            replicas.append(HostingNode(host=host, published_on=pub_on))
-        return replicas
 
     @cached_property
     def retracted(self) -> bool:
@@ -137,13 +131,16 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
             IS_PART_OF=self.is_part_of,
             HOSTING_NODE=self.hosting_node,
             REPLICA_NODES=self.replica_nodes,
-            UNPUBLISHED_REPLICAS=self.unpublished_replicas,
-            UNPUBLISHED_HOSTS=self.unpublished_hosts,
             RETRACTED=self.retracted,
         )
 
         if self.retracted:
             logging.warning(f"Dataset with id={self.dataset_id} was retracted!")
+
+        if self.replica_nodes:
+            logging.info(
+                f"Dataset with id={self.dataset_id} has {len(self.replica_nodes)} replica!"
+            )
 
         dsm.set_pid(self.pid)
         return dsm
