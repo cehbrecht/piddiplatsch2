@@ -3,6 +3,7 @@ from functools import cached_property
 from typing import Any
 
 from piddiplatsch.config import config
+from piddiplatsch.lookup import get_lookup
 from piddiplatsch.models import CMIP6DatasetModel, HostingNode
 from piddiplatsch.records.base import BaseCMIP6Record
 from piddiplatsch.records.utils import parse_datetime, parse_pid
@@ -22,6 +23,7 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
         super().__init__(item, additional_attributes, strict=strict)
         self.exclude_keys = set(exclude_keys or [])
         self.max_parts = config.get("cmip6", {}).get("max_parts", -1)
+        self.lookup = get_lookup()
 
     @cached_property
     def pid(self) -> str:
@@ -124,8 +126,10 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
 
     @cached_property
     def previous_version(self) -> str:
-        previous = None
-        return previous
+        previous, _, _ = self.lookup.latest_previous_version(self.dataset_id)
+        if previous:
+            return previous.id
+        return None
 
     def as_handle_model(self) -> CMIP6DatasetModel:
         dsm = CMIP6DatasetModel(
