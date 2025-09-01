@@ -18,14 +18,14 @@ class STACLookup(AbstractLookup):
             raise ValueError(f"Invalid CMIP6 dataset-id format: {dataset_id}")
         version = parts[-1]
         properties = {
-            "activity_id": parts[1],
-            "institution_id": parts[2],
-            "source_id": parts[3],
-            "experiment_id": parts[4],
-            "variant_label": parts[5],
-            "table_id": parts[6],
-            "variable_id": parts[7],
-            "grid_label": parts[8],
+            "activity_id": {"eq": parts[1]},
+            "institution_id": {"eq": parts[2]},
+            "source_id": {"eq": parts[3]},
+            "experiment_id": {"eq": parts[4]},
+            "variant_label": {"eq": parts[5]},
+            "table_id": {"eq": parts[6]},
+            "variable_id": {"eq": parts[7]},
+            "grid_label": {"eq": parts[8]},
         }
         base_id = ".".join(parts[:-1])
         return base_id, properties, version
@@ -62,11 +62,10 @@ class STACLookup(AbstractLookup):
         if not previous_items:
             return None
 
-        latest_prev_item = max(
-            previous_items, key=lambda i: int(i.id.split(".")[-1][1:])
-        )
-        base_id, _, version = self.split_cmip6_id(latest_prev_item.id)
-        return latest_prev_item, base_id, version
+        # latest_prev_item = max(
+        #    previous_items, key=lambda i: int(i.id.split(".")[-1][1:])
+        # )
+        return previous_items[0]
 
     def is_latest(self, dataset_id: str) -> bool:
         _, _, version = self.split_cmip6_id(dataset_id)

@@ -11,11 +11,6 @@ class AbstractLookup(ABC):
         pass
 
     @abstractmethod
-    def find_other_versions(self, dataset_id: str) -> list[Any]:
-        """Return all versions except the given one."""
-        pass
-
-    @abstractmethod
     def latest_version(self, dataset_id: str) -> tuple[Any, str, str] | None:
         """
         Return the latest version of a dataset.

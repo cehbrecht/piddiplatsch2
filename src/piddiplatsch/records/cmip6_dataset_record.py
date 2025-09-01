@@ -126,7 +126,7 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
 
     @cached_property
     def previous_version(self) -> str:
-        previous, _, _ = self.lookup.latest_previous_version(self.dataset_id)
+        previous = self.lookup.latest_previous_version(self.item_id)
         if previous:
             return previous.id
         return None
