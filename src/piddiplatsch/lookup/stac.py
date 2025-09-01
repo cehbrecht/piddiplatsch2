@@ -1,7 +1,7 @@
 from pystac import Item
 from pystac_client import Client
 
-from .base import AbstractLookup
+from piddiplatsch.lookup.base import AbstractLookup
 
 
 class STACLookup(AbstractLookup):
@@ -35,26 +35,6 @@ class STACLookup(AbstractLookup):
         base_id, _, _ = STACLookup.split_cmip6_id(dataset_id)
         return base_id
 
-    @staticmethod
-    def previous_version_link(item: Item | None, href: str | None) -> dict:
-        """
-        Return a STAC-style link dict for a previous version.
-        If item or href is None, returns a placeholder link.
-        """
-        if item is None or href is None:
-            return {
-                "rel": "previous",
-                "href": None,
-                "type": "application/json",
-                "title": "No previous version",
-            }
-        return {
-            "rel": "previous",
-            "href": href,
-            "type": "application/json",
-            "title": f"Previous version of {item.id}",
-        }
-
     def find_versions(self, dataset_id: str) -> list[Item]:
         _, props, _ = self.split_cmip6_id(dataset_id)
         search = self.client.search(collections=[self.collection], query=props)
@@ -87,18 +67,6 @@ class STACLookup(AbstractLookup):
         )
         base_id, _, version = self.split_cmip6_id(latest_prev_item.id)
         return latest_prev_item, base_id, version
-
-    def latest_previous_version_link(self, dataset_id: str, base_href: str) -> dict:
-        """
-        Return a STAC-style link dict for the latest previous version.
-        Returns a placeholder link if no previous version exists.
-        """
-        result = self.latest_previous_version(dataset_id)
-        if not result:
-            return self.previous_version_link(None, None)
-        item, _, _ = result
-        href = f"{base_href}/{item.id}.json"
-        return self.previous_version_link(item, href)
 
     def is_latest(self, dataset_id: str) -> bool:
         _, _, version = self.split_cmip6_id(dataset_id)
