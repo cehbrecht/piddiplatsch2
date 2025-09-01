@@ -122,11 +122,17 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
         retracted_ = bool(retracted_)
         return retracted_
 
+    @cached_property
+    def previous_version(self) -> str:
+        previous = None
+        return previous
+
     def as_handle_model(self) -> CMIP6DatasetModel:
         dsm = CMIP6DatasetModel(
             URL=self.url,
             DATASET_ID=self.dataset_id,
             DATASET_VERSION=self.dataset_version,
+            PREVIOUS_VERSION=self.previous_version,
             HAS_PARTS=self.has_parts,
             IS_PART_OF=self.is_part_of,
             HOSTING_NODE=self.hosting_node,
