@@ -17,17 +17,21 @@ class Properties:
     variable_id: str
     grid_label: str
     version: str
+    version_number: int
 
 
 def extract_version(item: Item) -> int:
-    return int(item.id.split(".")[-1][1:])
+    """Extract integer version number from CMIP6 dataset-id (vYYYYMMDD)."""
+    props = split_cmip6_id(item.id)
+    return props.version_number
 
 
-def split_cmip6_id(dataset_id: str) -> tuple[str, dict, str]:
-    parts = dataset_id.split(".")
+def split_cmip6_id(item_id: str) -> Properties:
+    """Split CMIP6 dataset-id into structured properties."""
+    parts = item_id.split(".")
     if len(parts) < 10:
-        raise ValueError(f"Invalid CMIP6 dataset-id format: {dataset_id}")
-    props = Properties(
+        raise ValueError(f"Invalid CMIP6 dataset-id format: {item_id}")
+    return Properties(
         activity_id=parts[1],
         institution_id=parts[2],
         source_id=parts[3],
@@ -37,8 +41,8 @@ def split_cmip6_id(dataset_id: str) -> tuple[str, dict, str]:
         variable_id=parts[7],
         grid_label=parts[8],
         version=parts[-1],
+        version_number=int(parts[-1][1:]),
     )
-    return props
 
 
 class STACLookup(AbstractLookup):
@@ -48,8 +52,9 @@ class STACLookup(AbstractLookup):
         self.client = Client.open(stac_url)
         self.collection = collection
 
-    def find_versions(self, dataset_id: str) -> list[Item]:
-        props = split_cmip6_id(dataset_id)
+    def find_versions(self, item_id: str) -> list[Item]:
+        """Find all dataset versions, sorted with latest version first."""
+        props = split_cmip6_id(item_id)
         query = {
             "activity_id": {"eq": props.activity_id},
             "institution_id": {"eq": props.institution_id},
@@ -61,32 +66,14 @@ class STACLookup(AbstractLookup):
             "grid_label": {"eq": props.grid_label},
         }
         search = self.client.search(collections=[self.collection], query=query)
-        return list(search.items())
+        items = list(search.items())
+        return sorted(items, key=extract_version, reverse=True)  # latest first
 
-    def latest_version(self, dataset_id: str) -> str | None:
-        items = self.find_versions(dataset_id)
-        if not items:
-            return None
-
-        latest_item = max(items, key=extract_version)
-        return latest_item.id
-
-    def previous_version(self, dataset_id: str) -> str | None:
-        props = split_cmip6_id(dataset_id)
-        current_version = int(props.version[1:])
-        items = self.find_versions(dataset_id)
-        previous_items = [
-            item for item in items if extract_version(item) < current_version
-        ]
-        if not previous_items:
-            return None
-
-        prev_item = max(previous_items, key=extract_version)
-        return prev_item.id
-
-    def is_latest(self, dataset_id: str) -> bool:
-        props = split_cmip6_id(dataset_id)
-        latest = self.latest_version(dataset_id)
-        if not latest:
-            return False
-        return props.version == latest
+    def previous_version(self, item_id: str) -> str | None:
+        """Return the previous version before the given dataset, if any."""
+        current = split_cmip6_id(item_id)
+        items = self.find_versions(item_id)
+        for item in items:
+            if extract_version(item) < current.version_number:
+                return item.id
+        return None

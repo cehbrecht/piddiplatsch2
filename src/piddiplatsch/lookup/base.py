@@ -11,26 +11,11 @@ class AbstractLookup(ABC):
         pass
 
     @abstractmethod
-    def latest_version(self, dataset_id: str) -> tuple[Any, str, str] | None:
-        """
-        Return the latest version of a dataset.
-
-        Returns:
-            (dataset_object, base_id, version) or None if not found.
-        """
-        pass
-
-    @abstractmethod
-    def previous_version(self, dataset_id: str) -> tuple[Any, str, str] | None:
+    def previous_version(self, dataset_id: str) -> str | None:
         """
         Return the previous version of a dataset.
 
         Returns:
             (dataset_object, base_id, version) or None if not found.
         """
-        pass
-
-    @abstractmethod
-    def is_latest(self, dataset_id: str) -> bool:
-        """Check if the given dataset-id is the latest version."""
         pass

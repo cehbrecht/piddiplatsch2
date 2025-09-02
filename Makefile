@@ -79,6 +79,10 @@ lint: ## check style with ruff, black, isort
 	@bash -c 'black --check src tests'
 	@bash -c 'isort --check-only src tests'
 
+fix: ## fix linting errors automatically
+	@echo "Running ruff with fix option ..."
+	@bash -c 'ruff check --fix src tests'
+
 format: ## format code using isort and black
 	@echo "Formatting code with isort and black ..."
 	@bash -c 'isort src tests'
