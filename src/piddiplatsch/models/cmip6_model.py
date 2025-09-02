@@ -39,6 +39,7 @@ class CMIP6DatasetModel(BaseCMIP6Model):
     AGGREGATION_LEVEL: str = "DATASET"
     DATASET_ID: str
     DATASET_VERSION: str | None = None
+    PREVIOUS_VERSION: str | None = None
     IS_PART_OF: str | None = None
     HAS_PARTS: list[str] = Field(default_factory=list)
     HOSTING_NODE: HostingNode
