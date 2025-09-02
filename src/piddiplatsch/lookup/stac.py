@@ -59,7 +59,6 @@ class STACLookup(AbstractLookup):
             "table_id": {"eq": props.table_id},
             "variable_id": {"eq": props.variable_id},
             "grid_label": {"eq": props.grid_label},
-            "version": {"eq": props.version},
         }
         search = self.client.search(collections=[self.collection], query=query)
         return list(search.items())
