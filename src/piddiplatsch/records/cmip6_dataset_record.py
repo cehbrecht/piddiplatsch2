@@ -1,4 +1,5 @@
 import logging
+from dataclasses import dataclass
 from functools import cached_property
 from typing import Any
 
@@ -8,6 +9,54 @@ from piddiplatsch.models import CMIP6DatasetModel, HostingNode
 from piddiplatsch.records.base import BaseCMIP6Record
 from piddiplatsch.records.utils import parse_datetime, parse_pid
 from piddiplatsch.utils.pid import asset_pid, build_handle, item_pid
+
+
+@dataclass
+class Properties:
+    activity_id: str
+    institution_id: str
+    source_id: str
+    experiment_id: str
+    variant_label: str
+    table_id: str
+    variable_id: str
+    grid_label: str
+    version: str
+    version_number: int
+
+
+def split_cmip6_id(item_id: str) -> Properties:
+    """Split CMIP6 dataset-id into structured properties."""
+    parts = item_id.split(".")
+    if len(parts) < 10:
+        raise ValueError(f"Invalid CMIP6 dataset-id format: {item_id}")
+    return Properties(
+        activity_id=parts[1],
+        institution_id=parts[2],
+        source_id=parts[3],
+        experiment_id=parts[4],
+        variant_label=parts[5],
+        table_id=parts[6],
+        variable_id=parts[7],
+        grid_label=parts[8],
+        version=parts[-1],
+        version_number=int(parts[-1][1:]),
+    )
+
+
+def query(item_id: str) -> dict[str, Any]:
+    props = split_cmip6_id(item_id)
+    query_ = {
+        "activity_id": {"eq": props.activity_id},
+        "institution_id": {"eq": props.institution_id},
+        "source_id": {"eq": props.source_id},
+        "experiment_id": {"eq": props.experiment_id},
+        "variant_label": {"eq": props.variant_label},
+        "table_id": {"eq": props.table_id},
+        "variable_id": {"eq": props.variable_id},
+        "grid_label": {"eq": props.grid_label},
+    }
+    return query_
 
 
 class CMIP6DatasetRecord(BaseCMIP6Record):
@@ -24,6 +73,10 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
         self.exclude_keys = set(exclude_keys or [])
         self.max_parts = config.get("cmip6", {}).get("max_parts", -1)
         self.lookup = get_lookup()
+
+    @cached_property
+    def dataset_properties(self) -> Properties:
+        return split_cmip6_id(self.item_id)
 
     @cached_property
     def pid(self) -> str:
@@ -126,8 +179,20 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
 
     @cached_property
     def previous_version(self) -> str:
-        prev_version = self.lookup.previous_version(self.item_id)
-        return prev_version
+        item_ids = self.lookup.find_versions(query(self.item_id))
+        if not item_ids:
+            logging.info(f"No versions found for id={self.dataset_id}")
+            return None
+        latest_version = split_cmip6_id(item_ids[0]).version_number
+        if latest_version == self.dataset_properties.version_number:
+            logging.info(
+                f"Dataset with id={self.dataset_id} is latest version {latest_version}"
+            )
+        for item_id in item_ids:
+            version = split_cmip6_id(item_id).version_number
+            if version < self.dataset_properties.version_number:
+                return item_id
+        return None
 
     def as_handle_model(self) -> CMIP6DatasetModel:
         dsm = CMIP6DatasetModel(
