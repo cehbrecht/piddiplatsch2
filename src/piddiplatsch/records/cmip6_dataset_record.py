@@ -126,10 +126,8 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
 
     @cached_property
     def previous_version(self) -> str:
-        previous = self.lookup.latest_previous_version(self.item_id)
-        if previous:
-            return previous.id
-        return None
+        prev_version = self.lookup.previous_version(self.item_id)
+        return prev_version
 
     def as_handle_model(self) -> CMIP6DatasetModel:
         dsm = CMIP6DatasetModel(
@@ -143,6 +141,11 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
             REPLICA_NODES=self.replica_nodes,
             RETRACTED=self.retracted,
         )
+
+        if self.previous_version:
+            logging.info(
+                f"Dataset with id={self.dataset_id} has a previous version {self.previous_version}!"
+            )
 
         if self.retracted:
             logging.warning(f"Dataset with id={self.dataset_id} was retracted!")

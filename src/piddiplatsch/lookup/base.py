@@ -21,9 +21,9 @@ class AbstractLookup(ABC):
         pass
 
     @abstractmethod
-    def latest_previous_version(self, dataset_id: str) -> tuple[Any, str, str] | None:
+    def previous_version(self, dataset_id: str) -> tuple[Any, str, str] | None:
         """
-        Return the latest previous version of a dataset.
+        Return the previous version of a dataset.
 
         Returns:
             (dataset_object, base_id, version) or None if not found.
