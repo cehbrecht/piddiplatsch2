@@ -4,6 +4,7 @@ from functools import cached_property
 from typing import Any
 
 from piddiplatsch.config import config
+from piddiplatsch.exceptions import LookupError
 from piddiplatsch.lookup import get_lookup
 from piddiplatsch.models import CMIP6DatasetModel, HostingNode
 from piddiplatsch.records.base import BaseCMIP6Record
@@ -114,7 +115,7 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
             if key in self.exclude_keys:
                 continue
             if self.max_parts > -1 and len(parts) >= self.max_parts:
-                logging.debug(f"Reached limit of {self.max_parts} assets.")
+                logging.warning(f"Reached limit of {self.max_parts} assets.")
                 break
             pid = asset_pid(self.item_id, key)
             handle = build_handle(pid, as_uri=True)
@@ -166,7 +167,17 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
 
     @cached_property
     def previous_version(self) -> str | None:
-        item_ids = self.lookup.find_versions(query(self.item_id))
+        """Return the previous version of this dataset.
+
+        Raises:
+            LookupError: If the STAC service is unavailable or the query fails.
+        """
+        try:
+            item_ids = self.lookup.find_versions(query(self.item_id))
+        except LookupError as e:
+            logging.error(f"Failed to fetch versions for {self.dataset_id}: {e}")
+            raise
+
         if not item_ids:
             logging.info(f"No versions found for id={self.dataset_id}")
             return None
@@ -176,6 +187,7 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
             version = split_cmip6_id(item_id).version_number
             if version < current_version:
                 return item_id
+
         logging.info(
             f"Dataset id={self.dataset_id} is the latest version {current_version}"
         )

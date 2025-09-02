@@ -2,8 +2,14 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 import requests
+from pystac import Item
 
 from piddiplatsch.config import config  # your TOML config loader
+
+
+def extract_version(item: Item) -> int:
+    """Extract the integer version number from a CMIP6 dataset-id (e.g., vYYYYMMDD)."""
+    return int(item.id.split(".")[-1][1:])
 
 
 class BaseStacClient(ABC):
