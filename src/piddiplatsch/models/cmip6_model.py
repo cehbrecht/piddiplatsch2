@@ -5,6 +5,10 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, PrivateAttr, model_validator
 
+from piddiplatsch.config import config
+
+__MAX_PARTS__ = config.get("cmip6", {}).get("max_parts", -1)
+
 
 class HostingNode(BaseModel):
     host: str
@@ -52,8 +56,9 @@ class CMIP6DatasetModel(BaseCMIP6Model):
     def validate_required(self) -> CMIP6DatasetModel:
         if not self.HOSTING_NODE or not self.HOSTING_NODE.host:
             raise ValueError("HOSTING_NODE with host is required.")
-        if not self.HAS_PARTS:
-            raise ValueError("HAS_PARTS must contain at least one file.")
+        if __MAX_PARTS__ <= -1 or __MAX_PARTS__ > -1:
+            if not self.HAS_PARTS:
+                raise ValueError("HAS_PARTS must contain at least one file.")
         return self
 
 
