@@ -3,6 +3,11 @@ from piddiplatsch.lookup.base import AbstractLookup
 from piddiplatsch.lookup.stac import STACLookup
 
 
+class DummyLookup(AbstractLookup):
+    def find_versions(self, query: dict) -> list[str]:
+        return []
+
+
 def get_lookup() -> AbstractLookup:
     """
     Factory function that returns the configured lookup instance
@@ -17,10 +22,8 @@ def get_lookup() -> AbstractLookup:
             raise ValueError("STAC backend requires 'stac_url' in config")
         return STACLookup(stac_url=stac_url, collection=collection)
 
-    # Example for future backends
-    # elif backend == "local":
-    #     path = config.get("lookup:local_path")
-    #     return LocalLookup(path=path)
+    elif backend == "dummy":
+        return DummyLookup()
 
     else:
         raise ValueError(f"Unknown lookup backend configured: {backend}")
