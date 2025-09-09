@@ -84,8 +84,11 @@ class ConsumerPipeline:
         except Exception as e:
             logger.exception(f"Error processing message {key}")
             retries = value.get("retries", 0)
-            FailureRecovery.record_failed_item(key, value, retries=retries)
-            return ProcessingResult(key=key, success=False, error=str(e))
+            reason = str(e)
+            FailureRecovery.record_failed_item(
+                key, value, retries=retries, reason=reason
+            )
+            return ProcessingResult(key=key, success=False, error=reason)
 
     def stop(self):
         """Gracefully stop the pipeline."""

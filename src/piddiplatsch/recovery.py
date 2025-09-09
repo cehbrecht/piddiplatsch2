@@ -15,7 +15,9 @@ class FailureRecovery:
     FAILURE_DIR.mkdir(parents=True, exist_ok=True)
 
     @staticmethod
-    def record_failed_item(key: str, data: dict, retries: int = 0) -> None:
+    def record_failed_item(
+        key: str, data: dict, retries: int = 0, reason: str = "Unknown"
+    ) -> None:
         """Append a failed STAC item to a daily JSONL file with UTC timestamp, under retries-N folder."""
         now = datetime.now(timezone.utc)
         timestamp = now.isoformat(timespec="seconds")
@@ -26,11 +28,15 @@ class FailureRecovery:
 
         failure_file = retry_folder / dated_filename
 
-        data_with_metadata = {
-            **data,
+        infos = {
             "failure_timestamp": timestamp,
             "retries": retries,
-            "reason": "TODO: add a reason here",
+            "reason": reason,
+        }
+
+        data_with_metadata = {
+            **data,
+            "__infos__": infos,
         }
 
         with failure_file.open("a", encoding="utf-8") as f:
