@@ -13,6 +13,9 @@ stats_summary_interval = 100
 "auto.offset.reset" = "earliest"
 "enable.auto.commit" = true
 
+# Best practice for higher availability in librdkafka clients prior to 1.7
+"session.timeout.ms" = 45000
+
 [handle]
 server_url = "http://localhost:8000"
 prefix = "21.TEST"
