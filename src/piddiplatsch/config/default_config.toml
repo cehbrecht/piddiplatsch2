@@ -6,6 +6,7 @@ topic = "CMIP6"
 retry_topic = "CMIP6"
 output_dir = "outputs"
 stats_summary_interval = 100
+max_errors = -1  # -1 = unlimited, any positive int = stop after that many
 
 [kafka]
 "bootstrap.servers" = "localhost:39092"

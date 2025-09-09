@@ -6,6 +6,7 @@ import sys
 from confluent_kafka import Consumer as ConfluentConsumer
 from confluent_kafka import KafkaException
 
+from piddiplatsch.config import config
 from piddiplatsch.dump import DumpRecorder
 from piddiplatsch.monitoring import MetricsTracker, get_rate_tracker
 from piddiplatsch.plugin_loader import load_single_plugin
@@ -56,20 +57,32 @@ class ConsumerPipeline:
         *,
         dump_messages=False,
         verbose=False,
+        max_errors=-1,
     ):
         self.consumer = Consumer(topic, kafka_cfg)
         self.processor = load_single_plugin(processor)
         self.dump_messages = dump_messages
         self.metrics = MetricsTracker()
         self.message_tracker = get_rate_tracker("messages", use_tqdm=verbose)
+        self.max_errors = int(max_errors)
+        self._error_count = 0
 
     def run(self):
-        """Consume and process messages indefinitely."""
+        """Consume and process messages until stopped or error limit reached."""
         logger.info("Starting consumer pipeline...")
         for key, value in self.consumer.consume():
             result = self._safe_process_message(key, value)
             self.metrics.record_result(result)
             self.message_tracker.tick()
+
+            if not result.success:
+                self._error_count += 1
+                if self.max_errors >= 0 and self._error_count >= self.max_errors:
+                    logger.error(
+                        f"Max error limit reached ({self._error_count}/{self.max_errors}). Stopping consumer."
+                    )
+                    self.stop()
+                    break
 
     def _safe_process_message(self, key: str, value: dict) -> ProcessingResult:
         """Process a single message with error handling."""
@@ -101,8 +114,15 @@ def start_consumer(
     topic: str, kafka_cfg: dict, processor: str, *, dump_messages=False, verbose=False
 ):
     """Entry point for running the consumer."""
+    max_errors = config.get("consumer", {}).get("max_errors", -1)
+
     pipeline = ConsumerPipeline(
-        topic, kafka_cfg, processor, dump_messages=dump_messages, verbose=verbose
+        topic,
+        kafka_cfg,
+        processor,
+        dump_messages=dump_messages,
+        verbose=verbose,
+        max_errors=max_errors,
     )
 
     def sigint_handler(sig, frame):
