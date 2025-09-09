@@ -16,6 +16,10 @@ from piddiplatsch.recovery import FailureRecovery
 logger = logging.getLogger(__name__)
 
 
+class MaxErrorsExceededError(Exception):
+    """Raised when the consumer reaches its max error limit."""
+
+
 class Consumer:
     """Thin wrapper around Kafka consumer."""
 
@@ -70,19 +74,14 @@ class ConsumerPipeline:
     def run(self):
         """Consume and process messages until stopped or error limit reached."""
         logger.info("Starting consumer pipeline...")
-        for key, value in self.consumer.consume():
-            result = self._safe_process_message(key, value)
-            self.metrics.record_result(result)
-            self.message_tracker.tick()
-
-            if not result.success:
-                self._error_count += 1
-                if self.max_errors >= 0 and self._error_count >= self.max_errors:
-                    logger.error(
-                        f"Max error limit reached ({self._error_count}/{self.max_errors}). Stopping consumer."
-                    )
-                    self.stop()
-                    break
+        try:
+            for key, value in self.consumer.consume():
+                result = self._safe_process_message(key, value)
+                self.metrics.record_result(result)
+                self.message_tracker.tick()
+        except MaxErrorsExceededError as e:
+            logger.error(str(e))
+            self.stop()
 
     def _safe_process_message(self, key: str, value: dict) -> ProcessingResult:
         """Process a single message with error handling."""
@@ -101,6 +100,13 @@ class ConsumerPipeline:
             FailureRecovery.record_failed_item(
                 key, value, retries=retries, reason=reason
             )
+
+            self._error_count += 1
+            if self.max_errors >= 0 and self._error_count >= self.max_errors:
+                raise MaxErrorsExceededError(
+                    f"Max error limit reached ({self._error_count}/{self.max_errors})"
+                )
+
             return ProcessingResult(key=key, success=False, error=reason)
 
     def stop(self):
