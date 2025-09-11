@@ -10,7 +10,7 @@ from confluent_kafka import KafkaException
 from piddiplatsch.config import config
 from piddiplatsch.dump import DumpRecorder
 from piddiplatsch.exceptions import MaxErrorsExceededError
-from piddiplatsch.monitoring import MessageStats, MetricsTracker, get_rate_tracker
+from piddiplatsch.monitoring import MessageStats, MetricsTracker, get_progress
 from piddiplatsch.plugin_loader import load_single_plugin
 from piddiplatsch.processing import ProcessingResult
 from piddiplatsch.recovery import FailureRecovery
@@ -73,9 +73,7 @@ class ConsumerPipeline:
         self.metrics = MetricsTracker()
         self.stats = MessageStats()  # central source of truth
         self.max_errors = int(max_errors)
-        self.message_tracker = get_rate_tracker(
-            "messages", use_tqdm=verbose, stats=self.stats
-        )
+        self.progress = get_progress("messages", use_tqdm=verbose, stats=self.stats)
 
     def run(self):
         logger.info("Starting consumer pipeline...")
@@ -90,8 +88,8 @@ class ConsumerPipeline:
             if not result.success:
                 self.stats.error()
 
-            # Refresh tracker display (does NOT increment messages)
-            self.message_tracker.refresh()
+            # Refresh progress display (does NOT increment messages)
+            self.progress.refresh()
 
             # Check max errors
             self._check_success(result)
@@ -124,7 +122,7 @@ class ConsumerPipeline:
     def stop(self, cause: StopCause = StopCause.MANUAL):
         logger.warning(f"Stopping consumer (cause: {cause.value})...")
         self.metrics.log_summary()
-        self.message_tracker.close()
+        self.progress.close()
         logger.info(
             f"Total messages: {self.stats.messages}, total errors: {self.stats.errors}"
         )
