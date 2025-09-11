@@ -28,10 +28,17 @@ class NoOpProgress(BaseProgress):
 class Progress(BaseProgress):
     """Displays message stats in the console (tqdm-based)."""
 
-    def __init__(self, name="progress", stats: MessageStats = None, update_interval=5):
-        self.name = name
-        self.stats = stats or MessageStats()
+    def __init__(
+        self,
+        title="progress",
+        stats: MessageStats = None,
+        update_interval=5,
+        show_retries=False,
+    ):
+        self.title = title
+        self._stats = stats or MessageStats()
         self.update_interval = update_interval
+        self.show_retries = show_retries
         self.start_time = time.time()
         self.last_update = self.start_time
 
@@ -42,13 +49,22 @@ class Progress(BaseProgress):
             dynamic_ncols=True,
         )
 
+    @property
+    def stats(self):
+        """Read-only access to MessageStats."""
+        return self._stats
+
     def _format_desc(self, elapsed, rate):
         h, rem = divmod(int(elapsed), 3600)
         m, s = divmod(rem, 60)
-        return (
-            f"{self.name:<10} | {self.stats.messages:>6} msgs | {rate:6.1f}/min "
-            f"| {self.stats.errors:>4} errors | {h:02}:{m:02}:{s:02} elapsed"
+        desc = (
+            f"{self.title:<10} | {self.stats.messages:>6} msgs | "
+            f"{rate:6.1f}/min | {self.stats.errors:>4} errors | "
+            f"{h:02}:{m:02}:{s:02} elapsed"
         )
+        if self.show_retries:
+            desc += f" | {self.stats.retries:>4} retries"
+        return desc
 
     def refresh(self):
         """Update the display from MessageStats."""
@@ -67,7 +83,11 @@ class Progress(BaseProgress):
 
 
 def get_progress(
-    name="progress", use_tqdm=False, stats: MessageStats = None, update_interval=5
+    title="progress",
+    use_tqdm=False,
+    stats: MessageStats = None,
+    update_interval=5,
+    show_retries=False,
 ):
     """
     Factory to get a progress display.
@@ -75,6 +95,11 @@ def get_progress(
     - Returns NoOpProgress if use_tqdm=False
     """
     if use_tqdm:
-        return Progress(name=name, stats=stats, update_interval=update_interval)
+        return Progress(
+            title=title,
+            stats=stats,
+            update_interval=update_interval,
+            show_retries=show_retries,
+        )
     else:
         return NoOpProgress()
