@@ -30,6 +30,14 @@ esgf docu:
 stac schema doc:
 https://docs.google.com/document/d/1O7CsCFpvoUhvw3LKH8PJz24O-oqF3DtQMi2hNhn9nPU/edit?tab=t.0
 
+## example pids
+
+dataset:
+http://fox.cloud.dkrz.de:8008/api/handles/21.T14995/d7f1f9ad-189e-394b-9776-ed708d7fc9fe
+
+file:
+http://fox.cloud.dkrz.de:8008/api/handles/21.T14995/54b0261c-c7c4-3d60-839f-39acf20412ec
+
 ## esgf stac schema notes
 
 ### replica
