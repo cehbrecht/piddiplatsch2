@@ -2,6 +2,7 @@ import json
 import logging
 import signal
 import sys
+from enum import Enum
 
 from confluent_kafka import Consumer as ConfluentConsumer
 from confluent_kafka import KafkaException
@@ -15,6 +16,15 @@ from piddiplatsch.processing import ProcessingResult
 from piddiplatsch.recovery import FailureRecovery
 
 logger = logging.getLogger(__name__)
+
+
+class StopCause(str, Enum):
+    """Enumerates reasons why the consumer stopped."""
+
+    MANUAL = "manual"
+    SIGINT = "sigint"
+    KEYBOARD_INTERRUPT = "keyboard_interrupt"
+    MAX_ERRORS = "max_errors_exceeded"
 
 
 class Consumer:
@@ -105,10 +115,23 @@ class ConsumerPipeline:
 
             return ProcessingResult(key=key, success=False, error=reason)
 
-    def stop(self, reason: str = "manual"):
+    def stop(self, cause: StopCause = StopCause.MANUAL):
         """Gracefully stop the pipeline."""
-        logger.warning(f"Stopping consumer (reason: {reason})...")
+        if cause is StopCause.MAX_ERRORS and self.max_errors >= 0:
+            logger.error(
+                f"Stopping consumer due to max error limit: "
+                f"{self._error_count}/{self.max_errors} failed messages"
+            )
+        else:
+            logger.warning(f"Stopping consumer (cause: {cause.value})...")
+
         self.metrics.log_summary()
+        if self.max_errors >= 0:
+            logger.info(
+                f"Final error count: {self._error_count}/{self.max_errors} (limit)"
+            )
+        else:
+            logger.info(f"Final error count: {self._error_count} (no limit set)")
         self.message_tracker.close()
 
 
@@ -129,18 +152,17 @@ def start_consumer(
 
     def sigint_handler(sig, frame):
         logger.warning("Received SIGINT. Gracefully shutting down.")
-        pipeline.stop(reason="sigint")
+        pipeline.stop(cause=StopCause.SIGINT)
         sys.exit(0)
 
     signal.signal(signal.SIGINT, sigint_handler)
 
     try:
         pipeline.run()
-    except MaxErrorsExceededError as e:
-        logger.error(str(e))
-        pipeline.stop(reason="max_errors_exceeded")
+    except MaxErrorsExceededError:
+        pipeline.stop(cause=StopCause.MAX_ERRORS)
         sys.exit(1)
     except KeyboardInterrupt:
         logger.warning("Consumer interrupted.")
-        pipeline.stop(reason="keyboard_interrupt")
+        pipeline.stop(cause=StopCause.KEYBOARD_INTERRUPT)
         sys.exit(0)
