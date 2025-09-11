@@ -123,3 +123,21 @@ test prefix: hdl:21.T14995/UUID
 ### variable name
 
  "patch": {"operations": [{"path": "/properties/variable_long_name", "op": "add", "value": "Precipitation"}
+
+## updates
+
+
+### 2025-09-11
+
+dataset:
+* use retraced_on with timestamp instead of retraced 
+    * only set when retracted
+
+file: 
+* add download_replica url
+
+version lookup:
+* Use cached ES for handle service.
+
+github:
+* move code to ESGF repo (piddiplatsch)
