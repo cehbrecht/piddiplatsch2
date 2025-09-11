@@ -11,3 +11,7 @@ class LookupError(PiddiplatschError):
 
 class ValidationError(PiddiplatschError):
     """Raised when input data or a record fails validation."""
+
+
+class MaxErrorsExceededError(PiddiplatschError):
+    """Raised when the consumer reaches its max error limit."""

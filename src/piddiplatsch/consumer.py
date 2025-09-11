@@ -2,17 +2,27 @@ import json
 import logging
 import signal
 import sys
+from enum import Enum
 
 from confluent_kafka import Consumer as ConfluentConsumer
 from confluent_kafka import KafkaException
 
+from piddiplatsch.config import config
 from piddiplatsch.dump import DumpRecorder
-from piddiplatsch.monitoring import MetricsTracker, get_rate_tracker
+from piddiplatsch.exceptions import MaxErrorsExceededError
+from piddiplatsch.monitoring import MessageStats, MetricsTracker, get_progress
 from piddiplatsch.plugin_loader import load_single_plugin
-from piddiplatsch.processing import ProcessingResult  # dataclass
+from piddiplatsch.processing import ProcessingResult
 from piddiplatsch.recovery import FailureRecovery
 
 logger = logging.getLogger(__name__)
+
+
+class StopCause(str, Enum):
+    MANUAL = "manual"
+    SIGINT = "sigint"
+    KEYBOARD_INTERRUPT = "keyboard_interrupt"
+    MAX_ERRORS = "max_errors_exceeded"
 
 
 class Consumer:
@@ -24,7 +34,6 @@ class Consumer:
         self.consumer.subscribe([self.topic])
 
     def consume(self):
-        """Yield decoded Kafka messages."""
         try:
             while True:
                 msg = self.consumer.poll(timeout=1.0)
@@ -50,37 +59,57 @@ class ConsumerPipeline:
 
     def __init__(
         self,
-        topic: str,
-        kafka_cfg: dict,
-        processor: str,
+        topic,
+        kafka_cfg,
+        processor,
         *,
         dump_messages=False,
         verbose=False,
+        max_errors=-1,
     ):
         self.consumer = Consumer(topic, kafka_cfg)
         self.processor = load_single_plugin(processor)
         self.dump_messages = dump_messages
         self.metrics = MetricsTracker()
-        self.message_tracker = get_rate_tracker("messages", use_tqdm=verbose)
+        self.stats = MessageStats()  # central source of truth
+        self.max_errors = int(max_errors)
+        self.progress = get_progress("messages", use_tqdm=verbose, stats=self.stats)
 
     def run(self):
-        """Consume and process messages indefinitely."""
         logger.info("Starting consumer pipeline...")
         for key, value in self.consumer.consume():
             result = self._safe_process_message(key, value)
             self.metrics.record_result(result)
-            self.message_tracker.tick()
 
-    def _safe_process_message(self, key: str, value: dict) -> ProcessingResult:
-        """Process a single message with error handling."""
+            # Count messages
+            self.stats.tick()
+
+            # Count errors
+            if not result.success:
+                self.stats.error()
+
+            # Refresh progress display (does NOT increment messages)
+            self.progress.refresh()
+
+            # Check max errors
+            self._check_success(result)
+
+    def _check_success(self, result: ProcessingResult):
+        if (
+            not result.success
+            and self.max_errors >= 0
+            and self.stats.errors >= self.max_errors
+        ):
+            raise MaxErrorsExceededError(
+                f"Max error limit reached ({self.stats.errors}/{self.max_errors})"
+            )
+
+    def _safe_process_message(self, key, value):
         try:
             logger.debug(f"Processing message: {key}")
-
             if self.dump_messages:
                 DumpRecorder.record_item(key, value)
-
             return self.processor.process(key, value)
-
         except Exception as e:
             logger.exception(f"Error processing message {key}")
             retries = value.get("retries", 0)
@@ -90,31 +119,40 @@ class ConsumerPipeline:
             )
             return ProcessingResult(key=key, success=False, error=reason)
 
-    def stop(self):
-        """Gracefully stop the pipeline."""
-        logger.warning("Stopping consumer...")
+    def stop(self, cause: StopCause = StopCause.MANUAL):
+        logger.warning(f"Stopping consumer (cause: {cause.value})...")
         self.metrics.log_summary()
-        self.message_tracker.close()
+        self.progress.close()
+        logger.info(
+            f"Total messages: {self.stats.messages}, total errors: {self.stats.errors}"
+        )
 
 
-def start_consumer(
-    topic: str, kafka_cfg: dict, processor: str, *, dump_messages=False, verbose=False
-):
-    """Entry point for running the consumer."""
+def start_consumer(topic, kafka_cfg, processor, *, dump_messages=False, verbose=False):
+    max_errors = config.get("consumer", {}).get("max_errors", -1)
     pipeline = ConsumerPipeline(
-        topic, kafka_cfg, processor, dump_messages=dump_messages, verbose=verbose
+        topic,
+        kafka_cfg,
+        processor,
+        dump_messages=dump_messages,
+        verbose=verbose,
+        max_errors=max_errors,
     )
 
     def sigint_handler(sig, frame):
         logger.warning("Received SIGINT. Gracefully shutting down.")
-        pipeline.stop()
+        pipeline.stop(cause=StopCause.SIGINT)
         sys.exit(0)
 
     signal.signal(signal.SIGINT, sigint_handler)
 
     try:
         pipeline.run()
+    except MaxErrorsExceededError as e:
+        logger.error(str(e))
+        pipeline.stop(cause=StopCause.MAX_ERRORS)
+        sys.exit(1)
     except KeyboardInterrupt:
         logger.warning("Consumer interrupted.")
-        pipeline.stop()
+        pipeline.stop(cause=StopCause.KEYBOARD_INTERRUPT)
         sys.exit(0)
