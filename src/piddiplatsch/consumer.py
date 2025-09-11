@@ -81,7 +81,7 @@ class ConsumerPipeline:
                 self.message_tracker.tick()
         except MaxErrorsExceededError as e:
             logger.error(str(e))
-            self.stop()
+            self.stop(reason="max_errors_exceeded")
 
     def _safe_process_message(self, key: str, value: dict) -> ProcessingResult:
         """Process a single message with error handling."""
@@ -109,9 +109,9 @@ class ConsumerPipeline:
 
             return ProcessingResult(key=key, success=False, error=reason)
 
-    def stop(self):
+    def stop(self, reason: str = "manual"):
         """Gracefully stop the pipeline."""
-        logger.warning("Stopping consumer...")
+        logger.warning(f"Stopping consumer (reason: {reason})...")
         self.metrics.log_summary()
         self.message_tracker.close()
 
@@ -133,7 +133,7 @@ def start_consumer(
 
     def sigint_handler(sig, frame):
         logger.warning("Received SIGINT. Gracefully shutting down.")
-        pipeline.stop()
+        pipeline.stop(reason="sigint")
         sys.exit(0)
 
     signal.signal(signal.SIGINT, sigint_handler)
@@ -142,5 +142,5 @@ def start_consumer(
         pipeline.run()
     except KeyboardInterrupt:
         logger.warning("Consumer interrupted.")
-        pipeline.stop()
+        pipeline.stop(reason="keyboard_interrupt")
         sys.exit(0)
