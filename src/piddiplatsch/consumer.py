@@ -8,16 +8,13 @@ from confluent_kafka import KafkaException
 
 from piddiplatsch.config import config
 from piddiplatsch.dump import DumpRecorder
+from piddiplatsch.exceptions import MaxErrorsExceededError
 from piddiplatsch.monitoring import MetricsTracker, get_rate_tracker
 from piddiplatsch.plugin_loader import load_single_plugin
 from piddiplatsch.processing import ProcessingResult  # dataclass
 from piddiplatsch.recovery import FailureRecovery
 
 logger = logging.getLogger(__name__)
-
-
-class MaxErrorsExceededError(Exception):
-    """Raised when the consumer reaches its max error limit."""
 
 
 class Consumer:
@@ -74,14 +71,19 @@ class ConsumerPipeline:
     def run(self):
         """Consume and process messages until stopped or error limit reached."""
         logger.info("Starting consumer pipeline...")
-        try:
-            for key, value in self.consumer.consume():
-                result = self._safe_process_message(key, value)
-                self.metrics.record_result(result)
-                self.message_tracker.tick()
-        except MaxErrorsExceededError as e:
-            logger.error(str(e))
-            self.stop(reason="max_errors_exceeded")
+        for key, value in self.consumer.consume():
+            result = self._safe_process_message(key, value)
+            self.metrics.record_result(result)
+            self.message_tracker.tick()
+            self._check_success(result)
+
+    def _check_success(self, result):
+        if not result.success:
+            self._error_count += 1
+            if self.max_errors >= 0 and self._error_count >= self.max_errors:
+                raise MaxErrorsExceededError(
+                    f"Max error limit reached ({self._error_count}/{self.max_errors})"
+                )
 
     def _safe_process_message(self, key: str, value: dict) -> ProcessingResult:
         """Process a single message with error handling."""
@@ -100,12 +102,6 @@ class ConsumerPipeline:
             FailureRecovery.record_failed_item(
                 key, value, retries=retries, reason=reason
             )
-
-            self._error_count += 1
-            if self.max_errors >= 0 and self._error_count >= self.max_errors:
-                raise MaxErrorsExceededError(
-                    f"Max error limit reached ({self._error_count}/{self.max_errors})"
-                )
 
             return ProcessingResult(key=key, success=False, error=reason)
 
@@ -140,6 +136,10 @@ def start_consumer(
 
     try:
         pipeline.run()
+    except MaxErrorsExceededError as e:
+        logger.error(str(e))
+        pipeline.stop(reason="max_errors_exceeded")
+        sys.exit(1)
     except KeyboardInterrupt:
         logger.warning("Consumer interrupted.")
         pipeline.stop(reason="keyboard_interrupt")
