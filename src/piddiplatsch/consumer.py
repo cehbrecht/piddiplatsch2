@@ -19,8 +19,6 @@ logger = logging.getLogger(__name__)
 
 
 class StopCause(str, Enum):
-    """Enumerates reasons why the consumer stopped."""
-
     MANUAL = "manual"
     SIGINT = "sigint"
     KEYBOARD_INTERRUPT = "keyboard_interrupt"
@@ -84,7 +82,10 @@ class ConsumerPipeline:
         for key, value in self.consumer.consume():
             result = self._safe_process_message(key, value)
             self.metrics.record_result(result)
-            self.message_tracker.tick()
+
+            # Always tick with error count
+            self.message_tracker.tick(errors=self._error_count)
+
             self._check_success(result)
 
     def _check_success(self, result: ProcessingResult):
@@ -117,22 +118,10 @@ class ConsumerPipeline:
 
     def stop(self, cause: StopCause = StopCause.MANUAL):
         """Gracefully stop the pipeline."""
-        if cause is StopCause.MAX_ERRORS and self.max_errors >= 0:
-            logger.error(
-                f"Stopping consumer due to max error limit: "
-                f"{self._error_count}/{self.max_errors} failed messages"
-            )
-        else:
-            logger.warning(f"Stopping consumer (cause: {cause.value})...")
-
+        logger.warning(f"Stopping consumer (cause: {cause.value})...")
         self.metrics.log_summary()
-        if self.max_errors >= 0:
-            logger.info(
-                f"Final error count: {self._error_count}/{self.max_errors} (limit)"
-            )
-        else:
-            logger.info(f"Final error count: {self._error_count} (no limit set)")
         self.message_tracker.close()
+        logger.info(f"Total errors: {self._error_count}")
 
 
 def start_consumer(
@@ -159,7 +148,8 @@ def start_consumer(
 
     try:
         pipeline.run()
-    except MaxErrorsExceededError:
+    except MaxErrorsExceededError as e:
+        logger.error(str(e))
         pipeline.stop(cause=StopCause.MAX_ERRORS)
         sys.exit(1)
     except KeyboardInterrupt:

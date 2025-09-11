@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 class BaseRateTracker:
-    def tick(self, n=1):
+    def tick(self, n=1, errors: int = 0):
         raise NotImplementedError
 
     def close(self):
@@ -15,7 +15,7 @@ class BaseRateTracker:
 
 
 class DummyRateTracker(BaseRateTracker):
-    def tick(self, n=1):
+    def tick(self, n=1, errors: int = 0):
         pass
 
 
@@ -25,6 +25,7 @@ class TqdmRateTracker(BaseRateTracker):
         self.start_time = time.time()
         self.last_update = self.start_time
         self.count = 0
+        self.errors = 0
         self.update_interval = update_interval  # seconds
 
         self.bar = tqdm(
@@ -37,10 +38,14 @@ class TqdmRateTracker(BaseRateTracker):
     def _format_desc(self, elapsed, rate):
         h, rem = divmod(int(elapsed), 3600)
         m, s = divmod(rem, 60)
-        return f"{self.name:<10} | {self.count:>6} msgs | {rate:6.1f}/min | {h:02}:{m:02}:{s:02} elapsed"
+        return (
+            f"{self.name:<10} | {self.count:>6} msgs | {rate:6.1f}/min "
+            f"| {self.errors:>4} errors | {h:02}:{m:02}:{s:02} elapsed"
+        )
 
-    def tick(self, n=1):
+    def tick(self, n=1, errors: int = 0):
         self.count += n
+        self.errors = errors
 
         now = time.time()
         elapsed = now - self.start_time
