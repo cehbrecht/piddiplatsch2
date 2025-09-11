@@ -1,5 +1,7 @@
 import time
+from datetime import datetime
 
+import humanize
 from tqdm import tqdm
 
 from piddiplatsch.monitoring.base import MessageStats
@@ -47,6 +49,13 @@ class Progress(BaseProgress):
     def _format_time(self, ts):
         return time.strftime("%H:%M:%S", time.localtime(ts)) if ts else "--:--:--"
 
+    def _time_ago(self, ts):
+        """Return a human-readable relative time, e.g., '2 minutes ago'."""
+        if ts is None:
+            return "--"
+        dt = datetime.fromtimestamp(ts)
+        return humanize.naturaltime(datetime.now() - dt)
+
     def _format_elapsed(self, start_ts):
         elapsed = int(time.time() - start_ts)
         h, rem = divmod(elapsed, 3600)
@@ -58,8 +67,10 @@ class Progress(BaseProgress):
             f"{self.title:<10} | {self.stats.messages:>6} msgs | "
             f"{self.stats.errors:>4} errors | "
             f"start: {self._format_time(self.start_time)} | "
-            f"last_msg: {self._format_time(self.stats.last_message_time)} | "
-            f"last_err: {self._format_time(self.stats.last_error_time)} | "
+            f"last_msg: {self._format_time(self.stats.last_message_time)} "
+            f"({self._time_ago(self.stats.last_message_time)}) | "
+            f"last_err: {self._format_time(self.stats.last_error_time)} "
+            f"({self._time_ago(self.stats.last_error_time)}) | "
             f"running: {self._format_elapsed(self.start_time)}"
         )
 
