@@ -11,7 +11,7 @@ from piddiplatsch.dump import DumpRecorder
 from piddiplatsch.exceptions import MaxErrorsExceededError
 from piddiplatsch.monitoring import MetricsTracker, get_rate_tracker
 from piddiplatsch.plugin_loader import load_single_plugin
-from piddiplatsch.processing import ProcessingResult  # dataclass
+from piddiplatsch.processing import ProcessingResult
 from piddiplatsch.recovery import FailureRecovery
 
 logger = logging.getLogger(__name__)
@@ -77,7 +77,7 @@ class ConsumerPipeline:
             self.message_tracker.tick()
             self._check_success(result)
 
-    def _check_success(self, result):
+    def _check_success(self, result: ProcessingResult):
         if not result.success:
             self._error_count += 1
             if self.max_errors >= 0 and self._error_count >= self.max_errors:
