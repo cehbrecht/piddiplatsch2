@@ -10,7 +10,7 @@ from confluent_kafka import KafkaException
 from piddiplatsch.config import config
 from piddiplatsch.dump import DumpRecorder
 from piddiplatsch.exceptions import MaxErrorsExceededError
-from piddiplatsch.monitoring import MetricsTracker, get_rate_tracker
+from piddiplatsch.monitoring import MessageStats, MetricsTracker, get_rate_tracker
 from piddiplatsch.plugin_loader import load_single_plugin
 from piddiplatsch.processing import ProcessingResult
 from piddiplatsch.recovery import FailureRecovery
@@ -34,7 +34,6 @@ class Consumer:
         self.consumer.subscribe([self.topic])
 
     def consume(self):
-        """Yield decoded Kafka messages."""
         try:
             while True:
                 msg = self.consumer.poll(timeout=1.0)
@@ -60,9 +59,9 @@ class ConsumerPipeline:
 
     def __init__(
         self,
-        topic: str,
-        kafka_cfg: dict,
-        processor: str,
+        topic,
+        kafka_cfg,
+        processor,
         *,
         dump_messages=False,
         verbose=False,
@@ -72,40 +71,47 @@ class ConsumerPipeline:
         self.processor = load_single_plugin(processor)
         self.dump_messages = dump_messages
         self.metrics = MetricsTracker()
-        self.message_tracker = get_rate_tracker("messages", use_tqdm=verbose)
+        self.stats = MessageStats()  # central source of truth
         self.max_errors = int(max_errors)
-        self._error_count = 0
+        self.message_tracker = get_rate_tracker(
+            "messages", use_tqdm=verbose, stats=self.stats
+        )
 
     def run(self):
-        """Consume and process messages until stopped or error limit reached."""
         logger.info("Starting consumer pipeline...")
         for key, value in self.consumer.consume():
             result = self._safe_process_message(key, value)
             self.metrics.record_result(result)
 
-            # Always tick with error count
-            self.message_tracker.tick(errors=self._error_count)
+            # Count messages
+            self.stats.tick()
 
+            # Count errors
+            if not result.success:
+                self.stats.error()
+
+            # Refresh tracker display (does NOT increment messages)
+            self.message_tracker.refresh()
+
+            # Check max errors
             self._check_success(result)
 
     def _check_success(self, result: ProcessingResult):
-        if not result.success:
-            self._error_count += 1
-            if self.max_errors >= 0 and self._error_count >= self.max_errors:
-                raise MaxErrorsExceededError(
-                    f"Max error limit reached ({self._error_count}/{self.max_errors})"
-                )
+        if (
+            not result.success
+            and self.max_errors >= 0
+            and self.stats.errors >= self.max_errors
+        ):
+            raise MaxErrorsExceededError(
+                f"Max error limit reached ({self.stats.errors}/{self.max_errors})"
+            )
 
-    def _safe_process_message(self, key: str, value: dict) -> ProcessingResult:
-        """Process a single message with error handling."""
+    def _safe_process_message(self, key, value):
         try:
             logger.debug(f"Processing message: {key}")
-
             if self.dump_messages:
                 DumpRecorder.record_item(key, value)
-
             return self.processor.process(key, value)
-
         except Exception as e:
             logger.exception(f"Error processing message {key}")
             retries = value.get("retries", 0)
@@ -113,23 +119,19 @@ class ConsumerPipeline:
             FailureRecovery.record_failed_item(
                 key, value, retries=retries, reason=reason
             )
-
             return ProcessingResult(key=key, success=False, error=reason)
 
     def stop(self, cause: StopCause = StopCause.MANUAL):
-        """Gracefully stop the pipeline."""
         logger.warning(f"Stopping consumer (cause: {cause.value})...")
         self.metrics.log_summary()
         self.message_tracker.close()
-        logger.info(f"Total errors: {self._error_count}")
+        logger.info(
+            f"Total messages: {self.stats.messages}, total errors: {self.stats.errors}"
+        )
 
 
-def start_consumer(
-    topic: str, kafka_cfg: dict, processor: str, *, dump_messages=False, verbose=False
-):
-    """Entry point for running the consumer."""
+def start_consumer(topic, kafka_cfg, processor, *, dump_messages=False, verbose=False):
     max_errors = config.get("consumer", {}).get("max_errors", -1)
-
     pipeline = ConsumerPipeline(
         topic,
         kafka_cfg,
