@@ -1,11 +1,8 @@
-import logging
 import time
 
 from tqdm import tqdm
 
 from piddiplatsch.monitoring.base import MessageStats
-
-logger = logging.getLogger(__name__)
 
 
 class BaseProgress:
@@ -26,25 +23,18 @@ class NoOpProgress(BaseProgress):
 
 
 class Progress(BaseProgress):
-    """Displays message stats in the console (tqdm-based)."""
+    """Displays message stats in the console (tqdm-based) with timestamps and total runtime."""
 
-    def __init__(
-        self,
-        title="progress",
-        stats: MessageStats = None,
-        update_interval=5,
-        show_retries=False,
-    ):
+    def __init__(self, title="progress", stats: MessageStats = None, update_interval=5):
         self.title = title
         self._stats = stats or MessageStats()
         self.update_interval = update_interval
-        self.show_retries = show_retries
-        self.start_time = time.time()
-        self.last_update = self.start_time
+        self.start_time = self._stats.start_time
+        self.last_update = time.time()
 
         self.bar = tqdm(
             total=0,  # ticker mode, no total
-            desc=self._format_desc(0, 0),
+            desc=self._format_desc(),
             bar_format="{desc}",
             dynamic_ncols=True,
         )
@@ -54,40 +44,39 @@ class Progress(BaseProgress):
         """Read-only access to MessageStats."""
         return self._stats
 
-    def _format_desc(self, elapsed, rate):
-        h, rem = divmod(int(elapsed), 3600)
+    def _format_time(self, ts):
+        return time.strftime("%H:%M:%S", time.localtime(ts)) if ts else "--:--:--"
+
+    def _format_elapsed(self, start_ts):
+        elapsed = int(time.time() - start_ts)
+        h, rem = divmod(elapsed, 3600)
         m, s = divmod(rem, 60)
-        desc = (
+        return f"{h:02}:{m:02}:{s:02}"
+
+    def _format_desc(self):
+        return (
             f"{self.title:<10} | {self.stats.messages:>6} msgs | "
-            f"{rate:6.1f}/min | {self.stats.errors:>4} errors | "
-            f"{h:02}:{m:02}:{s:02} elapsed"
+            f"{self.stats.errors:>4} errors | "
+            f"start: {self._format_time(self.start_time)} | "
+            f"last_msg: {self._format_time(self.stats.last_message_time)} | "
+            f"last_err: {self._format_time(self.stats.last_error_time)} | "
+            f"running: {self._format_elapsed(self.start_time)}"
         )
-        if self.show_retries:
-            desc += f" | {self.stats.retries:>4} retries"
-        return desc
 
     def refresh(self):
         """Update the display from MessageStats."""
         now = time.time()
-        elapsed = now - self.start_time
         if now - self.last_update >= self.update_interval:
-            rate_per_min = (self.stats.messages / elapsed) * 60 if elapsed > 0 else 0
-            self.bar.set_description(self._format_desc(elapsed, rate_per_min))
+            self.bar.set_description(self._format_desc())
             self.last_update = now
 
     def close(self):
-        elapsed = time.time() - self.start_time
-        rate_per_min = (self.stats.messages / elapsed) * 60 if elapsed > 0 else 0
-        self.bar.set_description(self._format_desc(elapsed, rate_per_min))
+        self.bar.set_description(self._format_desc())
         self.bar.close()
 
 
 def get_progress(
-    title="progress",
-    use_tqdm=False,
-    stats: MessageStats = None,
-    update_interval=5,
-    show_retries=False,
+    title="progress", use_tqdm=False, stats: MessageStats = None, update_interval=5
 ):
     """
     Factory to get a progress display.
@@ -95,11 +84,6 @@ def get_progress(
     - Returns NoOpProgress if use_tqdm=False
     """
     if use_tqdm:
-        return Progress(
-            title=title,
-            stats=stats,
-            update_interval=update_interval,
-            show_retries=show_retries,
-        )
+        return Progress(title=title, stats=stats, update_interval=update_interval)
     else:
         return NoOpProgress()
