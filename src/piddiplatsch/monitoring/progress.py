@@ -59,6 +59,8 @@ class Progress(BaseProgress):
         return (
             f"{self.title:<10} | {stats.messages:>6} msgs | "
             f"{stats.errors:>4} errors | "
+            f"{stats.retracted_messages:>4} retracted | "
+            f"{stats.replicas:>4} replicas | "
             f"start: {self._format_time(stats.start_time)} | "
             f"last_msg: {self._format_time(stats.last_message_time)} "
             f"({self._time_ago(stats.last_message_time)}) | "

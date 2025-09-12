@@ -11,6 +11,7 @@ class CounterKey(str, Enum):
     RETRIES = "retries"
     HANDLES = "handles"
     RETRACTED = "retracted_messages"
+    REPLICAS = "replicas"
     WARNINGS = "warnings"
 
 
@@ -68,6 +69,12 @@ class Stats:
         if message:
             logger.warning(f"RETRACTED: {message}")
 
+    def replica(self, message=None, n=1):
+        """Increment replica messages counter and log a info message if provided."""
+        self.increment(CounterKey.REPLICAS, n)
+        if message:
+            logger.info(f"REPLICA: {message}")
+
     def warn(self, message=None, n=1):
         """Increment warnings counter and log a warning message."""
         self.increment(CounterKey.WARNINGS, n)
@@ -82,6 +89,14 @@ class Stats:
     @property
     def messages(self):
         return self._counters[CounterKey.MESSAGES]
+
+    @property
+    def replicas(self):
+        return self._counters[CounterKey.REPLICAS]
+
+    @property
+    def retracted_messages(self):
+        return self._counters[CounterKey.RETRACTED]
 
     @property
     def errors(self):
