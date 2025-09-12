@@ -209,7 +209,7 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
             IS_PART_OF=self.is_part_of,
             HOSTING_NODE=self.hosting_node,
             REPLICA_NODES=self.replica_nodes,
-            # RETRACTED=self.retracted,
+            _RETRACTED=self.retracted,
             RETRACTED_ON=self.retracted_on,
         )
 
