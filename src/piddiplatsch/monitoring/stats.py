@@ -1,4 +1,6 @@
+import datetime
 import logging
+import sqlite3
 import time
 from enum import Enum
 
@@ -16,7 +18,7 @@ class CounterKey(str, Enum):
 
 
 class Stats:
-    """Singleton class tracking message stats, errors, retries, handles, retracted messages, warnings, etc."""
+    """Singleton class tracking message stats with optional SQLite persistence."""
 
     _instance = None
 
@@ -25,67 +27,140 @@ class Stats:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self):
+    def __init__(
+        self, log_interval_seconds=10, log_interval_messages=100, db_path="stats.db"
+    ):
         if getattr(self, "_initialized", False):
             return
+
         # Private timestamps
         self._start_time = time.time()
         self._last_message_time = None
         self._last_error_time = None
 
-        # Initialize all counters to 0
+        # Initialize all counters
         self._counters = dict.fromkeys(CounterKey, 0)
+
+        # Logging/persistence control
+        self.log_interval_seconds = log_interval_seconds
+        self.log_interval_messages = log_interval_messages
+        self._last_log_time = time.time()
+        self._last_logged_messages = 0
+
+        # SQLite setup
+        self.db_path = db_path
+        self._init_db()
+
         self._initialized = True
 
-    # --- Core counter increment ---
-    def increment(self, key: CounterKey, n=1):
-        """Increment any counter dynamically (pure counter, no side effects)."""
-        self._counters[key] += n
+    # --- SQLite setup ---
+    def _init_db(self):
+        self._conn = sqlite3.connect(self.db_path, check_same_thread=False)
+        self._cursor = self._conn.cursor()
+        self._cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS message_stats (
+                ts TIMESTAMP PRIMARY KEY,
+                messages INTEGER,
+                errors INTEGER,
+                retries INTEGER,
+                handles INTEGER,
+                retracted_messages INTEGER,
+                replicas INTEGER,
+                warnings INTEGER,
+                uptime REAL
+            )
+        """
+        )
+        self._conn.commit()
 
-    # --- Shortcuts (increment + optional logging + timestamps) ---
+    # --- Core increment ---
+    def increment(self, key: CounterKey, n=1):
+        self._counters[key] += n
+        if key == CounterKey.MESSAGES:
+            self._last_message_time = time.time()
+            self._maybe_log()
+
+    # --- Shortcuts ---
     def tick(self, n=1):
-        """Increment messages counter and update timestamp."""
         self.increment(CounterKey.MESSAGES, n)
-        self._last_message_time = time.time()
 
     def retry(self, n=1):
-        """Increment retries counter."""
         self.increment(CounterKey.RETRIES, n)
 
     def handle(self, n=1):
-        """Increment handle counter."""
         self.increment(CounterKey.HANDLES, n)
 
     def error(self, message=None, n=1):
-        """Increment errors counter, update timestamp, and log a message if provided."""
         self.increment(CounterKey.ERRORS, n)
         self._last_error_time = time.time()
         if message:
             logger.error(f"ERROR: {message}")
 
     def retracted(self, message=None, n=1):
-        """Increment retracted messages counter and log a warning message if provided."""
         self.increment(CounterKey.RETRACTED, n)
         if message:
             logger.warning(f"RETRACTED: {message}")
 
     def replica(self, message=None, n=1):
-        """Increment replica messages counter and log a info message if provided."""
         self.increment(CounterKey.REPLICAS, n)
         if message:
             logger.info(f"REPLICA: {message}")
 
     def warn(self, message=None, n=1):
-        """Increment warnings counter and log a warning message."""
         self.increment(CounterKey.WARNINGS, n)
         if message:
             logger.warning(f"WARNING: {message}")
+
+    # --- Internal logging / persistence ---
+    def _maybe_log(self):
+        now = time.time()
+        messages_since_last = (
+            self._counters[CounterKey.MESSAGES] - self._last_logged_messages
+        )
+
+        if messages_since_last == 0:
+            return  # nothing new
+
+        if (now - self._last_log_time >= self.log_interval_seconds) or (
+            messages_since_last >= self.log_interval_messages
+        ):
+            self._log_stats()
+            self._last_log_time = now
+            self._last_logged_messages = self._counters[CounterKey.MESSAGES]
+
+    def _log_stats(self):
+        s = self.summary()
+        ts = datetime.datetime.utcnow()
+        # Log to console/file
+        logger.info(f"Stats snapshot: {s}")
+
+        # Persist to SQLite
+        self._cursor.execute(
+            """
+            INSERT INTO message_stats
+            (ts, messages, errors, retries, handles, retracted_messages, replicas, warnings, uptime)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+            (
+                ts,
+                s[CounterKey.MESSAGES.value],
+                s[CounterKey.ERRORS.value],
+                s[CounterKey.RETRIES.value],
+                s[CounterKey.HANDLES.value],
+                s[CounterKey.RETRACTED.value],
+                s[CounterKey.REPLICAS.value],
+                s[CounterKey.WARNINGS.value],
+                s["uptime"],
+            ),
+        )
+        self._conn.commit()
 
     # --- Enum-based internal access ---
     def __getitem__(self, key: CounterKey):
         return self._counters[key]
 
-    # --- Accessors for main counters (keep properties for convenience) ---
+    # --- Properties for convenience ---
     @property
     def messages(self):
         return self._counters[CounterKey.MESSAGES]
@@ -116,7 +191,6 @@ class Stats:
 
     # --- Summary ---
     def summary(self):
-        """Return all counters and timestamps as a dict using CounterKey values as keys."""
         summary = {key.value: self._counters[key] for key in CounterKey}
         summary.update(
             {
