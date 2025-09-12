@@ -68,6 +68,14 @@ class CMIP6FileRecord(BaseCMIP6Record):
         return self.href
 
     @cached_property
+    def replica_download_urls(self) -> list[str]:
+        urls = set()
+        for alt in self.alternates.values():
+            if alt.get("href"):
+                urls.add(alt["href"])
+        return list(urls)
+
+    @cached_property
     def filename(self) -> str:
         """
         Filename derived from the resolved href.
@@ -96,6 +104,7 @@ class CMIP6FileRecord(BaseCMIP6Record):
             CHECKSUM=self.checksum,
             FILE_SIZE=self.size,
             DOWNLOAD_URL=self.download_url,
+            REPLICA_DOWNLOAD_URLS=self.replica_download_urls,
         )
         fm.set_pid(self.pid)
         return fm
