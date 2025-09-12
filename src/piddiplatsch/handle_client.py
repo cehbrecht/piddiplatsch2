@@ -9,7 +9,7 @@ from pyhandle.clientcredentials import PIDClientCredentials
 from pyhandle.handleexceptions import HandleAlreadyExistsException
 
 from piddiplatsch.config import config
-from piddiplatsch.utils.pid import build_handle
+from piddiplatsch.utils.models import build_handle
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 

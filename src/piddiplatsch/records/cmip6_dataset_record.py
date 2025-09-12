@@ -8,8 +8,13 @@ from piddiplatsch.exceptions import LookupError
 from piddiplatsch.lookup import get_lookup
 from piddiplatsch.models import CMIP6DatasetModel, HostingNode
 from piddiplatsch.records.base import BaseCMIP6Record
-from piddiplatsch.records.utils import parse_datetime, parse_pid
-from piddiplatsch.utils.pid import asset_pid, build_handle, item_pid
+from piddiplatsch.utils.models import (
+    asset_pid,
+    build_handle,
+    item_pid,
+    parse_datetime,
+    parse_pid,
+)
 
 PREFERRED_KEYS = ("reference_file", "data0000", "data0001")
 
