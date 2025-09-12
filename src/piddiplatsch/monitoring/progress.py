@@ -4,7 +4,7 @@ from datetime import datetime
 import humanize
 from tqdm import tqdm
 
-from piddiplatsch.monitoring.base import MessageStats
+from piddiplatsch.monitoring.stats import MessageStats
 
 
 class BaseProgress:
