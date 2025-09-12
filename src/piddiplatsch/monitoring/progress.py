@@ -4,7 +4,7 @@ from datetime import datetime
 import humanize
 from tqdm import tqdm
 
-from piddiplatsch.monitoring.stats import MessageStats
+from piddiplatsch.monitoring.stats import stats
 
 
 class BaseProgress:
@@ -27,11 +27,9 @@ class NoOpProgress(BaseProgress):
 class Progress(BaseProgress):
     """Displays message stats in the console (tqdm-based) with timestamps and total runtime."""
 
-    def __init__(self, title="progress", stats: MessageStats = None, update_interval=5):
+    def __init__(self, title="progress", update_interval=5):
         self.title = title
-        self._stats = stats or MessageStats()
         self.update_interval = update_interval
-        self.start_time = self._stats.start_time
         self.last_update = time.time()
 
         self.bar = tqdm(
@@ -40,11 +38,6 @@ class Progress(BaseProgress):
             bar_format="{desc}",
             dynamic_ncols=True,
         )
-
-    @property
-    def stats(self):
-        """Read-only access to MessageStats."""
-        return self._stats
 
     def _format_time(self, ts):
         return time.strftime("%H:%M:%S", time.localtime(ts)) if ts else "--:--:--"
@@ -64,18 +57,18 @@ class Progress(BaseProgress):
 
     def _format_desc(self):
         return (
-            f"{self.title:<10} | {self.stats.messages:>6} msgs | "
-            f"{self.stats.errors:>4} errors | "
-            f"start: {self._format_time(self.start_time)} | "
-            f"last_msg: {self._format_time(self.stats.last_message_time)} "
-            f"({self._time_ago(self.stats.last_message_time)}) | "
-            f"last_err: {self._format_time(self.stats.last_error_time)} "
-            f"({self._time_ago(self.stats.last_error_time)}) | "
-            f"running: {self._format_elapsed(self.start_time)}"
+            f"{self.title:<10} | {stats.messages:>6} msgs | "
+            f"{stats.errors:>4} errors | "
+            f"start: {self._format_time(stats.start_time)} | "
+            f"last_msg: {self._format_time(stats.last_message_time)} "
+            f"({self._time_ago(stats.last_message_time)}) | "
+            f"last_err: {self._format_time(stats.last_error_time)} "
+            f"({self._time_ago(stats.last_error_time)}) | "
+            f"running: {self._format_elapsed(stats.start_time)}"
         )
 
     def refresh(self):
-        """Update the display from MessageStats."""
+        """Update the display from Stats."""
         now = time.time()
         if now - self.last_update >= self.update_interval:
             self.bar.set_description(self._format_desc())
@@ -86,15 +79,13 @@ class Progress(BaseProgress):
         self.bar.close()
 
 
-def get_progress(
-    title="progress", use_tqdm=False, stats: MessageStats = None, update_interval=5
-):
+def get_progress(title="progress", use_tqdm=False, update_interval=5):
     """
     Factory to get a progress display.
     - Returns Progress (tqdm-based) if use_tqdm=True
     - Returns NoOpProgress if use_tqdm=False
     """
     if use_tqdm:
-        return Progress(title=title, stats=stats, update_interval=update_interval)
+        return Progress(title=title, update_interval=update_interval)
     else:
         return NoOpProgress()

@@ -10,7 +10,7 @@ from confluent_kafka import KafkaException
 from piddiplatsch.config import config
 from piddiplatsch.dump import DumpRecorder
 from piddiplatsch.exceptions import MaxErrorsExceededError
-from piddiplatsch.monitoring import MessageStats, MetricsTracker, get_progress
+from piddiplatsch.monitoring import MetricsTracker, get_progress, stats
 from piddiplatsch.plugin_loader import load_single_plugin
 from piddiplatsch.processing import ProcessingResult
 from piddiplatsch.recovery import FailureRecovery
@@ -71,9 +71,8 @@ class ConsumerPipeline:
         self.processor = load_single_plugin(processor)
         self.dump_messages = dump_messages
         self.metrics = MetricsTracker()
-        self.stats = MessageStats()  # central source of truth
         self.max_errors = int(max_errors)
-        self.progress = get_progress("messages", use_tqdm=verbose, stats=self.stats)
+        self.progress = get_progress("messages", use_tqdm=verbose)
 
     def run(self):
         logger.info("Starting consumer pipeline...")
@@ -82,11 +81,11 @@ class ConsumerPipeline:
             self.metrics.record_result(result)
 
             # Count messages
-            self.stats.tick()
+            stats.tick()
 
             # Count errors
             if not result.success:
-                self.stats.error()
+                stats.error()
 
             # Refresh progress display (does NOT increment messages)
             self.progress.refresh()
@@ -98,10 +97,10 @@ class ConsumerPipeline:
         if (
             not result.success
             and self.max_errors >= 0
-            and self.stats.errors >= self.max_errors
+            and stats.errors >= self.max_errors
         ):
             raise MaxErrorsExceededError(
-                f"Max error limit reached ({self.stats.errors}/{self.max_errors})"
+                f"Max error limit reached ({stats.errors}/{self.max_errors})"
             )
 
     def _safe_process_message(self, key, value):
@@ -123,9 +122,7 @@ class ConsumerPipeline:
         logger.warning(f"Stopping consumer (cause: {cause.value})...")
         self.metrics.log_summary()
         self.progress.close()
-        logger.info(
-            f"Total messages: {self.stats.messages}, total errors: {self.stats.errors}"
-        )
+        logger.info(f"Total messages: {stats.messages}, total errors: {stats.errors}")
 
 
 def start_consumer(topic, kafka_cfg, processor, *, dump_messages=False, verbose=False):
