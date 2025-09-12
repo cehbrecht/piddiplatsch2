@@ -28,7 +28,7 @@ base_url = "https://api.stac.esgf.ceda.ac.uk"
 timeout = 10
 
 [schema]
-strict = false
+strict_mode = false
 
 [cmip6]
 landing_page_url = "https://handle-esgf.dkrz.de/lp"

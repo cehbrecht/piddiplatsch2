@@ -6,7 +6,7 @@ from typing import Any
 from pydantic import BaseModel, ValidationError
 
 from piddiplatsch.config import config
-from piddiplatsch.records.utils import drop_empty
+from piddiplatsch.utils.models import drop_empty
 
 
 class BaseRecord(ABC):

@@ -28,7 +28,7 @@ def get_max_parts() -> int:
 
 def strict_mode() -> bool:
     """Check if strict schema validation is enabled via config."""
-    return config.get("schema", {}).get("strict", False)
+    return config.get("schema", {}).get("strict_mode", False)
 
 
 class HostingNode(BaseModel):
