@@ -4,7 +4,7 @@ from pathlib import Path
 import toml
 from rich.logging import RichHandler
 
-DEFAULT_CONFIG_PATH = Path(__file__).parent / "default_config.toml"
+DEFAULT_CONFIG_PATH = Path(__file__).parent / "default.toml"
 
 
 class Config:

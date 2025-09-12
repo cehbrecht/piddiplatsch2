@@ -50,7 +50,7 @@ make develop
 You can customize Kafka or Handle settings:
 
 ```bash
-cp src/config/default_config.toml custom.toml
+cp src/config/default.toml custom.toml
 vim custom.toml
 ```
 
