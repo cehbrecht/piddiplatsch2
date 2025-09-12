@@ -166,6 +166,12 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
         return raw.strip().lower() in ("true", "1", "yes")
 
     @cached_property
+    def retracted_on(self) -> bool:
+        if self.retracted:
+            return parse_datetime(self.default_publication_time)
+        return None
+
+    @cached_property
     def previous_version(self) -> str | None:
         """Return the previous version of this dataset.
 
@@ -203,7 +209,8 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
             IS_PART_OF=self.is_part_of,
             HOSTING_NODE=self.hosting_node,
             REPLICA_NODES=self.replica_nodes,
-            RETRACTED=self.retracted,
+            # RETRACTED=self.retracted,
+            RETRACTED_ON=self.retracted_on,
         )
 
         if self.previous_version:

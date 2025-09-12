@@ -47,10 +47,9 @@ class CMIP6DatasetModel(BaseCMIP6Model):
     IS_PART_OF: str | None = None
     HAS_PARTS: list[str] = Field(default_factory=list)
     HOSTING_NODE: HostingNode
-    REPLICA_NODES: list[HostingNode] = Field(default_factory=list)  # one per replica
-    # UNPUBLISHED_REPLICAS: list[str] = Field(default_factory=list)  # same as replica
-    # UNPUBLISHED_HOSTS: HostingNode | None = None
-    RETRACTED: bool = False
+    REPLICA_NODES: list[HostingNode] = Field(default_factory=list)
+    # RETRACTED: bool = False
+    RETRACTED_ON: datetime | None = None
 
     @model_validator(mode="after")
     def validate_required(self) -> CMIP6DatasetModel:
@@ -69,7 +68,6 @@ class CMIP6FileModel(BaseCMIP6Model):
     CHECKSUM: str
     CHECKSUM_METHOD: str = "SHA256"
     FILE_SIZE: int
-    # FILE_VERSION: str | None = None
     DOWNLOAD_URL: str
     DOWNLOAD_URL_REPLICA: list[str] = Field(default_factory=list)
 
