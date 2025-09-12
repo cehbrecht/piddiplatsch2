@@ -69,7 +69,7 @@ class CMIP6FileModel(BaseCMIP6Model):
     CHECKSUM_METHOD: str = "SHA256"
     FILE_SIZE: int
     DOWNLOAD_URL: str
-    DOWNLOAD_URL_REPLICA: list[str] = Field(default_factory=list)
+    REPLICA_DOWNLOAD_URLS: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_required(self) -> CMIP6FileModel:
