@@ -20,6 +20,8 @@ class CounterKey(str, Enum):
     RETRACTED = "retracted_messages"
     REPLICAS = "replicas"
     WARNINGS = "warnings"
+    SKIPPED = "skipped_messages"
+    HANDLE_TIME = "total_handle_processing_time"  # float seconds
 
 
 # -----------------------
@@ -56,8 +58,11 @@ class SQLiteReporter(StatsReporter):
                 retracted_messages INTEGER,
                 replicas INTEGER,
                 warnings INTEGER,
+                skipped_messages INTEGER,
+                total_handle_processing_time REAL,
                 uptime REAL,
-                message_rate REAL
+                message_rate REAL,
+                handle_rate REAL
             )
             """
         )
@@ -76,8 +81,9 @@ class SQLiteReporter(StatsReporter):
             """
             INSERT INTO message_stats (ts, messages, errors, retries, handles,
                                        retracted_messages, replicas, warnings,
-                                       uptime, message_rate)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                       skipped_messages, total_handle_processing_time,
+                                       uptime, message_rate, handle_rate)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 ts,
@@ -88,8 +94,11 @@ class SQLiteReporter(StatsReporter):
                 summary[CounterKey.RETRACTED.value],
                 summary[CounterKey.REPLICAS.value],
                 summary[CounterKey.WARNINGS.value],
+                summary[CounterKey.SKIPPED.value],
+                summary[CounterKey.HANDLE_TIME.value],
                 summary["uptime"],
                 summary["message_rate"],
+                summary["handle_rate"],
             ),
         )
         self._conn.commit()
@@ -126,7 +135,7 @@ class Stats:
         log_interval_seconds: int | None = None,
         log_interval_messages: int | None = None,
         db_path: str | None = None,
-        enable_db: bool = False,  # new flag
+        enable_db: bool = False,
     ):
         if getattr(self, "_initialized", False):
             return
@@ -136,61 +145,70 @@ class Stats:
         self._last_message_time = None
         self._last_error_time = None
 
-        # Initialize all counters to 0
+        # Initialize all counters
         self._counters = dict.fromkeys(CounterKey, 0)
+        self._counters[CounterKey.HANDLE_TIME] = 0.0  # float
 
-        # Logging control, fallback defaults
+        # Logging control
         self.log_interval_seconds = log_interval_seconds or 10
         self.log_interval_messages = log_interval_messages or 100
         self._last_log_time = time.time()
         self._last_logged_messages = 0
 
-        # Reporters: always console, optionally SQLite
+        # Reporters
         self.reporters: list[StatsReporter] = [ConsoleReporter()]
         if enable_db and db_path:
             self.reporters.append(SQLiteReporter(db_path=db_path))
 
-        # closed flag for cleanup
         self._closed = False
         self._initialized = True
 
-    # --- Core counter increment ---
-    def increment(self, key: CounterKey, n: int = 1):
-        self._counters[key] += n
+    # --- Core increment ---
+    def increment(self, key: CounterKey, n=1):
+        if key == CounterKey.HANDLE_TIME:
+            self._counters[key] += n  # float accumulation
+        else:
+            self._counters[key] += n
+
         if key == CounterKey.MESSAGES:
             self._last_message_time = time.time()
             self._maybe_log()
 
-    # --- Shortcuts (increment + optional logging + timestamps) ---
-    def tick(self, n: int = 1):
+    # --- Shortcuts ---
+    def tick(self, n=1):
         self.increment(CounterKey.MESSAGES, n)
 
-    def retry(self, n: int = 1):
+    def retry(self, n=1):
         self.increment(CounterKey.RETRIES, n)
 
-    def handle(self, n: int = 1):
+    def handle(self, n=1, handle_time_sec: float = 0.0):
         self.increment(CounterKey.HANDLES, n)
+        if handle_time_sec > 0:
+            self.increment(CounterKey.HANDLE_TIME, handle_time_sec)
 
-    def error(self, message: str | None = None, n: int = 1):
+    def error(self, message: str | None = None, n=1):
         self.increment(CounterKey.ERRORS, n)
         self._last_error_time = time.time()
         if message:
             logger.error(f"ERROR: {message}")
 
-    def retracted(self, message: str | None = None, n: int = 1):
+    def retracted(self, message: str | None = None, n=1):
         self.increment(CounterKey.RETRACTED, n)
         if message:
             logger.warning(f"RETRACTED: {message}")
 
-    def replica(self, message: str | None = None, n: int = 1):
+    def replica(self, message: str | None = None, n=1):
         self.increment(CounterKey.REPLICAS, n)
         if message:
             logger.info(f"REPLICA: {message}")
 
-    def warn(self, message: str | None = None, n: int = 1):
+    def warn(self, message: str | None = None, n=1):
         self.increment(CounterKey.WARNINGS, n)
         if message:
             logger.warning(f"WARNING: {message}")
+
+    def skip(self, n=1):
+        self.increment(CounterKey.SKIPPED, n)
 
     # --- Internal logging / persistence ---
     def _maybe_log(self):
@@ -200,7 +218,7 @@ class Stats:
         )
 
         if messages_since_last == 0:
-            return  # nothing new
+            return
 
         if (now - self._last_log_time >= self.log_interval_seconds) or (
             messages_since_last >= self.log_interval_messages
@@ -234,6 +252,10 @@ class Stats:
         return self._counters[CounterKey.RETRACTED]
 
     @property
+    def skipped_messages(self):
+        return self._counters[CounterKey.SKIPPED]
+
+    @property
     def errors(self):
         return self._counters[CounterKey.ERRORS]
 
@@ -255,11 +277,13 @@ class Stats:
         message_rate = (
             self._counters[CounterKey.MESSAGES] / uptime if uptime > 0 else 0.0
         )
+        handle_rate = self._counters[CounterKey.HANDLES] / uptime if uptime > 0 else 0.0
         summary = {key.value: self._counters[key] for key in CounterKey}
         summary.update(
             {
                 "uptime": uptime,
                 "message_rate": message_rate,
+                "handle_rate": handle_rate,
                 "last_message_time": self.last_message_time,
                 "last_error_time": self.last_error_time,
             }
