@@ -10,10 +10,10 @@ from confluent_kafka import KafkaException
 from piddiplatsch.config import config
 from piddiplatsch.dump import DumpRecorder
 from piddiplatsch.exceptions import MaxErrorsExceededError
+from piddiplatsch.monitoring.stats import CounterKey, stats
 from piddiplatsch.plugin_loader import load_single_plugin
 from piddiplatsch.processing import ProcessingResult
 from piddiplatsch.recovery import FailureRecovery
-from piddiplatsch.stats import CounterKey, stats
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +71,6 @@ class ConsumerPipeline:
         self.processor = load_single_plugin(processor)
         self.dump_messages = dump_messages
         self.max_errors = int(max_errors)
-        from piddiplatsch.stats import stats
 
         self.stats = stats
         self.progress = None
