@@ -39,6 +39,14 @@ backend = "stac"
 collection = "cmip6"
 
 [stats]
+# Interval in seconds for logging stats (console + DB)
+interval_seconds = 10
+
+# Number of messages processed before logging stats
+summary_interval = 100
+
+# Enable SQLite reporter for persistent stats
+enable_db = true
+
+# Path to SQLite database file (only used if enable_db = true)
 db_path = "stats.db"
-summary_interval = 100    # log every 100 messages
-interval_seconds = 10     # or after 10s, whichever comes first

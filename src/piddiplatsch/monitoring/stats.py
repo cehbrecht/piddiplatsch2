@@ -126,6 +126,7 @@ class Stats:
         log_interval_seconds: int | None = None,
         log_interval_messages: int | None = None,
         db_path: str | None = None,
+        enable_db: bool = False,  # new flag
     ):
         if getattr(self, "_initialized", False):
             return
@@ -146,7 +147,7 @@ class Stats:
 
         # Reporters: always console, optionally SQLite
         self.reporters: list[StatsReporter] = [ConsoleReporter()]
-        if db_path:
+        if enable_db and db_path:
             self.reporters.append(SQLiteReporter(db_path=db_path))
 
         # closed flag for cleanup
@@ -286,4 +287,5 @@ stats = Stats(
     log_interval_seconds=stats_config.get("interval_seconds"),
     log_interval_messages=stats_config.get("summary_interval"),
     db_path=stats_config.get("db_path"),
+    enable_db=stats_config.get("enable_db", False),
 )
