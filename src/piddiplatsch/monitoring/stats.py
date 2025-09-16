@@ -54,9 +54,13 @@ class SQLiteReporter(StatsReporter):
                 retracted_messages INTEGER,
                 replicas INTEGER,
                 warnings INTEGER,
-                uptime REAL
+                uptime REAL,
+                message_rate REAL
             )
             """
+        )
+        self._cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_message_stats_ts ON message_stats(ts)"
         )
         self._conn.commit()
         self._closed = False
@@ -69,8 +73,9 @@ class SQLiteReporter(StatsReporter):
         self._cursor.execute(
             """
             INSERT INTO message_stats (ts, messages, errors, retries, handles,
-                                       retracted_messages, replicas, warnings, uptime)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                       retracted_messages, replicas, warnings,
+                                       uptime, message_rate)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 ts,
@@ -82,6 +87,7 @@ class SQLiteReporter(StatsReporter):
                 summary[CounterKey.REPLICAS.value],
                 summary[CounterKey.WARNINGS.value],
                 summary["uptime"],
+                summary["message_rate"],
             ),
         )
         self._conn.commit()
@@ -90,7 +96,6 @@ class SQLiteReporter(StatsReporter):
         if getattr(self, "_closed", False):
             return
         try:
-            # attempt to flush/close cleanly
             try:
                 self._cursor.close()
             except Exception:
@@ -244,10 +249,15 @@ class Stats:
 
     # --- Summary ---
     def summary(self):
+        uptime = time.time() - self.start_time
+        message_rate = (
+            self._counters[CounterKey.MESSAGES] / uptime if uptime > 0 else 0.0
+        )
         summary = {key.value: self._counters[key] for key in CounterKey}
         summary.update(
             {
-                "uptime": time.time() - self.start_time,
+                "uptime": uptime,
+                "message_rate": message_rate,
                 "last_message_time": self.last_message_time,
                 "last_error_time": self.last_error_time,
             }
