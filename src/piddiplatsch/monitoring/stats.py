@@ -7,6 +7,9 @@ from enum import Enum
 logger = logging.getLogger(__name__)
 
 
+# -----------------------
+# Enum for counters
+# -----------------------
 class CounterKey(str, Enum):
     MESSAGES = "messages"
     ERRORS = "errors"
@@ -17,45 +20,28 @@ class CounterKey(str, Enum):
     WARNINGS = "warnings"
 
 
-class Stats:
-    """Singleton class tracking message stats with optional SQLite persistence."""
+# -----------------------
+# Reporter base
+# -----------------------
+class StatsReporter:
+    """Base class for stats reporters."""
 
-    _instance = None
+    def log(self, summary: dict):
+        raise NotImplementedError
 
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
+    def close(self):
+        """Optional cleanup hook (no-op by default)."""
+        return None
 
-    def __init__(
-        self, log_interval_seconds=10, log_interval_messages=100, db_path="stats.db"
-    ):
-        if getattr(self, "_initialized", False):
-            return
 
-        # Private timestamps
-        self._start_time = time.time()
-        self._last_message_time = None
-        self._last_error_time = None
+class ConsoleReporter(StatsReporter):
+    def log(self, summary: dict):
+        logger.info(f"Stats snapshot: {summary}")
 
-        # Initialize all counters
-        self._counters = dict.fromkeys(CounterKey, 0)
 
-        # Logging/persistence control
-        self.log_interval_seconds = log_interval_seconds
-        self.log_interval_messages = log_interval_messages
-        self._last_log_time = time.time()
-        self._last_logged_messages = 0
-
-        # SQLite setup
-        self.db_path = db_path
-        self._init_db()
-
-        self._initialized = True
-
-    # --- SQLite setup ---
-    def _init_db(self):
-        self._conn = sqlite3.connect(self.db_path, check_same_thread=False)
+class SQLiteReporter(StatsReporter):
+    def __init__(self, db_path: str = "stats.db"):
+        self._conn = sqlite3.connect(db_path, check_same_thread=False)
         self._cursor = self._conn.cursor()
         self._cursor.execute(
             """
@@ -70,44 +56,131 @@ class Stats:
                 warnings INTEGER,
                 uptime REAL
             )
-        """
+            """
+        )
+        self._conn.commit()
+        self._closed = False
+
+    def log(self, summary: dict):
+        if self._closed:
+            raise RuntimeError("SQLiteReporter is closed")
+
+        ts = datetime.datetime.utcnow()
+        self._cursor.execute(
+            """
+            INSERT INTO message_stats (ts, messages, errors, retries, handles,
+                                       retracted_messages, replicas, warnings, uptime)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                ts,
+                summary[CounterKey.MESSAGES.value],
+                summary[CounterKey.ERRORS.value],
+                summary[CounterKey.RETRIES.value],
+                summary[CounterKey.HANDLES.value],
+                summary[CounterKey.RETRACTED.value],
+                summary[CounterKey.REPLICAS.value],
+                summary[CounterKey.WARNINGS.value],
+                summary["uptime"],
+            ),
         )
         self._conn.commit()
 
-    # --- Core increment ---
-    def increment(self, key: CounterKey, n=1):
+    def close(self):
+        if getattr(self, "_closed", False):
+            return
+        try:
+            # attempt to flush/close cleanly
+            try:
+                self._cursor.close()
+            except Exception:
+                pass
+            try:
+                self._conn.close()
+            except Exception:
+                pass
+        finally:
+            self._closed = True
+
+
+# -----------------------
+# Stats singleton
+# -----------------------
+class Stats:
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(
+        self,
+        log_interval_seconds: int = 10,
+        log_interval_messages: int = 100,
+        db_path: str | None = None,
+    ):
+        if getattr(self, "_initialized", False):
+            return
+
+        # Private timestamps
+        self._start_time = time.time()
+        self._last_message_time = None
+        self._last_error_time = None
+
+        # Initialize all counters to 0
+        self._counters = dict.fromkeys(CounterKey, 0)
+
+        # Logging control
+        self.log_interval_seconds = log_interval_seconds
+        self.log_interval_messages = log_interval_messages
+        self._last_log_time = time.time()
+        self._last_logged_messages = 0
+
+        # Reporters: always console, optionally SQLite
+        self.reporters: list[StatsReporter] = [ConsoleReporter()]
+        if db_path:
+            self.reporters.append(SQLiteReporter(db_path=db_path))
+
+        # closed flag for cleanup
+        self._closed = False
+        self._initialized = True
+
+    # --- Core counter increment ---
+    def increment(self, key: CounterKey, n: int = 1):
+        """Increment any counter dynamically (pure counter, no side effects)."""
         self._counters[key] += n
         if key == CounterKey.MESSAGES:
             self._last_message_time = time.time()
             self._maybe_log()
 
-    # --- Shortcuts ---
-    def tick(self, n=1):
+    # --- Shortcuts (increment + optional logging + timestamps) ---
+    def tick(self, n: int = 1):
         self.increment(CounterKey.MESSAGES, n)
 
-    def retry(self, n=1):
+    def retry(self, n: int = 1):
         self.increment(CounterKey.RETRIES, n)
 
-    def handle(self, n=1):
+    def handle(self, n: int = 1):
         self.increment(CounterKey.HANDLES, n)
 
-    def error(self, message=None, n=1):
+    def error(self, message: str | None = None, n: int = 1):
         self.increment(CounterKey.ERRORS, n)
         self._last_error_time = time.time()
         if message:
             logger.error(f"ERROR: {message}")
 
-    def retracted(self, message=None, n=1):
+    def retracted(self, message: str | None = None, n: int = 1):
         self.increment(CounterKey.RETRACTED, n)
         if message:
             logger.warning(f"RETRACTED: {message}")
 
-    def replica(self, message=None, n=1):
+    def replica(self, message: str | None = None, n: int = 1):
         self.increment(CounterKey.REPLICAS, n)
         if message:
             logger.info(f"REPLICA: {message}")
 
-    def warn(self, message=None, n=1):
+    def warn(self, message: str | None = None, n: int = 1):
         self.increment(CounterKey.WARNINGS, n)
         if message:
             logger.warning(f"WARNING: {message}")
@@ -130,37 +203,17 @@ class Stats:
             self._last_logged_messages = self._counters[CounterKey.MESSAGES]
 
     def _log_stats(self):
-        s = self.summary()
-        ts = datetime.datetime.utcnow()
-        # Log to console/file
-        logger.info(f"Stats snapshot: {s}")
+        summary = self.summary()
+        for reporter in list(self.reporters):
+            try:
+                reporter.log(summary)
+            except Exception:
+                logger.exception("Failed to log stats with reporter %s", reporter)
 
-        # Persist to SQLite
-        self._cursor.execute(
-            """
-            INSERT INTO message_stats
-            (ts, messages, errors, retries, handles, retracted_messages, replicas, warnings, uptime)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-            (
-                ts,
-                s[CounterKey.MESSAGES.value],
-                s[CounterKey.ERRORS.value],
-                s[CounterKey.RETRIES.value],
-                s[CounterKey.HANDLES.value],
-                s[CounterKey.RETRACTED.value],
-                s[CounterKey.REPLICAS.value],
-                s[CounterKey.WARNINGS.value],
-                s["uptime"],
-            ),
-        )
-        self._conn.commit()
-
-    # --- Enum-based internal access ---
+    # --- Accessors ---
     def __getitem__(self, key: CounterKey):
         return self._counters[key]
 
-    # --- Properties for convenience ---
     @property
     def messages(self):
         return self._counters[CounterKey.MESSAGES]
@@ -201,6 +254,21 @@ class Stats:
         )
         return summary
 
+    # --- Cleanup ---
+    def close(self):
+        """Close all reporters (idempotent)."""
+        if getattr(self, "_closed", False):
+            return
+        for reporter in list(self.reporters):
+            try:
+                reporter.close()
+            except Exception:
+                logger.exception("Error closing reporter %s", reporter)
+        self._closed = True
 
-# Singleton instance
+
+# Singleton instance (no DB by default)
 stats = Stats()
+
+# If you want DB persistence:
+# stats = Stats(db_path="stats.db")
