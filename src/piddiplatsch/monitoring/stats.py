@@ -4,6 +4,8 @@ import sqlite3
 import time
 from enum import Enum
 
+from piddiplatsch.config import config
+
 logger = logging.getLogger(__name__)
 
 
@@ -121,8 +123,8 @@ class Stats:
 
     def __init__(
         self,
-        log_interval_seconds: int = 10,
-        log_interval_messages: int = 100,
+        log_interval_seconds: int | None = None,
+        log_interval_messages: int | None = None,
         db_path: str | None = None,
     ):
         if getattr(self, "_initialized", False):
@@ -136,9 +138,9 @@ class Stats:
         # Initialize all counters to 0
         self._counters = dict.fromkeys(CounterKey, 0)
 
-        # Logging control
-        self.log_interval_seconds = log_interval_seconds
-        self.log_interval_messages = log_interval_messages
+        # Logging control, fallback defaults
+        self.log_interval_seconds = log_interval_seconds or 10
+        self.log_interval_messages = log_interval_messages or 100
         self._last_log_time = time.time()
         self._last_logged_messages = 0
 
@@ -153,7 +155,6 @@ class Stats:
 
     # --- Core counter increment ---
     def increment(self, key: CounterKey, n: int = 1):
-        """Increment any counter dynamically (pure counter, no side effects)."""
         self._counters[key] += n
         if key == CounterKey.MESSAGES:
             self._last_message_time = time.time()
@@ -266,7 +267,6 @@ class Stats:
 
     # --- Cleanup ---
     def close(self):
-        """Close all reporters (idempotent)."""
         if getattr(self, "_closed", False):
             return
         for reporter in list(self.reporters):
@@ -277,8 +277,13 @@ class Stats:
         self._closed = True
 
 
-# Singleton instance (no DB by default)
-stats = Stats()
+# -----------------------
+# Singleton instance (auto-configured from config)
+# -----------------------
+stats_config = config.get("stats", {})
 
-# If you want DB persistence:
-# stats = Stats(db_path="stats.db")
+stats = Stats(
+    log_interval_seconds=stats_config.get("interval_seconds"),
+    log_interval_messages=stats_config.get("summary_interval"),
+    db_path=stats_config.get("db_path"),
+)
