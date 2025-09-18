@@ -62,7 +62,8 @@ class SQLiteReporter(StatsReporter):
                 total_handle_processing_time REAL,
                 uptime REAL,
                 message_rate REAL,
-                handle_rate REAL
+                handle_rate REAL,
+                messages_per_sec REAL
             )
             """
         )
@@ -82,8 +83,8 @@ class SQLiteReporter(StatsReporter):
             INSERT INTO message_stats (ts, messages, errors, retries, handles,
                                        retracted_messages, replicas, warnings,
                                        skipped_messages, total_handle_processing_time,
-                                       uptime, message_rate, handle_rate)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                       uptime, message_rate, handle_rate, messages_per_sec)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 ts,
@@ -99,6 +100,7 @@ class SQLiteReporter(StatsReporter):
                 summary["uptime"],
                 summary["message_rate"],
                 summary["handle_rate"],
+                summary["messages_per_sec"],
             ),
         )
         self._conn.commit()
@@ -240,50 +242,83 @@ class Stats:
         return self._counters[key]
 
     @property
-    def messages(self):
+    def messages(self) -> int:
         return self._counters[CounterKey.MESSAGES]
 
     @property
-    def replicas(self):
+    def replicas(self) -> int:
         return self._counters[CounterKey.REPLICAS]
 
     @property
-    def retracted_messages(self):
+    def retracted_messages(self) -> int:
         return self._counters[CounterKey.RETRACTED]
 
     @property
-    def skipped_messages(self):
+    def skipped_messages(self) -> int:
         return self._counters[CounterKey.SKIPPED]
 
     @property
-    def errors(self):
+    def errors(self) -> int:
         return self._counters[CounterKey.ERRORS]
 
     @property
-    def start_time(self):
+    def warnings(self) -> int:
+        return self._counters[CounterKey.WARNINGS]
+
+    @property
+    def retries(self) -> int:
+        return self._counters[CounterKey.RETRIES]
+
+    @property
+    def handles(self) -> int:
+        return self._counters[CounterKey.HANDLES]
+
+    @property
+    def handle_time_total(self) -> float:
+        return self._counters[CounterKey.HANDLE_TIME]
+
+    @property
+    def start_time(self) -> float:
         return self._start_time
 
     @property
-    def last_message_time(self):
+    def uptime(self) -> float:
+        return time.time() - self._start_time
+
+    @property
+    def last_message_time(self) -> float | None:
         return self._last_message_time
 
     @property
-    def last_error_time(self):
+    def last_error_time(self) -> float | None:
         return self._last_error_time
+
+    @property
+    def message_rate(self) -> float:
+        """Cumulative average messages per second since start."""
+        return self.messages / self.uptime if self.uptime > 0 else 0.0
+
+    @property
+    def handle_rate(self) -> float:
+        """Cumulative average handles per second since start."""
+        return self.handles / self.uptime if self.uptime > 0 else 0.0
+
+    @property
+    def messages_per_sec(self) -> float:
+        """Instantaneous message rate since last log."""
+        interval = time.time() - self._last_log_time
+        interval_messages = self.messages - self._last_logged_messages
+        return interval_messages / interval if interval > 0 else 0.0
 
     # --- Summary ---
     def summary(self):
-        uptime = time.time() - self.start_time
-        message_rate = (
-            self._counters[CounterKey.MESSAGES] / uptime if uptime > 0 else 0.0
-        )
-        handle_rate = self._counters[CounterKey.HANDLES] / uptime if uptime > 0 else 0.0
         summary = {key.value: self._counters[key] for key in CounterKey}
         summary.update(
             {
-                "uptime": uptime,
-                "message_rate": message_rate,
-                "handle_rate": handle_rate,
+                "uptime": self.uptime,
+                "message_rate": self.message_rate,
+                "handle_rate": self.handle_rate,
+                "messages_per_sec": self.messages_per_sec,
                 "last_message_time": self.last_message_time,
                 "last_error_time": self.last_error_time,
             }

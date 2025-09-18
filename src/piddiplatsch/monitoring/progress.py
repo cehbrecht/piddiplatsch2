@@ -40,7 +40,9 @@ class Progress(BaseProgress):
         )
 
     def _format_time(self, ts):
-        return time.strftime("%H:%M:%S", time.localtime(ts)) if ts else "--:--:--"
+        if ts is None:
+            return "--:--:--"
+        return time.strftime("%H:%M:%S", time.localtime(ts))
 
     def _time_ago(self, ts):
         """Return a human-readable relative time, e.g., '2 minutes ago'."""
@@ -57,8 +59,11 @@ class Progress(BaseProgress):
 
     def _format_desc(self):
         return (
-            f"{self.title:<10} | {stats.messages:>6} msgs | "
+            f"{self.title:<10} | {stats.messages:>6} msgs "
+            f"({stats.messages_per_sec:.2f}/s) | "
+            f"{stats.handles:>4} handles | "
             f"{stats.errors:>4} errors | "
+            f"{stats.warnings:>4} warns | "
             f"{stats.retracted_messages:>4} retracted | "
             f"{stats.replicas:>4} replicas | "
             f"start: {self._format_time(stats.start_time)} | "
