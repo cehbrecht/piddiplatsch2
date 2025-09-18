@@ -9,6 +9,21 @@ from piddiplatsch.config import config
 logger = logging.getLogger(__name__)
 
 
+def to_iso(dt: float | datetime.datetime | None) -> str | None:
+    """Convert a timestamp or datetime to a UTC ISO 8601 string."""
+    if dt is None:
+        return None
+    if isinstance(dt, datetime.datetime):
+        # If naive, assume UTC; otherwise convert to UTC
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=datetime.timezone.utc)
+        else:
+            dt = dt.astimezone(datetime.timezone.utc)
+        return dt.isoformat()
+    # dt is a float timestamp
+    return datetime.datetime.fromtimestamp(dt, tz=datetime.timezone.utc).isoformat()
+
+
 # -----------------------
 # Enum for counters
 # -----------------------
@@ -292,17 +307,14 @@ class Stats:
 
     @property
     def message_rate(self) -> float:
-        """Cumulative average messages per second since start."""
         return self.messages / self.uptime if self.uptime > 0 else 0.0
 
     @property
     def handle_rate(self) -> float:
-        """Cumulative average handles per second since start."""
         return self.handles / self.uptime if self.uptime > 0 else 0.0
 
     @property
     def messages_per_sec(self) -> float:
-        """Instantaneous message rate since last log."""
         interval = time.time() - self._last_log_time
         interval_messages = self.messages - self._last_logged_messages
         return interval_messages / interval if interval > 0 else 0.0
@@ -316,16 +328,9 @@ class Stats:
                 "message_rate": self.message_rate,
                 "handle_rate": self.handle_rate,
                 "messages_per_sec": self.messages_per_sec,
-                "last_message_time": (
-                    self.last_message_time.isoformat() + "Z"
-                    if self.last_message_time
-                    else None
-                ),
-                "last_error_time": (
-                    self.last_error_time.isoformat() + "Z"
-                    if self.last_error_time
-                    else None
-                ),
+                "last_message_time": to_iso(self.last_message_time),
+                "last_error_time": to_iso(self.last_error_time),
+                "start_time": to_iso(self.start_time),
             }
         )
         return summary
@@ -343,7 +348,7 @@ class Stats:
 
 
 # -----------------------
-# Singleton instance (auto-configured from config)
+# Singleton instance
 # -----------------------
 stats_config = config.get("stats", {})
 
