@@ -39,37 +39,28 @@ class Progress(BaseProgress):
             dynamic_ncols=True,
         )
 
-    def _format_time(self, ts):
-        """Format a UTC timestamp or datetime as HH:MM:SS UTC."""
+    def _to_utc_dt(self, ts):
         if ts is None:
-            return "--:--:--"
-        if isinstance(ts, int | float):
-            dt = datetime.fromtimestamp(ts, tz=timezone.utc)
-        elif isinstance(ts, datetime):
-            dt = ts.astimezone(timezone.utc)
-        else:
-            return "--:--:--"
-        return dt.strftime("%H:%M:%S UTC")
+            return None
+        if isinstance(ts, float):
+            return datetime.fromtimestamp(ts, tz=timezone.utc)
+        if ts.tzinfo is None:
+            return ts.replace(tzinfo=timezone.utc)
+        return ts
+
+    def _format_time(self, ts):
+        dt = self._to_utc_dt(ts)
+        return dt.strftime("%H:%M:%S") if dt else "--:--:--"
 
     def _time_ago(self, ts):
-        """Return human-readable relative time (UTC)."""
-        if ts is None:
-            return "--"
-        if isinstance(ts, int | float):
-            dt = datetime.fromtimestamp(ts, tz=timezone.utc)
-        elif isinstance(ts, datetime):
-            dt = ts.astimezone(timezone.utc)
-        else:
+        dt = self._to_utc_dt(ts)
+        if dt is None:
             return "--"
         return humanize.naturaltime(datetime.now(timezone.utc) - dt)
 
     def _format_elapsed(self, start_ts):
-        """Elapsed time since start_ts (UTC) as HH:MM:SS."""
-        if isinstance(start_ts, int | float):
-            start_dt = datetime.fromtimestamp(start_ts, tz=timezone.utc)
-        elif isinstance(start_ts, datetime):
-            start_dt = start_ts.astimezone(timezone.utc)
-        else:
+        start_dt = self._to_utc_dt(start_ts)
+        if start_dt is None:
             return "--:--:--"
         elapsed = int((datetime.now(timezone.utc) - start_dt).total_seconds())
         h, rem = divmod(elapsed, 3600)
@@ -78,20 +69,12 @@ class Progress(BaseProgress):
 
     def _format_desc(self):
         return (
-            f"{self.title:<10} | {stats.messages:>6} msgs "
-            f"({stats.message_rate:.2f}/s) | "
-            f"{stats.handles:>4} handles "
-            f"({stats.handle_rate:.2f}/s) | "
-            f"{stats.errors:>4} errors | "
-            f"{stats.warnings:>4} warns | "
-            f"{stats.retracted_messages:>4} retracted | "
-            f"{stats.replicas:>4} replicas | "
-            f"start: {self._format_time(stats.start_time)} | "
-            f"last_msg: {self._format_time(stats.last_message_time)} "
-            f"({self._time_ago(stats.last_message_time)}) | "
-            f"last_err: {self._format_time(stats.last_error_time)} "
-            f"({self._time_ago(stats.last_error_time)}) | "
-            f"running: {self._format_elapsed(stats.start_time)}"
+            f"{self.title:<10} | msgs: {stats.messages} ({stats.message_rate:.2f}/s) "
+            f"| hndls: {stats.handles} ({stats.handle_rate:.2f}/s) "
+            f"| err: {stats.errors} | warn: {stats.warnings} "
+            f"| rtrct: {stats.retracted_messages} | rplc: {stats.replicas} "
+            f"| last_err: {self._time_ago(stats.last_error_time)} "
+            f"| elapsed: {self._format_elapsed(stats.start_time)}"
         )
 
     def refresh(self):
