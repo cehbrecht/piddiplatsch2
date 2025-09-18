@@ -316,8 +316,16 @@ class Stats:
                 "message_rate": self.message_rate,
                 "handle_rate": self.handle_rate,
                 "messages_per_sec": self.messages_per_sec,
-                "last_message_time": self.last_message_time,
-                "last_error_time": self.last_error_time,
+                "last_message_time": (
+                    self.last_message_time.isoformat() + "Z"
+                    if self.last_message_time
+                    else None
+                ),
+                "last_error_time": (
+                    self.last_error_time.isoformat() + "Z"
+                    if self.last_error_time
+                    else None
+                ),
             }
         )
         return summary
