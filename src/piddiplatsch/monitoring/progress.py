@@ -25,7 +25,7 @@ class NoOpProgress(BaseProgress):
 
 
 class Progress(BaseProgress):
-    """Displays message stats in the console (tqdm-based) with timestamps and total runtime."""
+    """Displays concise message stats in the console (tqdm-based) with timestamps and total runtime."""
 
     def __init__(self, title="progress", update_interval=5):
         self.title = title
@@ -68,13 +68,14 @@ class Progress(BaseProgress):
         return f"{h:02}:{m:02}:{s:02}"
 
     def _format_desc(self):
+        # Short labels: m=messages, h=handles, e=errors, w=warn, r=retracted, R=replicas
         return (
-            f"{self.title:<10} | msgs: {stats.messages} ({stats.message_rate:.2f}/s) "
-            f"| hndls: {stats.handles} ({stats.handle_rate:.2f}/s) "
-            f"| err: {stats.errors} | warn: {stats.warnings} "
-            f"| rtrct: {stats.retracted_messages} | rplc: {stats.replicas} "
-            f"| last_err: {self._time_ago(stats.last_error_time)} "
-            f"| elapsed: {self._format_elapsed(stats.start_time)}"
+            f"{self.title:<8} | m:{humanize.intword(stats.messages)} "
+            f"({stats.message_rate:.2f}/s) | h:{humanize.intword(stats.handles)} "
+            f"({stats.handle_rate:.2f}/s) | e:{humanize.intword(stats.errors)} "
+            f"| w:{humanize.intword(stats.warnings)} | r:{humanize.intword(stats.retracted_messages)} "
+            f"| R:{humanize.intword(stats.replicas)} | last_e:{self._time_ago(stats.last_error_time)} "
+            f"| ⏱ {self._format_elapsed(stats.start_time)}"
         )
 
     def refresh(self):
