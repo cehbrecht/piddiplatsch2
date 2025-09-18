@@ -180,3 +180,4 @@ clusterID/
 custom.toml
 custom_*.toml
 outputs/
+*.db

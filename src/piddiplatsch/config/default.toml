@@ -5,7 +5,6 @@ processor = "cmip6"
 topic = "CMIP6"
 retry_topic = "CMIP6"
 output_dir = "outputs"
-stats_summary_interval = 100
 max_errors = -1  # -1 = unlimited, any positive int = stop after that many
 
 [kafka]
@@ -39,3 +38,15 @@ excluded_asset_keys = ["reference_file", "globus", "thumbnail", "quicklook"]
 backend = "stac"
 collection = "cmip6"
 
+[stats]
+# Interval in seconds for logging stats (console + DB)
+interval_seconds = 10
+
+# Number of messages processed before logging stats
+summary_interval = 100
+
+# Enable SQLite reporter for persistent stats
+enable_db = true
+
+# Path to SQLite database file (only used if enable_db = true)
+db_path = "stats.db"

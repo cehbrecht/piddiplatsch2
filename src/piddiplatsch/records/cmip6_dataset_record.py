@@ -7,6 +7,7 @@ from piddiplatsch.config import config
 from piddiplatsch.exceptions import LookupError
 from piddiplatsch.lookup import get_lookup
 from piddiplatsch.models import CMIP6DatasetModel, HostingNode
+from piddiplatsch.monitoring import stats
 from piddiplatsch.records.base import BaseCMIP6Record
 from piddiplatsch.utils.models import (
     asset_pid,
@@ -224,10 +225,10 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
             )
 
         if self.retracted:
-            logging.warning(f"Dataset id={self.dataset_id} is retracted!")
+            stats.retracted(f"Dataset id={self.dataset_id} is retracted!")
 
         if self.replica_nodes:
-            logging.info(
+            stats.replica(
                 f"Dataset id={self.dataset_id} has {len(self.replica_nodes)} replica nodes"
             )
 
