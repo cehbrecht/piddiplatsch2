@@ -63,7 +63,8 @@ class SQLiteReporter(StatsReporter):
                 uptime REAL,
                 message_rate REAL,
                 handle_rate REAL,
-                messages_per_sec REAL
+                messages_per_sec REAL,
+                handles_per_sec REAL
             )
             """
         )
@@ -83,8 +84,9 @@ class SQLiteReporter(StatsReporter):
             INSERT INTO message_stats (ts, messages, errors, retries, handles,
                                        retracted_messages, replicas, warnings,
                                        skipped_messages, total_handle_processing_time,
-                                       uptime, message_rate, handle_rate, messages_per_sec)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                       uptime, message_rate, handle_rate,
+                                       messages_per_sec, handles_per_sec)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 ts,
@@ -101,6 +103,7 @@ class SQLiteReporter(StatsReporter):
                 summary["message_rate"],
                 summary["handle_rate"],
                 summary["messages_per_sec"],
+                summary["handles_per_sec"],
             ),
         )
         self._conn.commit()
@@ -156,6 +159,7 @@ class Stats:
         self.log_interval_messages = log_interval_messages or 100
         self._last_log_time = time.time()
         self._last_logged_messages = 0
+        self._last_logged_handles = 0
 
         # Reporters
         self.reporters: list[StatsReporter] = [ConsoleReporter()]
@@ -215,9 +219,7 @@ class Stats:
     # --- Internal logging / persistence ---
     def _maybe_log(self):
         now = time.time()
-        messages_since_last = (
-            self._counters[CounterKey.MESSAGES] - self._last_logged_messages
-        )
+        messages_since_last = self.messages - self._last_logged_messages
 
         if messages_since_last == 0:
             return
@@ -227,7 +229,8 @@ class Stats:
         ):
             self._log_stats()
             self._last_log_time = now
-            self._last_logged_messages = self._counters[CounterKey.MESSAGES]
+            self._last_logged_messages = self.messages
+            self._last_logged_handles = self.handles
 
     def _log_stats(self):
         summary = self.summary()
@@ -310,6 +313,13 @@ class Stats:
         interval_messages = self.messages - self._last_logged_messages
         return interval_messages / interval if interval > 0 else 0.0
 
+    @property
+    def handles_per_sec(self) -> float:
+        """Instantaneous handle rate since last log."""
+        interval = time.time() - self._last_log_time
+        interval_handles = self.handles - self._last_logged_handles
+        return interval_handles / interval if interval > 0 else 0.0
+
     # --- Summary ---
     def summary(self):
         summary = {key.value: self._counters[key] for key in CounterKey}
@@ -319,6 +329,7 @@ class Stats:
                 "message_rate": self.message_rate,
                 "handle_rate": self.handle_rate,
                 "messages_per_sec": self.messages_per_sec,
+                "handles_per_sec": self.handles_per_sec,
                 "last_message_time": self.last_message_time,
                 "last_error_time": self.last_error_time,
             }
