@@ -60,8 +60,9 @@ class Progress(BaseProgress):
     def _format_desc(self):
         return (
             f"{self.title:<10} | {stats.messages:>6} msgs "
-            f"({stats.messages_per_sec:.2f}/s) | "
-            f"{stats.handles:>4} handles | "
+            f"({stats.message_rate:.2f}/s) | "
+            f"{stats.handles:>4} handles "
+            f"({stats.handle_rate:.2f}/s) | "
             f"{stats.errors:>4} errors | "
             f"{stats.warnings:>4} warns | "
             f"{stats.retracted_messages:>4} retracted | "
