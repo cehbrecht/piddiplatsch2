@@ -28,13 +28,10 @@ class CounterKey(str, Enum):
 # Reporter base
 # -----------------------
 class StatsReporter:
-    """Base class for stats reporters."""
-
     def log(self, summary: dict):
         raise NotImplementedError
 
     def close(self):
-        """Optional cleanup hook (no-op by default)."""
         return None
 
 
@@ -63,8 +60,7 @@ class SQLiteReporter(StatsReporter):
                 uptime REAL,
                 message_rate REAL,
                 handle_rate REAL,
-                messages_per_sec REAL,
-                handles_per_sec REAL
+                messages_per_sec REAL
             )
             """
         )
@@ -84,9 +80,8 @@ class SQLiteReporter(StatsReporter):
             INSERT INTO message_stats (ts, messages, errors, retries, handles,
                                        retracted_messages, replicas, warnings,
                                        skipped_messages, total_handle_processing_time,
-                                       uptime, message_rate, handle_rate,
-                                       messages_per_sec, handles_per_sec)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                       uptime, message_rate, handle_rate, messages_per_sec)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 ts,
@@ -103,7 +98,6 @@ class SQLiteReporter(StatsReporter):
                 summary["message_rate"],
                 summary["handle_rate"],
                 summary["messages_per_sec"],
-                summary["handles_per_sec"],
             ),
         )
         self._conn.commit()
@@ -145,21 +139,20 @@ class Stats:
         if getattr(self, "_initialized", False):
             return
 
-        # Private timestamps
-        self._start_time = time.time()
-        self._last_message_time = None
-        self._last_error_time = None
+        # Private timestamps as UTC datetime
+        self._start_time = datetime.datetime.utcnow()
+        self._last_message_time: datetime.datetime | None = None
+        self._last_error_time: datetime.datetime | None = None
 
-        # Initialize all counters
+        # Initialize counters
         self._counters = dict.fromkeys(CounterKey, 0)
-        self._counters[CounterKey.HANDLE_TIME] = 0.0  # float
+        self._counters[CounterKey.HANDLE_TIME] = 0.0
 
         # Logging control
         self.log_interval_seconds = log_interval_seconds or 10
         self.log_interval_messages = log_interval_messages or 100
         self._last_log_time = time.time()
         self._last_logged_messages = 0
-        self._last_logged_handles = 0
 
         # Reporters
         self.reporters: list[StatsReporter] = [ConsoleReporter()]
@@ -172,12 +165,12 @@ class Stats:
     # --- Core increment ---
     def increment(self, key: CounterKey, n=1):
         if key == CounterKey.HANDLE_TIME:
-            self._counters[key] += n  # float accumulation
+            self._counters[key] += n
         else:
             self._counters[key] += n
 
         if key == CounterKey.MESSAGES:
-            self._last_message_time = time.time()
+            self._last_message_time = datetime.datetime.utcnow()
             self._maybe_log()
 
     # --- Shortcuts ---
@@ -194,7 +187,7 @@ class Stats:
 
     def error(self, message: str | None = None, n=1):
         self.increment(CounterKey.ERRORS, n)
-        self._last_error_time = time.time()
+        self._last_error_time = datetime.datetime.utcnow()
         if message:
             logger.error(f"ERROR: {message}")
 
@@ -216,10 +209,12 @@ class Stats:
     def skip(self, n=1):
         self.increment(CounterKey.SKIPPED, n)
 
-    # --- Internal logging / persistence ---
+    # --- Logging / persistence ---
     def _maybe_log(self):
         now = time.time()
-        messages_since_last = self.messages - self._last_logged_messages
+        messages_since_last = (
+            self._counters[CounterKey.MESSAGES] - self._last_logged_messages
+        )
 
         if messages_since_last == 0:
             return
@@ -229,8 +224,7 @@ class Stats:
         ):
             self._log_stats()
             self._last_log_time = now
-            self._last_logged_messages = self.messages
-            self._last_logged_handles = self.handles
+            self._last_logged_messages = self._counters[CounterKey.MESSAGES]
 
     def _log_stats(self):
         summary = self.summary()
@@ -281,19 +275,19 @@ class Stats:
         return self._counters[CounterKey.HANDLE_TIME]
 
     @property
-    def start_time(self) -> float:
+    def start_time(self) -> datetime.datetime:
         return self._start_time
 
     @property
     def uptime(self) -> float:
-        return time.time() - self._start_time
+        return (datetime.datetime.utcnow() - self._start_time).total_seconds()
 
     @property
-    def last_message_time(self) -> float | None:
+    def last_message_time(self) -> datetime.datetime | None:
         return self._last_message_time
 
     @property
-    def last_error_time(self) -> float | None:
+    def last_error_time(self) -> datetime.datetime | None:
         return self._last_error_time
 
     @property
@@ -313,13 +307,6 @@ class Stats:
         interval_messages = self.messages - self._last_logged_messages
         return interval_messages / interval if interval > 0 else 0.0
 
-    @property
-    def handles_per_sec(self) -> float:
-        """Instantaneous handle rate since last log."""
-        interval = time.time() - self._last_log_time
-        interval_handles = self.handles - self._last_logged_handles
-        return interval_handles / interval if interval > 0 else 0.0
-
     # --- Summary ---
     def summary(self):
         summary = {key.value: self._counters[key] for key in CounterKey}
@@ -329,7 +316,6 @@ class Stats:
                 "message_rate": self.message_rate,
                 "handle_rate": self.handle_rate,
                 "messages_per_sec": self.messages_per_sec,
-                "handles_per_sec": self.handles_per_sec,
                 "last_message_time": self.last_message_time,
                 "last_error_time": self.last_error_time,
             }

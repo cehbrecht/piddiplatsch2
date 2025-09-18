@@ -1,5 +1,5 @@
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 import humanize
 from tqdm import tqdm
@@ -40,19 +40,38 @@ class Progress(BaseProgress):
         )
 
     def _format_time(self, ts):
+        """Format a UTC timestamp or datetime as HH:MM:SS UTC."""
         if ts is None:
             return "--:--:--"
-        return time.strftime("%H:%M:%S", time.localtime(ts))
+        if isinstance(ts, int | float):
+            dt = datetime.fromtimestamp(ts, tz=timezone.utc)
+        elif isinstance(ts, datetime):
+            dt = ts.astimezone(timezone.utc)
+        else:
+            return "--:--:--"
+        return dt.strftime("%H:%M:%S UTC")
 
     def _time_ago(self, ts):
-        """Return a human-readable relative time, e.g., '2 minutes ago'."""
+        """Return human-readable relative time (UTC)."""
         if ts is None:
             return "--"
-        dt = datetime.fromtimestamp(ts)
-        return humanize.naturaltime(datetime.now() - dt)
+        if isinstance(ts, int | float):
+            dt = datetime.fromtimestamp(ts, tz=timezone.utc)
+        elif isinstance(ts, datetime):
+            dt = ts.astimezone(timezone.utc)
+        else:
+            return "--"
+        return humanize.naturaltime(datetime.now(timezone.utc) - dt)
 
     def _format_elapsed(self, start_ts):
-        elapsed = int(time.time() - start_ts)
+        """Elapsed time since start_ts (UTC) as HH:MM:SS."""
+        if isinstance(start_ts, int | float):
+            start_dt = datetime.fromtimestamp(start_ts, tz=timezone.utc)
+        elif isinstance(start_ts, datetime):
+            start_dt = start_ts.astimezone(timezone.utc)
+        else:
+            return "--:--:--"
+        elapsed = int((datetime.now(timezone.utc) - start_dt).total_seconds())
         h, rem = divmod(elapsed, 3600)
         m, s = divmod(rem, 60)
         return f"{h:02}:{m:02}:{s:02}"
