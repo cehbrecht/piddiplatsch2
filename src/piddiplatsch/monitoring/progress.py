@@ -2,6 +2,7 @@ import time
 from datetime import datetime, timezone
 
 import humanize
+from millify import millify
 from tqdm import tqdm
 
 from piddiplatsch.monitoring.stats import stats
@@ -70,11 +71,11 @@ class Progress(BaseProgress):
     def _format_desc(self):
         # Short labels: m=messages, h=handles, e=errors, w=warn, r=retracted, R=replicas
         return (
-            f"{self.title:<8} | m:{humanize.intword(stats.messages)} "
-            f"({stats.message_rate:.2f}/s) | h:{humanize.intword(stats.handles)} "
-            f"({stats.handle_rate:.2f}/s) | e:{humanize.intword(stats.errors)} "
-            f"| w:{humanize.intword(stats.warnings)} | r:{humanize.intword(stats.retracted_messages)} "
-            f"| R:{humanize.intword(stats.replicas)} | last_e:{self._time_ago(stats.last_error_time)} "
+            f"{self.title:<8} | m:{millify(stats.messages, precision=1)} "
+            f"({stats.message_rate:.2f}/s) | h:{millify(stats.handles, precision=1)} "
+            f"({stats.handle_rate:.2f}/s) | e:{millify(stats.errors, precision=1)} "
+            f"| w:{millify(stats.warnings, precision=1)} | r:{millify(stats.retracted_messages, precision=1)} "
+            f"| R:{millify(stats.replicas, precision=1)} | last_e:{self._time_ago(stats.last_error_time)} "
             f"| ⏱ {self._format_elapsed(stats.start_time)}"
         )
 

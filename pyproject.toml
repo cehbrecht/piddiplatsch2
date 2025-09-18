@@ -24,6 +24,7 @@ dependencies = [
     "python-dateutil",
     "tqdm",
     "humanize >=4.13",
+    "millify",
     "jsonpatch >=1.33",
     "pystac-client >=0.9.0"
 ]
