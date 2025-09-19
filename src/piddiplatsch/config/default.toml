@@ -5,7 +5,7 @@ processor = "cmip6"
 topic = "CMIP6"
 retry_topic = "CMIP6"
 output_dir = "outputs"
-max_errors = -1  # -1 = unlimited, any positive int = stop after that many
+max_errors = 10  # -1 = unlimited, any positive int = stop after that many
 
 [kafka]
 "bootstrap.servers" = "localhost:39092"
@@ -25,6 +25,11 @@ password = "testpass"
 [stac]
 base_url = "https://api.stac.esgf.ceda.ac.uk"
 timeout = 10
+collection = "cmip6"
+
+[elasticsearch]
+base_url = "http://elastic-hippo.cloud.dkrz.de:9200"
+index = "handle_21t14995"
 
 [schema]
 strict_mode = false
@@ -36,7 +41,7 @@ excluded_asset_keys = ["reference_file", "globus", "thumbnail", "quicklook"]
 
 [lookup]
 backend = "stac"
-collection = "cmip6"
+enabled = true
 
 [stats]
 # Interval in seconds for logging stats (console + DB)

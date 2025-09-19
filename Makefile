@@ -49,6 +49,7 @@ clean-build: ## remove build artifacts
 	@-find . -name '*.egg' -exec rm -f {} +
 	@-find . -name '*.log' -exec rm -fr {} +
 	@-find . -name '*.sqlite' -exec rm -fr {} +
+	@-find . -name '*.db' -exec rm -fr {} +
 
 clean-pyc: ## remove Python file artifacts
 	@echo "Removing Python file artifacts ..."
