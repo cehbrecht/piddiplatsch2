@@ -2,8 +2,25 @@ from elasticsearch import Elasticsearch
 
 from piddiplatsch.exceptions import LookupError
 from piddiplatsch.lookup.base import AbstractLookup
-from piddiplatsch.utils.models import build_handle, item_pid
-from piddiplatsch.utils.stac import extract_version
+from piddiplatsch.utils.stac import extract_version, split_cmip6_id
+
+
+def build_dataset_id(item_id: str) -> str:
+    props = split_cmip6_id(item_id)
+    dataset_id = ".".join(  # noqa: FLY002
+        [
+            "CMIP6",
+            props.activity_id,
+            props.institution_id,
+            props.source_id,
+            props.experiment_id,
+            props.variant_label,
+            props.table_id,
+            props.variable_id,
+            props.grid_label,
+        ]
+    )
+    return dataset_id
 
 
 class ElasticsearchLookup(AbstractLookup):
@@ -24,15 +41,21 @@ class ElasticsearchLookup(AbstractLookup):
                 ) from e
         return self._client
 
+    def _build_query(self, item_id: str, limit: int = 100) -> dict:
+        """Build Elasticsearch query for a dataset_id derived from item_id."""
+
+        dataset_id = build_dataset_id(item_id)
+
+        return {"query": {"term": {"data.keyword": dataset_id}}, "size": limit}
+
     def find_versions(self, item_id: str, limit: int = 100) -> list[str]:
-        """
-        Return all versions of a dataset as full dataset_ids, sorted by version_number descending.
-        """
-        handle_value = build_handle(item_pid(item_id), as_uri=True)
-        query = {"query": {"term": {"handle.keyword": handle_value}}}
+        """Find all versions of a CMIP6 dataset based on DATASET_ID."""
+
+        query_body = self._build_query(item_id, limit=limit)
+        dataset_id = build_dataset_id(item_id)
 
         try:
-            resp = self._get_client().search(index=self.index, body=query, size=limit)
+            resp = self._get_client().search(index=self.index, body=query_body)
         except Exception as e:
             raise LookupError(f"Elasticsearch query failed: {e}") from e
 
@@ -40,23 +63,20 @@ class ElasticsearchLookup(AbstractLookup):
         if not hits:
             return []
 
-        dataset_ids = set()
+        dataset_versions = []
+        seen = set()
         for hit in hits:
-            values = hit.get("_source", {}).get("values", [])
-            dataset_id = None
-            dataset_version = None
+            source = hit.get("_source", {})
+            if source.get("type") != "DATASET_VERSION":
+                continue
 
-            for v in values:
-                type_value = v.get("type")
-                data_value = v.get("data", {}).get("value")
-                if type_value == "DATASET_ID":
-                    dataset_id = data_value
-                elif type_value == "DATASET_VERSION":
-                    dataset_version = data_value
+            version_str = source.get("data")
+            if not version_str or version_str in seen:
+                continue
 
-            if dataset_id and dataset_version:
-                full_id = f"{dataset_id}.{dataset_version}"
-                dataset_ids.add(full_id)
+            full_id = f"{dataset_id}.{version_str}"
+            dataset_versions.append(full_id)
+            seen.add(version_str)
 
-        # Sort by version_number descending
-        return sorted(dataset_ids, key=extract_version, reverse=True)[:limit]
+        dataset_versions.sort(key=extract_version, reverse=True)
+        return dataset_versions[:limit]
