@@ -228,11 +228,6 @@ Explore the example notebooks here:
 - [ ] **Batch Handle registration**  
   Support committing one dataset and its associated files in a single batch request.
 
-- [ ] **version lookup example**  
-  Add an example demonstrating how to retrieve dataset versions via the STAC catalog.
-
 - [ ] **Plugin improvements**  
   Enhance plugin system to better support multiple processing use-cases.
 
-- [ ] **Performance tests with locust.io**  
-  Add [locust.io](https://locust.io/) tests to check performance.
