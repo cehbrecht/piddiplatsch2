@@ -1,5 +1,3 @@
-import re
-
 from elasticsearch import Elasticsearch
 
 from piddiplatsch.exceptions import LookupError
@@ -10,8 +8,6 @@ from piddiplatsch.utils.stac import extract_version
 
 class ElasticsearchLookup(AbstractLookup):
     """Elasticsearch-based implementation of AbstractLookup for dataset versions."""
-
-    HANDLE_PATTERN = re.compile(r"^\d+\.\w+/.+$")
 
     def __init__(self, es_url: str, index: str = "handle_21t14995") -> None:
         self.es_url = es_url
@@ -29,6 +25,19 @@ class ElasticsearchLookup(AbstractLookup):
         return self._client
 
     def find_versions(self, item_id: str, limit: int = 100) -> list[str]:
+        """
+        Return all versions of a dataset for a given item_id.
+
+        Args:
+            item_id: CMIP6 dataset-id.
+            limit: Maximum number of versions to return (default 100).
+
+        Returns:
+            List of dataset version IDs, sorted latest-first.
+
+        Raises:
+            LookupError: If the Elasticsearch query fails.
+        """
         handle_value = build_handle(item_pid(item_id), as_uri=True)
 
         query = {"query": {"term": {"handle.keyword": handle_value}}}
