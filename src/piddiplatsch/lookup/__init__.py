@@ -11,7 +11,7 @@ class DummyLookup(AbstractLookup):
         # Accept any arguments (stac_url, collection, es_url, index, etc.) and ignore them
         pass
 
-    def find_versions(self, query: dict) -> list[str]:
+    def find_versions(self, item_id: str, limit: int = 100) -> list[str]:
         return []
 
 
