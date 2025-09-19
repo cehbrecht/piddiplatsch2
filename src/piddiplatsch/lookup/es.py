@@ -28,15 +28,8 @@ class ElasticsearchLookup(AbstractLookup):
                 ) from e
         return self._client
 
-    def _validate_handle(self, handle_value: str) -> None:
-        if not isinstance(handle_value, str):
-            raise LookupError(f"Handle must be a string, got {type(handle_value)}")
-        if not self.HANDLE_PATTERN.match(handle_value):
-            raise LookupError(f"Invalid handle format: {handle_value}")
-
     def find_versions(self, item_id: str, limit: int = 100) -> list[str]:
         handle_value = build_handle(item_pid(item_id), as_uri=True)
-        self._validate_handle(handle_value)
 
         query = {"query": {"term": {"handle.keyword": handle_value}}}
 
