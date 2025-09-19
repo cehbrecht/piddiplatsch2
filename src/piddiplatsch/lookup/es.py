@@ -26,20 +26,19 @@ class ElasticsearchLookup(AbstractLookup):
 
     def find_versions(self, item_id: str, limit: int = 100) -> list[str]:
         """
-        Return all versions of a dataset for a given item_id.
+        Return all full dataset IDs of previous versions for a given item_id.
 
         Args:
-            item_id: CMIP6 dataset-id.
+            item_id: CMIP6 dataset-id (full ID).
             limit: Maximum number of versions to return (default 100).
 
         Returns:
-            List of dataset version IDs, sorted latest-first.
+            List of full dataset IDs, sorted latest-first.
 
         Raises:
             LookupError: If the Elasticsearch query fails.
         """
         handle_value = build_handle(item_pid(item_id), as_uri=True)
-
         query = {"query": {"term": {"handle.keyword": handle_value}}}
 
         try:
@@ -51,10 +50,15 @@ class ElasticsearchLookup(AbstractLookup):
         if not hits:
             return []
 
+        # extract versions from hits
         versions = {
             h["_source"]["data"]
             for h in hits
             if h["_source"].get("type") == "DATASET_VERSION"
         }
 
-        return sorted(versions, key=extract_version, reverse=True)[:limit]
+        # reconstruct full dataset IDs
+        base_id = item_id.rsplit(".", 1)[0]
+        full_ids = [f"{base_id}.{v}" for v in versions]
+
+        return sorted(full_ids, key=extract_version, reverse=True)[:limit]
