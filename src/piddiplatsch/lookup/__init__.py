@@ -8,7 +8,6 @@ class DummyLookup(AbstractLookup):
     """A no-op lookup that returns empty results, ignores all init arguments."""
 
     def __init__(self, **kwargs):
-        # Accept any arguments (stac_url, collection, es_url, index, etc.) and ignore them
         pass
 
     def find_versions(self, item_id: str, limit: int = 100) -> list[str]:
@@ -20,6 +19,11 @@ def get_lookup() -> AbstractLookup:
     Factory function that returns the configured lookup instance
     based on the TOML config [lookup] section.
     """
+
+    # Check for config-based disable flag
+    if not config.get("lookup", "enabled", True):
+        return DummyLookup()
+
     backend = config.get("lookup", "backend", "stac").lower()
 
     if backend == "stac":
@@ -37,9 +41,6 @@ def get_lookup() -> AbstractLookup:
                 "Elasticsearch backend requires 'elasticsearch.base_url' in config"
             )
         return ElasticsearchLookup(es_url=es_url, index=index)
-
-    elif backend == "dummy":
-        return DummyLookup()
 
     else:
         raise ValueError(f"Unknown lookup backend configured: {backend}")

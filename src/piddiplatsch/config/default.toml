@@ -5,7 +5,7 @@ processor = "cmip6"
 topic = "CMIP6"
 retry_topic = "CMIP6"
 output_dir = "outputs"
-max_errors = -1  # -1 = unlimited, any positive int = stop after that many
+max_errors = 10  # -1 = unlimited, any positive int = stop after that many
 
 [kafka]
 "bootstrap.servers" = "localhost:39092"
@@ -41,6 +41,7 @@ excluded_asset_keys = ["reference_file", "globus", "thumbnail", "quicklook"]
 
 [lookup]
 backend = "stac"
+enabled = true
 
 [stats]
 # Interval in seconds for logging stats (console + DB)
