@@ -1,3 +1,5 @@
+import re
+
 from elasticsearch import Elasticsearch
 
 from piddiplatsch.exceptions import LookupError
@@ -8,6 +10,8 @@ from piddiplatsch.utils.stac import extract_version
 
 class ElasticsearchLookup(AbstractLookup):
     """Elasticsearch-based implementation of AbstractLookup for dataset versions."""
+
+    HANDLE_PATTERN = re.compile(r"^\d+\.\w+/.+$")
 
     def __init__(self, es_url: str, index: str = "handle_21t14995") -> None:
         self.es_url = es_url
@@ -26,20 +30,13 @@ class ElasticsearchLookup(AbstractLookup):
 
     def find_versions(self, item_id: str, limit: int = 100) -> list[str]:
         """
-        Return all full dataset IDs of previous versions for a given item_id.
+        Return full dataset IDs for all versions of the given item.
 
-        Args:
-            item_id: CMIP6 dataset-id (full ID).
-            limit: Maximum number of versions to return (default 100).
-
-        Returns:
-            List of full dataset IDs, sorted latest-first.
-
-        Raises:
-            LookupError: If the Elasticsearch query fails.
+        Combines DATASET_ID and DATASET_VERSION from handle records.
+        Eliminates duplicates and sorts by version descending.
         """
-        handle_value = build_handle(item_pid(item_id), as_uri=True)
-        query = {"query": {"term": {"handle.keyword": handle_value}}}
+        handle_pid = build_handle(item_pid(item_id), as_uri=True)
+        query = {"query": {"term": {"handle.keyword": handle_pid}}}
 
         try:
             resp = self._get_client().search(index=self.index, body=query, size=limit)
@@ -50,15 +47,24 @@ class ElasticsearchLookup(AbstractLookup):
         if not hits:
             return []
 
-        # extract versions from hits
-        versions = {
-            h["_source"]["data"]
-            for h in hits
-            if h["_source"].get("type") == "DATASET_VERSION"
-        }
+        seen = set()
+        full_ids = []
 
-        # reconstruct full dataset IDs
-        base_id = item_id.rsplit(".", 1)[0]
-        full_ids = [f"{base_id}.{v}" for v in versions]
+        for h in hits:
+            values = h["_source"].get("values", [])
+            dataset_id = next(
+                (v["data"]["value"] for v in values if v["type"] == "DATASET_ID"),
+                None,
+            )
+            dataset_version = next(
+                (v["data"]["value"] for v in values if v["type"] == "DATASET_VERSION"),
+                None,
+            )
+            if dataset_id and dataset_version:
+                full_id = f"{dataset_id}.{dataset_version}"
+                if full_id not in seen:
+                    seen.add(full_id)
+                    full_ids.append(full_id)
 
+        # Sort by version descending and apply limit
         return sorted(full_ids, key=extract_version, reverse=True)[:limit]
