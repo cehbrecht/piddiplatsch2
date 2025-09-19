@@ -1,5 +1,3 @@
-import re
-
 from elasticsearch import Elasticsearch
 
 from piddiplatsch.exceptions import LookupError
@@ -10,8 +8,6 @@ from piddiplatsch.utils.stac import extract_version
 
 class ElasticsearchLookup(AbstractLookup):
     """Elasticsearch-based implementation of AbstractLookup for dataset versions."""
-
-    HANDLE_PATTERN = re.compile(r"^\d+\.\w+/.+$")
 
     def __init__(self, es_url: str, index: str = "handle_21t14995") -> None:
         self.es_url = es_url
@@ -30,13 +26,10 @@ class ElasticsearchLookup(AbstractLookup):
 
     def find_versions(self, item_id: str, limit: int = 100) -> list[str]:
         """
-        Return full dataset IDs for all versions of the given item.
-
-        Combines DATASET_ID and DATASET_VERSION from handle records.
-        Eliminates duplicates and sorts by version descending.
+        Return all versions of a dataset as full dataset_ids, sorted by version_number descending.
         """
-        handle_pid = build_handle(item_pid(item_id), as_uri=True)
-        query = {"query": {"term": {"handle.keyword": handle_pid}}}
+        handle_value = build_handle(item_pid(item_id), as_uri=True)
+        query = {"query": {"term": {"handle.keyword": handle_value}}}
 
         try:
             resp = self._get_client().search(index=self.index, body=query, size=limit)
@@ -47,24 +40,23 @@ class ElasticsearchLookup(AbstractLookup):
         if not hits:
             return []
 
-        seen = set()
-        full_ids = []
+        dataset_ids = set()
+        for hit in hits:
+            values = hit.get("_source", {}).get("values", [])
+            dataset_id = None
+            dataset_version = None
 
-        for h in hits:
-            values = h["_source"].get("values", [])
-            dataset_id = next(
-                (v["data"]["value"] for v in values if v["type"] == "DATASET_ID"),
-                None,
-            )
-            dataset_version = next(
-                (v["data"]["value"] for v in values if v["type"] == "DATASET_VERSION"),
-                None,
-            )
+            for v in values:
+                type_value = v.get("type")
+                data_value = v.get("data", {}).get("value")
+                if type_value == "DATASET_ID":
+                    dataset_id = data_value
+                elif type_value == "DATASET_VERSION":
+                    dataset_version = data_value
+
             if dataset_id and dataset_version:
                 full_id = f"{dataset_id}.{dataset_version}"
-                if full_id not in seen:
-                    seen.add(full_id)
-                    full_ids.append(full_id)
+                dataset_ids.add(full_id)
 
-        # Sort by version descending and apply limit
-        return sorted(full_ids, key=extract_version, reverse=True)[:limit]
+        # Sort by version_number descending
+        return sorted(dataset_ids, key=extract_version, reverse=True)[:limit]
