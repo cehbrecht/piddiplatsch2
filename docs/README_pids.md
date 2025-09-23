@@ -126,6 +126,16 @@ test prefix: hdl:21.T14995/UUID
 
 ## updates
 
+### 2025-09-23
+
+* update tests
+* host = unknown: treat as error?
+* check version lookup ... use mock test?
+* retracted, replica ... use differnt names
+* how to handle checksum types?
+* need a stac synced with kafka for testing
+* need multiple datasetid versions in kafka stream
+
 
 ### 2025-09-11
 
