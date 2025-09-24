@@ -40,7 +40,7 @@ max_parts = -1
 excluded_asset_keys = ["reference_file", "globus", "thumbnail", "quicklook"]
 
 [lookup]
-backend = "stac"
+backend = "stac" # or "es"
 enabled = true
 
 [stats]
