@@ -136,6 +136,8 @@ test prefix: hdl:21.T14995/UUID
 * how to use strict (validation) mode?
 * need a stac synced with kafka for testing
 * need multiple datasetid versions in kafka stream
+* work on recovery ... might also be used for "offline" testing ...
+* need cli for evaluation of stats.db
 
 
 ### 2025-09-11
