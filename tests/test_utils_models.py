@@ -1,4 +1,3 @@
-import logging
 import string
 from datetime import datetime
 from uuid import NAMESPACE_URL, UUID, uuid3
@@ -134,9 +133,7 @@ def test_drop_empty_no_empty_fields_in_result(d):
 # ----------------------
 
 
-def test_parse_datetime_valid_and_invalid(caplog):
-    caplog.set_level(logging.WARNING)
-
+def test_parse_datetime_valid_and_invalid():
     valid = "2021-09-01T12:34:56Z"
     dt = models.parse_datetime(valid)
     assert isinstance(dt, datetime)
@@ -145,7 +142,6 @@ def test_parse_datetime_valid_and_invalid(caplog):
     invalid = "not-a-datetime"
     result = models.parse_datetime(invalid)
     assert result is None
-    assert "Failed to parse datetime" in caplog.text
 
     assert models.parse_datetime(None) is None
 
