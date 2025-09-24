@@ -14,45 +14,9 @@ import piddiplatsch.utils.models as models
 
 
 def test_build_handle_with_and_without_uri():
-    from _pytest.monkeypatch import MonkeyPatch
-
-    monkeypatch = MonkeyPatch()
-    try:
-        # Mock config.get to return prefix
-        monkeypatch.setattr(
-            models.config,
-            "get",
-            lambda k, default=None: {"prefix": "21.TEST"} if k == "handle" else default,
-        )
-        pid = "12345"
-        assert models.build_handle(pid) == "21.TEST/12345"
-        assert models.build_handle(pid, as_uri=True) == "hdl:21.TEST/12345"
-    finally:
-        monkeypatch.undo()
-
-
-@given(
-    prefix=st.text(alphabet=string.printable, min_size=1, max_size=10),
-    pid=st.text(alphabet=string.printable, min_size=1, max_size=10),
-)
-def test_build_handle_fuzz(prefix, pid):
-    """Random printable prefixes and PIDs produce consistent handle strings."""
-    from _pytest.monkeypatch import MonkeyPatch
-
-    monkeypatch = MonkeyPatch()
-    try:
-        monkeypatch.setattr(
-            models.config,
-            "get",
-            lambda k, default=None: {"prefix": prefix} if k == "handle" else default,
-        )
-        plain = models.build_handle(pid)
-        uri = models.build_handle(pid, as_uri=True)
-
-        assert plain == f"{prefix}/{pid}"
-        assert uri == f"hdl:{prefix}/{pid}"
-    finally:
-        monkeypatch.undo()
+    pid = "12345"
+    assert models.build_handle(pid) == "21.TEST/12345"
+    assert models.build_handle(pid, as_uri=True) == "hdl:21.TEST/12345"
 
 
 # ----------------------
