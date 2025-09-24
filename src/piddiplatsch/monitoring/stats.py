@@ -155,7 +155,7 @@ class Stats:
             return
 
         # Private timestamps as UTC datetime
-        self._start_time = datetime.datetime.utcnow()
+        self._start_time = datetime.datetime.now(datetime.UTC)
         self._last_message_time: datetime.datetime | None = None
         self._last_error_time: datetime.datetime | None = None
 
