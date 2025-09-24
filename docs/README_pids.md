@@ -133,6 +133,7 @@ test prefix: hdl:21.T14995/UUID
 * check version lookup ... use mock test?
 * retracted, replica ... use differnt names
 * how to handle checksum types?
+* how to use strict (validation) mode?
 * need a stac synced with kafka for testing
 * need multiple datasetid versions in kafka stream
 
