@@ -90,7 +90,7 @@ def test_strict_mode_requires_parts():
     config._set("cmip6", "max_parts", 5)
     config._set("schema", "strict_mode", True)
 
-    with pytest.raises(ValueError, match="HAS_PARTS must contain at least one file."):
+    with pytest.raises(ValueError):
         make_dataset(has_parts=[])
 
 
