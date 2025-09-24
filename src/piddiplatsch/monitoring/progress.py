@@ -71,11 +71,14 @@ class Progress(BaseProgress):
     def _format_desc(self):
         # Short labels: m=messages, h=handles, e=errors, w=warn, r=retracted, R=replicas
         return (
-            f"{self.title:<8} | m:{millify(stats.messages, precision=1)} "
-            f"({stats.message_rate:.2f}/s) | h:{millify(stats.handles, precision=1)} "
-            f"({stats.handle_rate:.2f}/s) | e:{millify(stats.errors, precision=1)} "
-            f"| w:{millify(stats.warnings, precision=1)} | r:{millify(stats.retracted_messages, precision=1)} "
-            f"| R:{millify(stats.replicas, precision=1)} | last_e:{self._time_ago(stats.last_error_time)} "
+            f"{self.title:<8}"
+            f"| m:{millify(stats.messages, precision=1)} ({stats.message_rate:.2f}/s)"
+            f"| h:{millify(stats.handles, precision=1)} ({stats.handle_rate:.2f}/s)"
+            f"| e:{millify(stats.errors, precision=1)}"
+            # f"| w:{millify(stats.warnings, precision=1)}"
+            f"| D:{millify(stats.retracted_messages, precision=1)}"
+            f"| c:{millify(stats.replicas, precision=1)}"
+            f"| last_e:{self._time_ago(stats.last_error_time)} "
             f"| ⏱ {self._format_elapsed(stats.start_time)}"
         )
 
