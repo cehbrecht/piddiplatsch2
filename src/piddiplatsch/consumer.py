@@ -27,12 +27,28 @@ class StopCause(StrEnum):
 
 
 # ----------------------------
+# Base Consumer
+# ----------------------------
+
+
+class BaseConsumer:
+    """Abstract base consumer interface."""
+
+    def consume(self):
+        """
+        Yield tuples of (key, value) messages.
+        Must be implemented by subclasses.
+        """
+        raise NotImplementedError
+
+
+# ----------------------------
 # Kafka Consumer
 # ----------------------------
 
 
-class Consumer:
-    """Thin wrapper around Kafka consumer."""
+class KafkaConsumer(BaseConsumer):
+    """Kafka consumer wrapper."""
 
     def __init__(self, topic: str, kafka_cfg: dict):
         self.topic = topic
@@ -65,7 +81,7 @@ class Consumer:
 # ----------------------------
 
 
-class DirectConsumer:
+class DirectConsumer(BaseConsumer):
     """Feed messages directly without Kafka."""
 
     def __init__(self, messages):
@@ -75,7 +91,6 @@ class DirectConsumer:
         self.messages = list(messages)
 
     def consume(self):
-        # Linter fix UP028: use yield from
         yield from self.messages
 
 
@@ -89,7 +104,7 @@ class ConsumerPipeline:
 
     def __init__(
         self,
-        consumer,
+        consumer: BaseConsumer,
         processor,
         *,
         dump_messages=False,
@@ -97,7 +112,7 @@ class ConsumerPipeline:
         max_errors=-1,
     ):
         """
-        consumer: instance of Consumer or DirectConsumer
+        consumer: instance of BaseConsumer (KafkaConsumer or DirectConsumer)
         processor: plugin name
         """
         self.consumer = consumer
@@ -182,23 +197,16 @@ class ConsumerPipeline:
 
 
 def feed_messages_direct(messages, processor="cmip6"):
-    """
-    Feed messages (list of (key, value)) directly into the pipeline.
-    """
     consumer = DirectConsumer(messages)
     pipeline = ConsumerPipeline(consumer, processor=processor)
     pipeline.run()
 
 
 def feed_test_files(testfile_paths, processor="cmip6"):
-    """
-    Feed multiple JSON files directly, using filename as key.
-    """
     messages = []
     for path in testfile_paths:
         if isinstance(path, str):
             path = Path(path)
-        # Linter fix PTH123: use Path.open()
         with path.open("r", encoding="utf-8") as f:
             messages.append((path.name, json.load(f)))
     feed_messages_direct(messages, processor=processor)
@@ -220,12 +228,6 @@ def start_consumer(
     db_path: str | None = None,
     direct_messages=None,
 ):
-    """
-    Start a consumer pipeline.
-
-    Either consume from Kafka (topic + kafka_cfg) or feed direct messages (direct_messages).
-    """
-    # Configure stats singleton
     if enable_db:
         stats.__init__(db_path=db_path)
     else:
@@ -234,7 +236,7 @@ def start_consumer(
     if direct_messages is not None:
         consumer = DirectConsumer(direct_messages)
     elif topic and kafka_cfg:
-        consumer = Consumer(topic, kafka_cfg)
+        consumer = KafkaConsumer(topic, kafka_cfg)
     else:
         raise ValueError("Either Kafka config or direct_messages must be provided")
 

@@ -1,6 +1,5 @@
 import pytest
 
-from piddiplatsch.config import config
 from piddiplatsch.consumer import feed_test_files
 
 
@@ -81,7 +80,6 @@ def test_send_valid_cmip6_mri_6hr_dc4(testfile, handle_client):
 
 @pytest.mark.online
 def test_send_valid_cmip6_ipsl_mon_dc4(testfile, handle_client):
-    config._set("schema", "strict_mode", False)
     paths = [
         testfile(
             "data_challenge_04",
