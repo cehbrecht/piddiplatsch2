@@ -5,7 +5,7 @@ import click
 
 from piddiplatsch.config import config
 from piddiplatsch.consumer import start_consumer
-from piddiplatsch.recovery import FailureRecovery
+from piddiplatsch.persist.recovery import FailureRecovery
 from piddiplatsch.testing import kafka_client
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
