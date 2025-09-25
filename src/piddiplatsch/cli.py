@@ -3,10 +3,10 @@ from pathlib import Path
 
 import click
 
-from piddiplatsch import client
 from piddiplatsch.config import config
 from piddiplatsch.consumer import start_consumer
 from piddiplatsch.recovery import FailureRecovery
+from piddiplatsch.testing import kafka_client
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -47,7 +47,7 @@ def init():
     """Creates the kafka topic."""
     topic = config.get("consumer", "topic")
     kafka_cfg = config.get("kafka")
-    client.ensure_topic_exists(topic, kafka_cfg)
+    kafka_client.ensure_topic_exists(topic, kafka_cfg)
 
 
 # consume command
@@ -105,7 +105,7 @@ def retry(filename: Path, delete_after: bool):
 def send(ctx, filename: Path, verbose: bool):
     """Send a message to the Kafka queue."""
     try:
-        key, value = client.build_message_from_path(filename)
+        key, value = kafka_client.build_message_from_path(filename)
     except (FileNotFoundError, json.JSONDecodeError) as e:
         click.echo(f"❌ {e}", err=True)
         ctx.exit(1)
@@ -123,7 +123,7 @@ def send(ctx, filename: Path, verbose: bool):
     try:
         topic = config.get("consumer", "topic")
         kafka_cfg = config.get("kafka")
-        client.send_message(topic, kafka_cfg, key, value, on_delivery=report)
+        kafka_client.send_message(topic, kafka_cfg, key, value, on_delivery=report)
     except Exception as e:
         click.echo(f"❌ {e}", err=True)
         ctx.exit(1)

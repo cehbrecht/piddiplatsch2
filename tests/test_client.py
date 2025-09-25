@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from piddiplatsch.client import ensure_topic_exists
+from piddiplatsch.testing.kafka_client import ensure_topic_exists
 
 
 @pytest.fixture
@@ -25,7 +25,9 @@ def test_ensure_topic_exists_creates_missing_topic(topic, kafka_cfg):
     mock_future.result.return_value = None
     mock_admin.create_topics.return_value = {topic: mock_future}
 
-    with patch("piddiplatsch.client.get_admin_client", return_value=mock_admin):
+    with patch(
+        "piddiplatsch.testing.kafka_client.get_admin_client", return_value=mock_admin
+    ):
         ensure_topic_exists(topic, kafka_cfg)
 
     mock_admin.create_topics.assert_called_once()
