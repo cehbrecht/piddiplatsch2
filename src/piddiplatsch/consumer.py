@@ -8,12 +8,12 @@ from confluent_kafka import Consumer as ConfluentConsumer
 from confluent_kafka import KafkaException
 
 from piddiplatsch.config import config
-from piddiplatsch.dump import DumpRecorder
 from piddiplatsch.exceptions import MaxErrorsExceededError
 from piddiplatsch.monitoring.stats import CounterKey, stats
+from piddiplatsch.persist.dump import DumpRecorder
+from piddiplatsch.persist.recovery import FailureRecovery
 from piddiplatsch.plugin_loader import load_single_plugin
 from piddiplatsch.processing import ProcessingResult
-from piddiplatsch.recovery import FailureRecovery
 
 logger = logging.getLogger(__name__)
 

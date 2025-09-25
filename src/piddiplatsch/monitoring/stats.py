@@ -59,10 +59,11 @@ class SQLiteReporter(StatsReporter):
     def __init__(self, db_path: str = "stats.db"):
         self._conn = sqlite3.connect(db_path, check_same_thread=False)
         self._cursor = self._conn.cursor()
+        # Store timestamps as TEXT (ISO 8601 UTC strings)
         self._cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS message_stats (
-                ts TIMESTAMP PRIMARY KEY,
+                ts TEXT PRIMARY KEY,
                 messages INTEGER,
                 errors INTEGER,
                 retries INTEGER,
@@ -89,7 +90,8 @@ class SQLiteReporter(StatsReporter):
         if self._closed:
             raise RuntimeError("SQLiteReporter is closed")
 
-        ts = datetime.datetime.utcnow()
+        # Store UTC timestamp as ISO 8601 string
+        ts = datetime.datetime.now(datetime.UTC).isoformat()
         self._cursor.execute(
             """
             INSERT INTO message_stats (ts, messages, errors, retries, handles,
@@ -177,6 +179,33 @@ class Stats:
         self._closed = False
         self._initialized = True
 
+    def reset(self):
+        """
+        Reset counters, timestamps, and logging state.
+        Can be used for testing or to restart stats tracking.
+        """
+        self._start_time = datetime.datetime.now(datetime.UTC)
+        self._last_message_time = None
+        self._last_error_time = None
+
+        # Reset counters
+        self._counters = dict.fromkeys(CounterKey, 0)
+        self._counters[CounterKey.HANDLE_TIME] = 0.0
+
+        # Reset logging control
+        self._last_log_time = time.time()
+        self._last_logged_messages = 0
+
+        # Close and reset reporters (optional: keep ConsoleReporter)
+        for reporter in list(self.reporters):
+            try:
+                reporter.close()
+            except Exception:
+                pass
+
+        self.reporters = [ConsoleReporter()]
+        self._closed = False
+
     # --- Core increment ---
     def increment(self, key: CounterKey, n=1):
         if key == CounterKey.HANDLE_TIME:
@@ -185,7 +214,7 @@ class Stats:
             self._counters[key] += n
 
         if key == CounterKey.MESSAGES:
-            self._last_message_time = datetime.datetime.utcnow()
+            self._last_message_time = datetime.datetime.now(datetime.UTC)
             self._maybe_log()
 
     # --- Shortcuts ---
@@ -202,7 +231,7 @@ class Stats:
 
     def error(self, message: str | None = None, n=1):
         self.increment(CounterKey.ERRORS, n)
-        self._last_error_time = datetime.datetime.utcnow()
+        self._last_error_time = datetime.datetime.now(datetime.UTC)
         if message:
             logger.error(f"ERROR: {message}")
 
@@ -295,7 +324,7 @@ class Stats:
 
     @property
     def uptime(self) -> float:
-        return (datetime.datetime.utcnow() - self._start_time).total_seconds()
+        return (datetime.datetime.now(datetime.UTC) - self._start_time).total_seconds()
 
     @property
     def last_message_time(self) -> datetime.datetime | None:
