@@ -2,7 +2,7 @@ import json
 import logging
 import signal
 import sys
-from enum import Enum
+from enum import StrEnum
 
 from confluent_kafka import Consumer as ConfluentConsumer
 from confluent_kafka import KafkaException
@@ -18,7 +18,7 @@ from piddiplatsch.recovery import FailureRecovery
 logger = logging.getLogger(__name__)
 
 
-class StopCause(str, Enum):
+class StopCause(StrEnum):
     MANUAL = "manual"
     SIGINT = "sigint"
     KEYBOARD_INTERRUPT = "keyboard_interrupt"
