@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from functools import cached_property
 from typing import Any
 
@@ -69,7 +69,7 @@ class BaseCMIP6Record(BaseRecord):
     def default_publication_time(self) -> str:
         published_on = self.additional_attributes.get("publication_time")
         if not published_on:
-            published_on = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+            published_on = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
         return published_on
 
     @cached_property

@@ -1,6 +1,6 @@
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from confluent_kafka import Producer
@@ -19,7 +19,7 @@ class FailureRecovery:
         key: str, data: dict, retries: int = 0, reason: str = "Unknown"
     ) -> None:
         """Append a failed STAC item to a daily JSONL file with UTC timestamp, under retries-N folder."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         timestamp = now.isoformat(timespec="seconds")
         dated_filename = f"failed_items_{now.date()}.jsonl"
 

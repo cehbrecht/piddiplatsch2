@@ -32,7 +32,7 @@ base_url = "http://elastic-hippo.cloud.dkrz.de:9200"
 index = "handle_21t14995"
 
 [schema]
-strict_mode = false
+strict_mode = true
 
 [cmip6]
 landing_page_url = "https://handle-esgf.dkrz.de/lp"

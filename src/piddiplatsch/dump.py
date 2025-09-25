@@ -1,6 +1,6 @@
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from piddiplatsch.config import config
@@ -12,7 +12,7 @@ class DumpRecorder:
 
     @staticmethod
     def record_item(key: str, data: dict) -> None:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         dated_filename = f"dump_messages_{now.date()}.jsonl"
         dump_file = DumpRecorder.DUMP_DIR / dated_filename
         # record = {"key": key, "value": data, "timestamp": now.isoformat()}

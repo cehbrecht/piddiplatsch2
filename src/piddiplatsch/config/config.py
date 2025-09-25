@@ -16,6 +16,22 @@ class Config:
             return toml.load(path)
         return {}
 
+    # --- Test / internal helper to override config values ---
+    def _set(self, section: str, key: str | None, value):
+        """
+        Private setter for testing or dynamic overrides.
+        Example:
+            config._set("cmip6", "max_parts", 5)
+            config._set("schema", None, {"strict_mode": True})
+        """
+        if key is None:
+            # Replace the entire section
+            self.config_data[section] = value
+        else:
+            if section not in self.config_data:
+                self.config_data[section] = {}
+            self.config_data[section][key] = value
+
     def load_user_config(self, user_config_path: str | None):
         if user_config_path:
             user_path = Path(user_config_path)

@@ -2,7 +2,7 @@ import datetime
 import logging
 import sqlite3
 import time
-from enum import Enum
+from enum import StrEnum
 
 from piddiplatsch.config import config
 
@@ -16,18 +16,18 @@ def to_iso(dt: float | datetime.datetime | None) -> str | None:
     if isinstance(dt, datetime.datetime):
         # If naive, assume UTC; otherwise convert to UTC
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=datetime.timezone.utc)
+            dt = dt.replace(tzinfo=datetime.UTC)
         else:
-            dt = dt.astimezone(datetime.timezone.utc)
+            dt = dt.astimezone(datetime.UTC)
         return dt.isoformat()
     # dt is a float timestamp
-    return datetime.datetime.fromtimestamp(dt, tz=datetime.timezone.utc).isoformat()
+    return datetime.datetime.fromtimestamp(dt, tz=datetime.UTC).isoformat()
 
 
 # -----------------------
 # Enum for counters
 # -----------------------
-class CounterKey(str, Enum):
+class CounterKey(StrEnum):
     MESSAGES = "messages"
     ERRORS = "errors"
     RETRIES = "retries"
@@ -155,7 +155,7 @@ class Stats:
             return
 
         # Private timestamps as UTC datetime
-        self._start_time = datetime.datetime.utcnow()
+        self._start_time = datetime.datetime.now(datetime.UTC)
         self._last_message_time: datetime.datetime | None = None
         self._last_error_time: datetime.datetime | None = None
 
