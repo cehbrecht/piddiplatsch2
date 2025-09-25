@@ -134,6 +134,7 @@ test prefix: hdl:21.T14995/UUID
 * retracted, replica ... use differnt names
 * how to handle checksum types?
 * how to use strict (validation) mode?
+* when strict = raise error, when not strict = raise warning
 * need a stac synced with kafka for testing
 * need multiple datasetid versions in kafka stream
 * work on recovery ... might also be used for "offline" testing ...
