@@ -2,8 +2,8 @@ import logging
 import time
 from typing import Any
 
-from piddiplatsch.handle_client import HandleClient
 from piddiplatsch.processing.result import ProcessingResult
+from piddiplatsch.utils.handle_client import HandleClient
 
 
 class BaseProcessor:
