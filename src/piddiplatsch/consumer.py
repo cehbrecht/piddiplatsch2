@@ -3,6 +3,7 @@ import logging
 import signal
 import sys
 from enum import StrEnum
+from pathlib import Path
 
 from confluent_kafka import Consumer as ConfluentConsumer
 from confluent_kafka import KafkaException
@@ -23,6 +24,11 @@ class StopCause(StrEnum):
     SIGINT = "sigint"
     KEYBOARD_INTERRUPT = "keyboard_interrupt"
     MAX_ERRORS = "max_errors_exceeded"
+
+
+# ----------------------------
+# Kafka Consumer
+# ----------------------------
 
 
 class Consumer:
@@ -54,20 +60,47 @@ class Consumer:
             self.consumer.close()
 
 
+# ----------------------------
+# Direct Consumer (for tests / recovery)
+# ----------------------------
+
+
+class DirectConsumer:
+    """Feed messages directly without Kafka."""
+
+    def __init__(self, messages):
+        """
+        messages: iterable of (key, value) tuples
+        """
+        self.messages = list(messages)
+
+    def consume(self):
+        # Linter fix UP028: use yield from
+        yield from self.messages
+
+
+# ----------------------------
+# Consumer Pipeline
+# ----------------------------
+
+
 class ConsumerPipeline:
-    """Coordinates Kafka consumption, message processing, and stats."""
+    """Coordinates consumption, message processing, and stats."""
 
     def __init__(
         self,
-        topic,
-        kafka_cfg,
+        consumer,
         processor,
         *,
         dump_messages=False,
         verbose=False,
         max_errors=-1,
     ):
-        self.consumer = Consumer(topic, kafka_cfg)
+        """
+        consumer: instance of Consumer or DirectConsumer
+        processor: plugin name
+        """
+        self.consumer = consumer
         self.processor = load_single_plugin(processor)
         self.dump_messages = dump_messages
         self.max_errors = int(max_errors)
@@ -86,7 +119,7 @@ class ConsumerPipeline:
         for key, value in self.consumer.consume():
             result = self._safe_process_message(key, value)
 
-            # Track metrics via Stats
+            # Track metrics
             if result.success:
                 self.stats.tick()
                 self.stats.handle(
@@ -105,11 +138,9 @@ class ConsumerPipeline:
             if getattr(result, "replica", False):
                 self.stats.replica(message=f"Dataset {key} replica created")
 
-            # Refresh progress display
             if self.progress:
                 self.progress.refresh()
 
-            # Check max errors
             self._check_success()
 
     def _check_success(self):
@@ -145,38 +176,71 @@ class ConsumerPipeline:
         self.stats.close()
 
 
+# ----------------------------
+# Direct helpers for testing / recovery
+# ----------------------------
+
+
+def feed_messages_direct(messages, processor="cmip6"):
+    """
+    Feed messages (list of (key, value)) directly into the pipeline.
+    """
+    consumer = DirectConsumer(messages)
+    pipeline = ConsumerPipeline(consumer, processor=processor)
+    pipeline.run()
+
+
+def feed_test_files(testfile_paths, processor="cmip6"):
+    """
+    Feed multiple JSON files directly, using filename as key.
+    """
+    messages = []
+    for path in testfile_paths:
+        if isinstance(path, str):
+            path = Path(path)
+        # Linter fix PTH123: use Path.open()
+        with path.open("r", encoding="utf-8") as f:
+            messages.append((path.name, json.load(f)))
+    feed_messages_direct(messages, processor=processor)
+
+
+# ----------------------------
+# CLI / Dispatcher entrypoint
+# ----------------------------
+
+
 def start_consumer(
-    topic,
-    kafka_cfg,
-    processor,
+    topic=None,
+    kafka_cfg=None,
+    processor="cmip6",
     *,
     dump_messages=False,
     verbose=False,
     enable_db=False,
     db_path: str | None = None,
+    direct_messages=None,
 ):
     """
-    Starts a Kafka consumer pipeline.
+    Start a consumer pipeline.
 
-    Args:
-        topic: Kafka topic to consume from.
-        kafka_cfg: Kafka configuration dict.
-        processor: Name of the processing plugin to load.
-        dump_messages: If True, raw messages are saved to disk.
-        verbose: If True, show progress with tqdm.
-        enable_db: If True, enable SQLite persistence for stats.
-        db_path: Path to SQLite database file (used if enable_db is True).
+    Either consume from Kafka (topic + kafka_cfg) or feed direct messages (direct_messages).
     """
-    # Configure Stats singleton with optional DB reporter
+    # Configure stats singleton
     if enable_db:
-        stats.__init__(db_path=db_path)  # re-initialize with DB
+        stats.__init__(db_path=db_path)
     else:
-        stats.__init__()  # console only
+        stats.__init__()
+
+    if direct_messages is not None:
+        consumer = DirectConsumer(direct_messages)
+    elif topic and kafka_cfg:
+        consumer = Consumer(topic, kafka_cfg)
+    else:
+        raise ValueError("Either Kafka config or direct_messages must be provided")
 
     max_errors = config.get("consumer", {}).get("max_errors", -1)
     pipeline = ConsumerPipeline(
-        topic,
-        kafka_cfg,
+        consumer,
         processor,
         dump_messages=dump_messages,
         verbose=verbose,
