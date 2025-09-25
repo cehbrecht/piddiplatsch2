@@ -1,14 +1,10 @@
-import time
-from pathlib import Path
-
 import pytest
 
-from piddiplatsch.cli import cli
+from piddiplatsch.consumer import feed_test_files
 
 
 def assert_dataset_record(handle_client, pid: str, all: bool = False):
     record = handle_client.get_record(pid)
-
     assert record is not None, f"PID {pid} was not registered"
     print(record)
     assert "URL" in record
@@ -18,14 +14,10 @@ def assert_dataset_record(handle_client, pid: str, all: bool = False):
     assert "HOSTING_NODE" in record
     if all:
         assert "HAS_PARTS" in record
-        # assert "REPLICA_NODES" in record
-        # assert "UNPUBLISHED_REPLICAS" in record
-        # assert "UNPUBLISHED_HOSTS" in record
 
 
 def assert_file_record(handle_client, pid: str):
     record = handle_client.get_record(pid)
-
     assert record is not None, f"PID {pid} was not registered"
     print(record)
     assert "URL" in record
@@ -36,21 +28,19 @@ def assert_file_record(handle_client, pid: str):
     assert "CHECKSUM" in record
     assert "CHECKSUM_METHOD" in record
     assert "FILE_SIZE" in record
-    # assert "FILE_VERSION" in record
-    # assert "DOWNLOAD_URL_REPLICA" in record
 
 
 def assert_record(handle_client, pid, sub_pids, all: bool = False):
     wait_for_pid(handle_client, pid)
-
     assert_dataset_record(handle_client, pid, all)
-
-    for pid in sub_pids:
-        assert_file_record(handle_client, pid)
+    for sub_pid in sub_pids:
+        assert_file_record(handle_client, sub_pid)
 
 
 def wait_for_pid(handle_client, pid: str, timeout: float = 5.0):
     """Wait until a PID is available in the handle service or timeout."""
+    import time
+
     start = time.time()
     while time.time() - start < timeout:
         if handle_client.get_record(pid):
@@ -59,33 +49,21 @@ def wait_for_pid(handle_client, pid: str, timeout: float = 5.0):
     raise AssertionError(f"PID {pid} was not registered within {timeout:.1f} seconds")
 
 
-def send_message(runner, filename: Path):
-    result = runner.invoke(cli, ["send", filename.as_posix()])
-
-    if result.exit_code != 0 or "📤 Message delivered" not in result.output:
-        print("---- CLI Output ----")
-        print(result.output)
-        print("--------------------")
-
-    assert result.exit_code == 0
-    assert "📤 Message delivered" in result.output
+# ----------------------------
+# Smoke Tests
+# ----------------------------
 
 
 @pytest.mark.online
-def test_send_invalid_file(runner):
-    result = runner.invoke(cli, ["send", "nonexistent.json"])
-    assert result.exit_code != 0
-    assert "No such file" in result.output or "Error" in result.output
-
-
-@pytest.mark.online
-def test_send_valid_cmip6_mri_6hr_dc4(runner, testfile, handle_client):
-    path = testfile(
-        "data_challenge_04",
-        "CMIP6",
-        "CMIP6.HighResMIP.MRI.MRI-AGCM3-2-H.highresSST-present.r1i1p1f1.6hrPlevPt.psl.gn.v20190820.json",
-    )
-    send_message(runner, path)
+def test_send_valid_cmip6_mri_6hr_dc4(testfile, handle_client):
+    paths = [
+        testfile(
+            "data_challenge_04",
+            "CMIP6",
+            "CMIP6.HighResMIP.MRI.MRI-AGCM3-2-H.highresSST-present.r1i1p1f1.6hrPlevPt.psl.gn.v20190820.json",
+        )
+    ]
+    feed_test_files(paths, processor="cmip6")
 
     pid = "b06058a6-1077-35cb-9500-1ccbd341d309"
     pids = [
@@ -97,42 +75,61 @@ def test_send_valid_cmip6_mri_6hr_dc4(runner, testfile, handle_client):
         "0b469be3-c851-3c37-96fd-f0f30dd90809",
         "4764e73c-ee61-38d7-aed5-4e35b8c1b39b",
     ]
-
     assert_record(handle_client, pid, pids)
 
 
 @pytest.mark.online
-def test_send_valid_cmip6_ipsl_mon_dc4(runner, testfile, handle_client):
-    path = testfile(
-        "data_challenge_04",
-        "CMIP6",
-        "CMIP6.ScenarioMIP.IPSL.IPSL-CM6A-LR.ssp245.r1i1p1f1.Amon.pr.gr.v20190119.json",
-    )
-    send_message(runner, path)
+def test_send_valid_cmip6_ipsl_mon_dc4(testfile, handle_client):
+    paths = [
+        testfile(
+            "data_challenge_04",
+            "CMIP6",
+            "CMIP6.ScenarioMIP.IPSL.IPSL-CM6A-LR.ssp245.r1i1p1f1.Amon.pr.gr.v20190119.json",
+        )
+    ]
+    feed_test_files(paths, processor="cmip6")
 
     pid = "11da5bd1-157f-3158-b775-ba42ed4e193b"
-    pids = [
-        "d1e2181e-1066-3d33-b56a-f45bf7a40ab5",
-    ]
-
+    pids = ["d1e2181e-1066-3d33-b56a-f45bf7a40ab5"]
     assert_record(handle_client, pid, pids)
 
 
 @pytest.mark.online
-def test_send_invalid_cmip6_dkrz_yr_dc4(runner, testfile):
-    path = testfile(
-        "data_challenge_04",
-        "CMIP6_invalid",
-        "CMIP6.ScenarioMIP.DKRZ.MPI-ESM1-2-HR.ssp126.r1i1p1f1.Eyr.baresoilFrac.gn.v20190710.json",
-    )
-    send_message(runner, path)
+def test_send_invalid_cmip6_dkrz_yr_dc4(testfile):
+    paths = [
+        testfile(
+            "data_challenge_04",
+            "CMIP6_invalid",
+            "CMIP6.ScenarioMIP.DKRZ.MPI-ESM1-2-HR.ssp126.r1i1p1f1.Eyr.baresoilFrac.gn.v20190710.json",
+        )
+    ]
+    feed_test_files(paths, processor="cmip6")
 
 
 @pytest.mark.online
-def test_send_invalid_cmip6_ipsl_mon_dc4_missing_file_size(runner, testfile):
-    path = testfile(
-        "data_challenge_04",
-        "CMIP6_invalid",
-        "CMIP6.ScenarioMIP.IPSL.IPSL-CM6A-LR.ssp245.r1i1p1f1.Amon.pr.gr.v20190119_missing_file_size.json",
-    )
-    send_message(runner, path)
+def test_send_invalid_cmip6_ipsl_mon_dc4_missing_file_size(testfile):
+    paths = [
+        testfile(
+            "data_challenge_04",
+            "CMIP6_invalid",
+            "CMIP6.ScenarioMIP.IPSL.IPSL-CM6A-LR.ssp245.r1i1p1f1.Amon.pr.gr.v20190119_missing_file_size.json",
+        )
+    ]
+    feed_test_files(paths, processor="cmip6")
+
+
+@pytest.mark.online
+def test_send_multiple_files(testfile, handle_client):
+    paths = [
+        testfile(
+            "data_challenge_04",
+            "CMIP6",
+            "CMIP6.HighResMIP.MRI.MRI-AGCM3-2-H.highresSST-present.r1i1p1f1.6hrPlevPt.psl.gn.v20190820.json",
+        ),
+        testfile(
+            "data_challenge_04",
+            "CMIP6",
+            "CMIP6.ScenarioMIP.IPSL.IPSL-CM6A-LR.ssp245.r1i1p1f1.Amon.pr.gr.v20190119.json",
+        ),
+    ]
+    feed_test_files(paths, processor="cmip6")
