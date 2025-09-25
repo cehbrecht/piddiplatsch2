@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -112,7 +112,7 @@ def test_has_parts_respects_max_parts(stac_item_complex):
 def test_host_and_published_on(stac_item_basic):
     record = CMIP6DatasetRecord(stac_item_basic, strict=True)
     assert record.host == "host1"
-    expected_dt = datetime(2024, 1, 1, 0, 0, tzinfo=timezone.utc)
+    expected_dt = datetime(2024, 1, 1, 0, 0, tzinfo=UTC)
     assert record.published_on == expected_dt
 
 
@@ -171,8 +171,8 @@ def test_replica_nodes_published_on_fallback(stac_item_with_alternates):
     record = CMIP6DatasetRecord(stac_item_with_alternates, strict=True)
     replicas = {n.host: n.published_on for n in record.replica_nodes}
 
-    expected_replica1 = datetime(2024, 1, 2, 0, 0, tzinfo=timezone.utc)
-    expected_replica2 = datetime(2024, 1, 1, 0, 0, tzinfo=timezone.utc)
+    expected_replica1 = datetime(2024, 1, 2, 0, 0, tzinfo=UTC)
+    expected_replica2 = datetime(2024, 1, 1, 0, 0, tzinfo=UTC)
 
     assert replicas["replica1"] == expected_replica1
     assert replicas["replica2"] == expected_replica2

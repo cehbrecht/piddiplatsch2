@@ -1,5 +1,5 @@
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import humanize
 from millify import millify
@@ -44,9 +44,9 @@ class Progress(BaseProgress):
         if ts is None:
             return None
         if isinstance(ts, float):
-            return datetime.fromtimestamp(ts, tz=timezone.utc)
+            return datetime.fromtimestamp(ts, tz=UTC)
         if ts.tzinfo is None:
-            return ts.replace(tzinfo=timezone.utc)
+            return ts.replace(tzinfo=UTC)
         return ts
 
     def _format_time(self, ts):
@@ -57,13 +57,13 @@ class Progress(BaseProgress):
         dt = self._to_utc_dt(ts)
         if dt is None:
             return "--"
-        return humanize.naturaltime(datetime.now(timezone.utc) - dt)
+        return humanize.naturaltime(datetime.now(UTC) - dt)
 
     def _format_elapsed(self, start_ts):
         start_dt = self._to_utc_dt(start_ts)
         if start_dt is None:
             return "--:--:--"
-        elapsed = int((datetime.now(timezone.utc) - start_dt).total_seconds())
+        elapsed = int((datetime.now(UTC) - start_dt).total_seconds())
         h, rem = divmod(elapsed, 3600)
         m, s = divmod(rem, 60)
         return f"{h:02}:{m:02}:{s:02}"
