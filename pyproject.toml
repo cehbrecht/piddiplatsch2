@@ -9,7 +9,7 @@ description = "A Kafka consumer for CMIP6+ records with Handle Service integrati
 authors = [
     { name = "Carsten Ehbrecht", email = "ehbrecht@dkrz.de" }
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = {file = "LICENSE"}
 dependencies = [
     "click",
