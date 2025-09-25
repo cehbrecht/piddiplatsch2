@@ -179,6 +179,33 @@ class Stats:
         self._closed = False
         self._initialized = True
 
+    def reset(self):
+        """
+        Reset counters, timestamps, and logging state.
+        Can be used for testing or to restart stats tracking.
+        """
+        self._start_time = datetime.datetime.now(datetime.UTC)
+        self._last_message_time = None
+        self._last_error_time = None
+
+        # Reset counters
+        self._counters = dict.fromkeys(CounterKey, 0)
+        self._counters[CounterKey.HANDLE_TIME] = 0.0
+
+        # Reset logging control
+        self._last_log_time = time.time()
+        self._last_logged_messages = 0
+
+        # Close and reset reporters (optional: keep ConsoleReporter)
+        for reporter in list(self.reporters):
+            try:
+                reporter.close()
+            except Exception:
+                pass
+
+        self.reporters = [ConsoleReporter()]
+        self._closed = False
+
     # --- Core increment ---
     def increment(self, key: CounterKey, n=1):
         if key == CounterKey.HANDLE_TIME:
