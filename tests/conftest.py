@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-from piddiplatsch.handle_client import HandleClient
+from piddiplatsch.utils.handle_client import HandleClient
 
 
 @pytest.fixture
