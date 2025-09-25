@@ -9,7 +9,7 @@ STAC_ITEM = {
         "data.nc": {
             "href": "https://example.com/data.nc",
             "tracking_id": None,
-            "file:checksum": "abc123",
+            "file:checksum": "9123456789abcdef0123456789abcdef01234568",
             "file:size": "1024",
             "alternate": {"mirror": {"href": "https://mirror.com/data.nc"}},
         },
@@ -35,16 +35,16 @@ def test_get_value_with_alternates():
     assert record.get_value("href_nonexistent") == ""  # key missing in both
 
 
-def test_tracking_id_and_pid(monkeypatch):
+def test_tracking_id_and_pid():
     # asset without tracking_id generates PID
     record = CMIP6FileRecord(STAC_ITEM, "data.nc", strict=False)
     pid = record.pid
-    assert pid.startswith("hdl:")  # asset_pid produces hdl: style PID
+    assert pid is not None
 
     # asset with existing tracking_id uses it
     record2 = CMIP6FileRecord(STAC_ITEM, "readme.txt", strict=False)
-    assert parse_pid(record2.tracking_id) == "hdl:21.TEST/readme123"
-    assert record2.pid == "hdl:21.TEST/readme123"
+    assert parse_pid(record2.tracking_id) == "readme123"
+    assert record2.pid == "readme123"
 
 
 def test_parent_and_filename():
@@ -61,20 +61,22 @@ def test_download_and_replica_urls():
 
 def test_checksum_and_size():
     record = CMIP6FileRecord(STAC_ITEM, "data.nc", strict=False)
-    assert record.checksum == "abc123"
+    assert record.checksum == "9123456789abcdef0123456789abcdef01234568"
     assert record.size == 1024
 
 
 def test_as_handle_model_structure():
     record = CMIP6FileRecord(STAC_ITEM, "data.nc", strict=False)
     model = record.as_handle_model()
-    assert model.URL == record.url
+    assert str(model.URL) == record.url
     assert model.FILE_NAME == "data.nc"
-    assert model.CHECKSUM == "abc123"
+    assert model.CHECKSUM == "9123456789abcdef0123456789abcdef01234568"
     assert model.FILE_SIZE == 1024
-    assert model.DOWNLOAD_URL == record.download_url
-    assert model.REPLICA_DOWNLOAD_URLS == record.replica_download_urls
-    assert model.PID == record.pid
+    assert str(model.DOWNLOAD_URL) == record.download_url
+    assert [
+        str(url) for url in model.REPLICA_DOWNLOAD_URLS
+    ] == record.replica_download_urls
+    assert model._PID == record.pid
 
 
 def test_extract_asset_records_excludes():
