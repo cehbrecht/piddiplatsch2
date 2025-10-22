@@ -126,6 +126,12 @@ test prefix: hdl:21.T14995/UUID
 
 ## updates
 
+### 2025-10-02
+
+Die STAC Kataloge und Suche für DC4 und ESGF West sind hier zu finden: https://data-challenge-04-discovery.api.stac.esgf-west.org/
+
+Und die nächste DC wird ein Load Test mit > 100.000 items sein. Aber wenn ich es richtig gesehen habe keine neue versionen sondern nur neu-Publikationen und Updated.
+
 ### 2025-09-23
 
 * update tests
