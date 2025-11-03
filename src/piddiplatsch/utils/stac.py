@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
+from multiformats import multihash
 
 import requests
 from pystac import Item
@@ -43,6 +44,33 @@ def split_cmip6_id(item_id: str) -> Properties:
         version=parts[-1],
         version_number=int(parts[-1][1:]),
     )
+
+def parse_multihash_hex(checksum_with_type: str) -> tuple[str, str]:
+    """
+    Parse a multihash hex string into (checksum_type, checksum_hex).
+
+    Args:
+        checksum_with_type: multihash as hex string, e.g.
+            '12205994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5'
+
+    Returns:
+        Tuple of:
+        - checksum_type: human-readable hash name, e.g., 'sha2-256'
+        - checksum_hex: raw digest as hex string
+    """
+    # Convert hex string to bytes
+    mh_bytes = bytes.fromhex(checksum_with_type)
+
+    # Decode the multihash
+    code, digest_bytes = multihash.unwrap_raw(mh_bytes)
+
+    # Get human-readable hash name
+    checksum_type = multihash.get(code).name
+
+    # Convert digest bytes to hex
+    checksum_hex = digest_bytes.hex()
+
+    return checksum_type, checksum_hex
 
 
 def extract_version(item: Item) -> int:
