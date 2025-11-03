@@ -126,6 +126,14 @@ test prefix: hdl:21.T14995/UUID
 
 ## updates
 
+### 2025-11-03
+
+checksum have encoded checksum type:
+
+https://github.com/multiformats/multihash
+
+It needs to be separated from the checksum and stored as the checksum type.
+
 ### 2025-10-29
 Moin Carsten, 
 
