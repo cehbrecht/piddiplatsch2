@@ -126,6 +126,116 @@ test prefix: hdl:21.T14995/UUID
 
 ## updates
 
+### 2025-11-03
+
+checksum have encoded checksum type:
+
+https://github.com/multiformats/multihash
+
+It needs to be separated from the checksum and stored as the checksum type.
+
+### 2025-10-29
+Moin Carsten, 
+
+die wollen demnächst einen größeren Lasttest machen und haben mich gefragt, ob folgende Metadaten für uns ok sind:
+
+```
+$ cat CMIP6.AerChemMIP.BCC.BCC-ESM1.hist-piAer.r3i1p1f1.Amon.hus.gn.v20200430_eagle.alcf.anl.gov.json
+{
+    "type": "Feature",
+    "stac_version": "1.1.0",
+    "stac_extensions": [
+        "https://esgf.github.io/stac-transaction-api/cmip6/v1.0.0/schema.json",
+        "https://stac-extensions.github.io/alternate-assets/v1.2.0/schema.json",
+        "https://stac-extensions.github.io/file/v2.1.0/schema.json"
+    ],
+    "id": "CMIP6.AerChemMIP.BCC.BCC-ESM1.hist-piAer.r3i1p1f1.Amon.hus.gn.v20200430",
+    "geometry": {
+        "type": "Polygon",
+        "coordinates": [...]
+    },
+    "bbox": [...],
+    "collection": "CMIP6",
+    "links": [...],
+    "properties": {
+        "datetime": null,
+        "start_datetime": "1850-01-16T12:00:00Z",
+        "end_datetime": "2014-11-06T12:00:00Z",
+        "size": 1232798856,
+        "created": "2025-01-02T00:00:00Z",
+        "updated": "2025-01-02T00:00:00Z",
+        "access": [
+            "HTTPServer",
+            "Globus"
+        ],
+        "latest": true,
+        "pid": "hdl:21.14100/e4d72478-e3f9-3f7e-9088-74b615d09a78",
+        "project": "CMIP6",
+        "retracted": false,
+        "title": "CMIP6.AerChemMIP.BCC.BCC-ESM1.hist-piAer.r3i1p1f1.Amon.hus.gn",
+        "version": 20200430,
+        "cmip6:activity_id": "AerChemMIP",
+        "cmip6:cf_standard_name": "specific_humidity",
+        "cmip6:citation_url": "http://cera-www.dkrz.de/WDCC/meta/CMIP6/CMIP6.AerChemMIP.BCC.BCC-ESM1.hist-piAer.r3i1p1f1.Amon.hus.gn.v20200430.json",
+        "cmip6:data_specs_version": "01.00.27",
+        "cmip6:experiment_id": "hist-piAer",
+        "cmip6:experiment_title": "historical forcing, but with pre-industrial aerosol emissions",
+        "cmip6:frequency": "mon",
+        "cmip6:further_info_url": "https://furtherinfo.es-doc.org/CMIP6.BCC.BCC-ESM1.hist-piAer.none.r3i1p1f1",
+        "cmip6:grid": "T42",
+        "cmip6:grid_label": "gn",
+        "cmip6:institution_id": "BCC",
+        "cmip6:member_id": "r3i1p1f1",
+        "cmip6:mip_era": "CMIP6",
+        "cmip6:nominal_resolution": "250 km",
+        "cmip6:product": "model-output",
+        "cmip6:realm": [
+            "atmos"
+        ],
+        "cmip6:source_id": "BCC-ESM1",
+        "cmip6:source_type": [
+            "AER",
+            "AOGCM",
+            "CHEM"
+        ],
+        "cmip6:table_id": "Amon",
+        "cmip6:variable": "hus",
+        "cmip6:variable_long_name": "Specific Humidity",
+        "cmip6:variable_units": "1",
+        "cmip6:variant_label": "r3i1p1f1"
+    },
+    "assets": {
+        "globus": {
+            "href": "https://app.globus.org/file-manager?origin_id=8896f38e-68d1-4708-bce4-b1b3a3405809&origin_path=/css03_data/CMIP6/AerChemMIP/BCC/BCC-ESM1/hist-piAer/r3i1p1f1/Amon/hus/gn/v20200430/",
+            "description": "Globus Web App Link",
+            "type": "text/html",
+            "roles": [
+                "data"
+            ],
+            "alternate:name": "eagle.alcf.anl.gov"
+        },
+        "data0000": {
+            "href": "https://g-52ba3.fd635.8443.data.globus.org/css03_data/CMIP6/AerChemMIP/BCC/BCC-ESM1/hist-piAer/r3i1p1f1/Amon/hus/gn/v20200430/hus_Amon_BCC-ESM1_hist-piAer_r3i1p1f1_gn_185001-201412.nc",
+            "description": "HTTPServer Link",
+            "type": "application/netcdf",
+            "roles": [
+                "data"
+            ],
+            "alternate:name": "eagle.alcf.anl.gov",
+            "file:size": 1232798856,
+            "file:checksum": "1220ebde086005717110daef5f5b7fc9084a2aa9a91428baaa72ad1e4e2337571762",
+            "cmip6:tracking_id": "hdl:21.14100/8327d538-67a9-4460-99a5-fb22ebbc2148"
+        }
+    }
+}
+```
+
+### 2025-10-02
+
+Die STAC Kataloge und Suche für DC4 und ESGF West sind hier zu finden: https://data-challenge-04-discovery.api.stac.esgf-west.org/
+
+Und die nächste DC wird ein Load Test mit > 100.000 items sein. Aber wenn ich es richtig gesehen habe keine neue versionen sondern nur neu-Publikationen und Updated.
+
 ### 2025-09-23
 
 * update tests

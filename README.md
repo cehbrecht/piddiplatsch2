@@ -81,13 +81,33 @@ piddiplatsch --verbose consume
 
 In verbose mode the consumer shows a performance message on the console.
 
-### Change logging
+### Change logging:
 
 ```bash
 piddiplatsch --debug --log my.log consume
 ```
 
 You can enable debug logging and also change the default log file (`pid.log`).
+
+### Optionally dump all messages:
+
+```bash
+piddiplatsch consume --dump
+```
+
+The messages are written to `outputs/dump/` as json-lines files. For example:
+
+```bash
+outputs/dump/dump_messages_2025-11-03.jsonl
+```
+
+### Example
+
+Run consumer with custom configuration in verbose mode and dump all messages:
+
+```bash
+piddiplatsch --config custom.toml --verbose consume --dump
+```
 
 ---
 
