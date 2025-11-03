@@ -6,6 +6,7 @@ from typing import Any
 from piddiplatsch.models import CMIP6FileModel
 from piddiplatsch.records.base import BaseCMIP6Record
 from piddiplatsch.utils.models import asset_pid, build_handle, item_pid, parse_pid
+from piddiplatsch.utils.stac import parse_multihash_hex
 
 
 class CMIP6FileRecord(BaseCMIP6Record):
@@ -85,7 +86,21 @@ class CMIP6FileRecord(BaseCMIP6Record):
 
     @cached_property
     def checksum(self) -> str | None:
-        return self.get_value("file:checksum")
+        cval = self.get_value("file:checksum")
+        try:
+            cype, chex = parse_multihash_hex(cval)
+        except Exception as err:
+            chex = cval
+        return chex
+
+    @cached_property
+    def checksum_type(self) -> str | None:
+        cval = self.get_value("file:checksum")
+        try:
+            ctype, chex = parse_multihash_hex(cval)
+        except Exception as err:
+            ctype = "UNKNOWN"
+        return ctype
 
     @cached_property
     def size(self) -> int | None:
@@ -101,6 +116,7 @@ class CMIP6FileRecord(BaseCMIP6Record):
             IS_PART_OF=self.parent,
             FILE_NAME=self.filename,
             CHECKSUM=self.checksum,
+            CHECKSUM_METHOD=self.checksum_type,
             FILE_SIZE=self.size,
             DOWNLOAD_URL=self.download_url,
             REPLICA_DOWNLOAD_URLS=self.replica_download_urls,
