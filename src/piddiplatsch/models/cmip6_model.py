@@ -114,5 +114,9 @@ class CMIP6FileModel(BaseCMIP6Model):
     def validate_required(self) -> CMIP6FileModel:
         if not self.CHECKSUM:
             raise ValueError("CHECKSUM is required.")
-
+        if not self.CHECKSUM_METHOD:
+            raise ValueError("CHECKSUM_METHOD is required.")
+        if self.CHECKSUM_METHOD not in ["sha2-256"]:
+            if strict_mode():
+                raise ValueError(f"Unknown CHECKSUM_METHOD: {self.CHECKSUM_METHOD}")
         return self
