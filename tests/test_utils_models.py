@@ -1,33 +1,32 @@
 import string
 from datetime import datetime
 from uuid import NAMESPACE_URL, UUID, uuid3
+from multiformats import multihash
 
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-import piddiplatsch.utils.models as models
+import piddiplatsch.utils.models as utils
 
 # ----------------------
 # build_handle tests
 # ----------------------
 
-
 def test_build_handle_with_and_without_uri():
     pid = "12345"
-    assert models.build_handle(pid) == "21.TEST/12345"
-    assert models.build_handle(pid, as_uri=True) == "hdl:21.TEST/12345"
+    assert utils.build_handle(pid) == "21.TEST/12345"
+    assert utils.build_handle(pid, as_uri=True) == "hdl:21.TEST/12345"
 
 
 # ----------------------
 # item_pid and asset_pid tests
 # ----------------------
 
-
 def test_item_pid_is_deterministic():
     item_id = "item-001"
-    pid1 = models.item_pid(item_id)
-    pid2 = models.item_pid(item_id)
+    pid1 = utils.item_pid(item_id)
+    pid2 = utils.item_pid(item_id)
 
     assert pid1 == pid2
     assert pid1 == str(uuid3(NAMESPACE_URL, item_id))
@@ -35,7 +34,7 @@ def test_item_pid_is_deterministic():
 
 @given(st.text(alphabet=string.printable))
 def test_item_pid_always_valid_uuid(item_id):
-    pid = models.item_pid(item_id)
+    pid = utils.item_pid(item_id)
     assert isinstance(UUID(pid), UUID)
 
 
@@ -43,8 +42,8 @@ def test_asset_pid_is_deterministic():
     item_id = "item-001"
     asset_key = "asset-a"
 
-    pid1 = models.asset_pid(item_id, asset_key)
-    pid2 = models.asset_pid(item_id, asset_key)
+    pid1 = utils.asset_pid(item_id, asset_key)
+    pid2 = utils.asset_pid(item_id, asset_key)
 
     assert pid1 == pid2
     assert pid1 == str(uuid3(NAMESPACE_URL, f"{item_id}#{asset_key}"))
@@ -55,7 +54,7 @@ def test_asset_pid_is_deterministic():
     asset_key=st.text(alphabet=string.printable),
 )
 def test_asset_pid_always_valid_uuid(item_id, asset_key):
-    pid = models.asset_pid(item_id, asset_key)
+    pid = utils.asset_pid(item_id, asset_key)
     assert isinstance(UUID(pid), UUID)
 
 
@@ -73,7 +72,7 @@ def test_asset_pid_always_valid_uuid(item_id, asset_key):
     ],
 )
 def test_drop_empty(data, expected):
-    assert models.drop_empty(data) == expected
+    assert utils.drop_empty(data) == expected
 
 
 @given(
@@ -88,7 +87,7 @@ def test_drop_empty(data, expected):
     )
 )
 def test_drop_empty_no_empty_fields_in_result(d):
-    cleaned = models.drop_empty(d)
+    cleaned = utils.drop_empty(d)
     assert all(v not in ("", [], {}, None) for v in cleaned.values())
 
 
@@ -99,21 +98,21 @@ def test_drop_empty_no_empty_fields_in_result(d):
 
 def test_parse_datetime_valid_and_invalid():
     valid = "2021-09-01T12:34:56Z"
-    dt = models.parse_datetime(valid)
+    dt = utils.parse_datetime(valid)
     assert isinstance(dt, datetime)
     assert dt.isoformat() == "2021-09-01T12:34:56+00:00"
 
     invalid = "not-a-datetime"
-    result = models.parse_datetime(invalid)
+    result = utils.parse_datetime(invalid)
     assert result is None
 
-    assert models.parse_datetime(None) is None
+    assert utils.parse_datetime(None) is None
 
 
 @given(st.datetimes())
 def test_parse_datetime_roundtrip(dt):
     iso = dt.isoformat()
-    parsed = models.parse_datetime(iso)
+    parsed = utils.parse_datetime(iso)
     assert isinstance(parsed, datetime)
 
 
@@ -132,10 +131,38 @@ def test_parse_datetime_roundtrip(dt):
     ],
 )
 def test_parse_pid(value, expected):
-    assert models.parse_pid(value) == expected
+    assert utils.parse_pid(value) == expected
 
 
 @given(st.text(alphabet=string.printable))
 def test_parse_pid_never_crashes(s):
-    result = models.parse_pid(s)
+    result = utils.parse_pid(s)
     assert result is None or isinstance(result, str)
+
+
+# ----------------------
+# parse_multihash_checksum tests
+# ----------------------
+
+
+def test_parse_multihash_hex_sha256():
+    mh_hex = "12205994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5"
+    checksum_type, checksum_hex = utils.parse_multihash_hex(mh_hex)
+    
+    assert checksum_type == "sha2-256"
+    assert checksum_hex == "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5"
+
+@pytest.mark.parametrize("digest_bytes,code_name", [
+    (b"hello world", "sha1"),
+    (b"another test", "sha2-256"),
+    (b"123456", "sha2-512"),
+])
+def test_parse_multihash_various(digest_bytes, code_name):
+    # Encode a multihash
+    mh_hex = multihash.digest(digest_bytes, code_name).hex()
+
+    # Parse
+    ctype, chex = utils.parse_multihash_hex(mh_hex)
+
+    assert ctype == code_name
+    # assert chex == digest_bytes.hex()

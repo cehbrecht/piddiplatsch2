@@ -5,8 +5,7 @@ from typing import Any
 
 from piddiplatsch.models import CMIP6FileModel
 from piddiplatsch.records.base import BaseCMIP6Record
-from piddiplatsch.utils.models import asset_pid, build_handle, item_pid, parse_pid
-from piddiplatsch.utils.stac import parse_multihash_hex
+from piddiplatsch.utils.models import asset_pid, build_handle, item_pid, parse_pid, parse_multihash_hex
 
 
 class CMIP6FileRecord(BaseCMIP6Record):
