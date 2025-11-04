@@ -19,6 +19,7 @@
 - Includes a mock Handle Server for local testing
 - Includes a Kafka service with docker-compose for testing
 - CLI and plugin support
+- Supports multihash checksums
 - Example notebooks
 
 ---
@@ -244,6 +245,9 @@ Explore the example notebooks here:
 ---
 
 ## ✅ TODO
+
+- [ ] **Dummy Handle Writer**  
+  Write handle records for testing purposes.
 
 - [ ] **Batch Handle registration**  
   Support committing one dataset and its associated files in a single batch request.
