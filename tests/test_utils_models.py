@@ -156,6 +156,9 @@ def test_parse_multihash_checksum_sha256():
     (b"hello world", "sha1"),
     (b"another test", "sha2-256"),
     (b"123456", "sha2-512"),
+    (b"hamburg", "sha3-512"),
+    (b"berlin", "md5"),
+    (b"bremen", "blake2b-256"),
 ])
 def test_parse_multihash_various(digest_bytes, code_name):
     # Encode a multihash

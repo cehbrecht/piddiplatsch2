@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import logging
-import re
 import uuid
 from datetime import datetime
+from multiformats import multihash
+
+
 
 from pydantic import (
     BaseModel,
@@ -19,10 +21,14 @@ from piddiplatsch.config import config
 
 logger = logging.getLogger(__name__)
 
-ALLOWED_CHECKSUM_TYPES = {
+
+ALLOWED_CHECKSUM_METHODs = {
+    "md5",
+    "sha1",
     "sha2-256",
     "sha2-512",
     "sha3-256",
+    "sha3-512",
     "blake2b-256",
 }
 
@@ -116,12 +122,12 @@ class CMIP6FileModel(BaseCMIP6Model):
         return str(v)
 
     @model_validator(mode="after")
-    def validate_required(self) -> CMIP6FileModel:
+    def validate_checksum(self) -> CMIP6FileModel:
         if not self.CHECKSUM:
             raise ValueError("CHECKSUM is required.")
         if not self.CHECKSUM_METHOD:
             raise ValueError("CHECKSUM_METHOD is required.")
-        if self.CHECKSUM_METHOD not in ALLOWED_CHECKSUM_TYPES:
+        if self.CHECKSUM_METHOD not in ALLOWED_CHECKSUM_METHODs:
             if strict_mode():
                 raise ValueError(f"Used CHECKSUM_METHOD is not allowed: {self.CHECKSUM_METHOD}")
         return self
