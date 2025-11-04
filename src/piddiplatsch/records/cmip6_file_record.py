@@ -91,6 +91,7 @@ class CMIP6FileRecord(BaseCMIP6Record):
             value = f"{cmethod}:{chex}"
         except Exception as err:
            value = f"unknown:{cval}"
+           logging.warning(f"Could not parse checksum: {cval}")
         return value
 
     @cached_property
