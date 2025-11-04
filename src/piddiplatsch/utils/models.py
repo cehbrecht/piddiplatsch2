@@ -87,3 +87,10 @@ def parse_multihash_checksum(checksum: str) -> tuple[str, str]:
     checksum_hex = digest_bytes.hex()
 
     return checksum_type, checksum_hex
+
+def is_hex(s: str) -> bool:
+    try:
+        bytes.fromhex(s)
+        return True
+    except ValueError:
+        return False

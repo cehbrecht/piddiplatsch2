@@ -165,4 +165,5 @@ def test_parse_multihash_various(digest_bytes, code_name):
     cmethod, chex = utils.parse_multihash_checksum(mh_hex)
 
     assert cmethod == code_name
-    # assert chex == digest_bytes.hex()
+    assert utils.is_hex(chex)
+    
