@@ -4,7 +4,6 @@ import logging
 import uuid
 from datetime import datetime
 
-
 from pydantic import (
     BaseModel,
     Field,
@@ -128,5 +127,7 @@ class CMIP6FileModel(BaseCMIP6Model):
             raise ValueError("CHECKSUM_METHOD is required.")
         if self.CHECKSUM_METHOD not in ALLOWED_CHECKSUM_METHODs:
             if strict_mode():
-                raise ValueError(f"Used CHECKSUM_METHOD is not allowed: {self.CHECKSUM_METHOD}")
+                raise ValueError(
+                    f"Used CHECKSUM_METHOD is not allowed: {self.CHECKSUM_METHOD}"
+                )
         return self

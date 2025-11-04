@@ -5,7 +5,13 @@ from typing import Any
 
 from piddiplatsch.models import CMIP6FileModel
 from piddiplatsch.records.base import BaseCMIP6Record
-from piddiplatsch.utils.models import asset_pid, build_handle, item_pid, parse_pid, parse_multihash_checksum
+from piddiplatsch.utils.models import (
+    asset_pid,
+    build_handle,
+    item_pid,
+    parse_multihash_checksum,
+    parse_pid,
+)
 
 
 class CMIP6FileRecord(BaseCMIP6Record):

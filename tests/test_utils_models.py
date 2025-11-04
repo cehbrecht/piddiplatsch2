@@ -1,11 +1,11 @@
 import string
 from datetime import datetime
 from uuid import NAMESPACE_URL, UUID, uuid3
-from multiformats import multihash
 
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
+from multiformats import multihash
 
 import piddiplatsch.utils.models as utils
 
@@ -23,6 +23,7 @@ def test_build_handle_with_and_without_uri():
 # ----------------------
 # item_pid and asset_pid tests
 # ----------------------
+
 
 def test_item_pid_is_deterministic():
     item_id = "item-001"
@@ -151,17 +152,23 @@ def test_parse_multihash_checksum_sha256():
     checksum_type, checksum_hex = utils.parse_multihash_checksum(mh_hex)
 
     assert checksum_type == "sha2-256"
-    assert checksum_hex == "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5"
+    assert (
+        checksum_hex
+        == "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5"
+    )
 
 
-@pytest.mark.parametrize("digest_bytes,code_name", [
-    (b"hello world", "sha1"),
-    (b"another test", "sha2-256"),
-    (b"123456", "sha2-512"),
-    (b"hamburg", "sha3-512"),
-    (b"berlin", "md5"),
-    (b"bremen", "blake2b-256"),
-])
+@pytest.mark.parametrize(
+    "digest_bytes,code_name",
+    [
+        (b"hello world", "sha1"),
+        (b"another test", "sha2-256"),
+        (b"123456", "sha2-512"),
+        (b"hamburg", "sha3-512"),
+        (b"berlin", "md5"),
+        (b"bremen", "blake2b-256"),
+    ],
+)
 def test_parse_multihash_various(digest_bytes, code_name):
     # Encode a multihash
     mh_hex = multihash.digest(digest_bytes, code_name).hex()

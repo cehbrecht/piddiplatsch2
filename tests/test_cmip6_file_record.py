@@ -61,7 +61,10 @@ def test_download_and_replica_urls():
 
 def test_checksum_and_size():
     record = CMIP6FileRecord(STAC_ITEM, "data.nc", strict=False)
-    assert record.checksum == "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5"
+    assert (
+        record.checksum
+        == "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5"
+    )
     assert record.checksum_method == "sha2-256"
     assert record.size == 1024
 
@@ -71,7 +74,10 @@ def test_as_handle_model_structure():
     model = record.as_handle_model()
     assert str(model.URL) == record.url
     assert model.FILE_NAME == "data.nc"
-    assert model.CHECKSUM == "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5"
+    assert (
+        model.CHECKSUM
+        == "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5"
+    )
     assert model.CHECKSUM_METHOD == "sha2-256"
     assert model.FILE_SIZE == 1024
     assert str(model.DOWNLOAD_URL) == record.download_url
