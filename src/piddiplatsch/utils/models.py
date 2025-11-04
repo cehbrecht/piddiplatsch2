@@ -61,21 +61,21 @@ def parse_pid(value: str) -> str:
     return pid_
 
 
-def parse_multihash_hex(checksum_with_type: str) -> tuple[str, str]:
+def parse_multihash_checksum(checksum: str) -> tuple[str, str]:
     """
-    Parse a multihash hex string into (checksum_type, checksum_hex).
+    Parse a multihash checksum string into (checksum_method, checksum_hex).
 
     Args:
-        checksum_with_type: multihash as hex string, e.g.
+        checksum: multihash as hex string, e.g.
             '12205994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5'
 
     Returns:
         Tuple of:
-        - checksum_type: human-readable hash name, e.g., 'sha2-256'
+        - checksum_method: human-readable hash name, e.g., 'sha2-256'
         - checksum_hex: raw digest as hex string
     """
     # Convert hex string to bytes
-    mh_bytes = bytes.fromhex(checksum_with_type)
+    mh_bytes = bytes.fromhex(checksum)
 
     # Decode the multihash
     code, digest_bytes = multihash.unwrap_raw(mh_bytes)

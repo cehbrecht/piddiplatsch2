@@ -5,7 +5,7 @@ from typing import Any
 
 from piddiplatsch.models import CMIP6FileModel
 from piddiplatsch.records.base import BaseCMIP6Record
-from piddiplatsch.utils.models import asset_pid, build_handle, item_pid, parse_pid, parse_multihash_hex
+from piddiplatsch.utils.models import asset_pid, build_handle, item_pid, parse_pid, parse_multihash_checksum
 
 
 class CMIP6FileRecord(BaseCMIP6Record):
@@ -87,7 +87,7 @@ class CMIP6FileRecord(BaseCMIP6Record):
     def checksum_with_method(self) -> str | None:
         cval = self.get_value("file:checksum")
         try:
-            cmethod, chex = parse_multihash_hex(cval)
+            cmethod, chex = parse_multihash_checksum(cval)
             value = f"{cmethod}:{chex}"
         except Exception as err:
            value = f"unknown:{cval}"

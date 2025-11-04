@@ -145,9 +145,9 @@ def test_parse_pid_never_crashes(s):
 # ----------------------
 
 
-def test_parse_multihash_hex_sha256():
-    mh_hex = "12205994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5"
-    checksum_type, checksum_hex = utils.parse_multihash_hex(mh_hex)
+def test_parse_multihash_checksum_sha256():
+    mh_hex = "1220" + "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5"
+    checksum_type, checksum_hex = utils.parse_multihash_checksum(mh_hex)
     
     assert checksum_type == "sha2-256"
     assert checksum_hex == "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5"
@@ -162,7 +162,7 @@ def test_parse_multihash_various(digest_bytes, code_name):
     mh_hex = multihash.digest(digest_bytes, code_name).hex()
 
     # Parse
-    ctype, chex = utils.parse_multihash_hex(mh_hex)
+    cmethod, chex = utils.parse_multihash_checksum(mh_hex)
 
-    assert ctype == code_name
+    assert cmethod == code_name
     # assert chex == digest_bytes.hex()
