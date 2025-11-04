@@ -96,19 +96,17 @@ class CMIP6FileRecord(BaseCMIP6Record):
 
     @cached_property
     def checksum(self) -> str | None:
-        cval = self.checksum_with_method
-        if cval:
-            chex = cval.split(":")[1]
-        else:
+        try:
+            chex = self.checksum_with_method.split(":")[1]
+        except Exception as err:
             chex = None
         return chex
 
     @cached_property
     def checksum_method(self) -> str | None:
-        cval = self.checksum_with_method
-        if cval:
-            cmethod = cval.split(":")[0]
-        else:
+        try:
+            cmethod = self.checksum_with_method.split(":")[0]
+        except Exception as err:
             cmethod = None
         return cmethod
 
