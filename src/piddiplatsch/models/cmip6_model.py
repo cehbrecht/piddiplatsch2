@@ -20,6 +20,12 @@ from piddiplatsch.utils.models import detect_checksum_type
 
 logger = logging.getLogger(__name__)
 
+ALLOWED_CHECKSUM_TYPES = {
+    "sha2-256",
+    "sha2-512",
+    "sha3-256",
+    "blake2b-256",
+}
 
 def get_max_parts() -> int:
     """Read max_parts dynamically from config."""
@@ -116,7 +122,7 @@ class CMIP6FileModel(BaseCMIP6Model):
             raise ValueError("CHECKSUM is required.")
         if not self.CHECKSUM_METHOD:
             raise ValueError("CHECKSUM_METHOD is required.")
-        if self.CHECKSUM_METHOD not in ["sha2-256"]:
+        if self.CHECKSUM_METHOD not in ALLOWED_CHECKSUM_TYPES:
             if strict_mode():
-                raise ValueError(f"Unknown CHECKSUM_METHOD: {self.CHECKSUM_METHOD}")
+                raise ValueError(f"Used CHECKSUM_METHOD is not allowed: {self.CHECKSUM_METHOD}")
         return self
