@@ -16,7 +16,6 @@ from pydantic import (
 )
 
 from piddiplatsch.config import config
-from piddiplatsch.utils.models import detect_checksum_type
 
 logger = logging.getLogger(__name__)
 
