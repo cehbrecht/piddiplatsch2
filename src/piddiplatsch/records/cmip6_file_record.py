@@ -90,8 +90,8 @@ class CMIP6FileRecord(BaseCMIP6Record):
             cmethod, chex = parse_multihash_checksum(cval)
             value = f"{cmethod}:{chex}"
         except Exception:
-           value = f"unknown:{cval}"
-           logging.warning(f"Could not parse checksum: {cval}")
+            value = f"unknown:{cval}"
+            logging.warning(f"Could not parse checksum: {cval}")
         return value
 
     @cached_property
