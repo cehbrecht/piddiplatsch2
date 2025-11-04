@@ -3,8 +3,6 @@ from __future__ import annotations
 import logging
 import uuid
 from datetime import datetime
-from multiformats import multihash
-
 
 
 from pydantic import (
@@ -31,6 +29,7 @@ ALLOWED_CHECKSUM_METHODs = {
     "sha3-512",
     "blake2b-256",
 }
+
 
 def get_max_parts() -> int:
     """Read max_parts dynamically from config."""

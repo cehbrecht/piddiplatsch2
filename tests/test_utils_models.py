@@ -13,6 +13,7 @@ import piddiplatsch.utils.models as utils
 # build_handle tests
 # ----------------------
 
+
 def test_build_handle_with_and_without_uri():
     pid = "12345"
     assert utils.build_handle(pid) == "21.TEST/12345"
@@ -148,9 +149,10 @@ def test_parse_pid_never_crashes(s):
 def test_parse_multihash_checksum_sha256():
     mh_hex = "1220" + "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5"
     checksum_type, checksum_hex = utils.parse_multihash_checksum(mh_hex)
-    
+
     assert checksum_type == "sha2-256"
     assert checksum_hex == "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5"
+
 
 @pytest.mark.parametrize("digest_bytes,code_name", [
     (b"hello world", "sha1"),
@@ -169,4 +171,3 @@ def test_parse_multihash_various(digest_bytes, code_name):
 
     assert cmethod == code_name
     assert utils.is_hex(chex)
-    

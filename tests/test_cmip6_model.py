@@ -15,7 +15,7 @@ VALID_FILE_DATA = {
     "URL": "https://example.com/data.nc",
     "FILE_NAME": "data.nc",
     "IS_PART_OF": "dataset-001",
-    "CHECKSUM": "12205994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5", 
+    "CHECKSUM": "12205994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5",
     "CHECKSUM_METHOD": "sha2-256",
     "FILE_SIZE": 123,
     "DOWNLOAD_URL": "https://example.com/data.nc",

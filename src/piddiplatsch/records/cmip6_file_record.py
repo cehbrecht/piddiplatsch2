@@ -82,14 +82,14 @@ class CMIP6FileRecord(BaseCMIP6Record):
         # Try filename from resolved href first
         resolved_name = PurePosixPath(self.href).name
         return resolved_name
-    
+
     @cached_property
     def checksum_with_method(self) -> str | None:
         cval = self.get_value("file:checksum")
         try:
             cmethod, chex = parse_multihash_checksum(cval)
             value = f"{cmethod}:{chex}"
-        except Exception as err:
+        except Exception:
            value = f"unknown:{cval}"
            logging.warning(f"Could not parse checksum: {cval}")
         return value
@@ -98,7 +98,7 @@ class CMIP6FileRecord(BaseCMIP6Record):
     def checksum(self) -> str | None:
         try:
             chex = self.checksum_with_method.split(":")[1]
-        except Exception as err:
+        except Exception:
             chex = None
         return chex
 
@@ -106,7 +106,7 @@ class CMIP6FileRecord(BaseCMIP6Record):
     def checksum_method(self) -> str | None:
         try:
             cmethod = self.checksum_with_method.split(":")[0]
-        except Exception as err:
+        except Exception:
             cmethod = None
         return cmethod
 
