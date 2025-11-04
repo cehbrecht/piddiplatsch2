@@ -83,23 +83,33 @@ class CMIP6FileRecord(BaseCMIP6Record):
         # Try filename from resolved href first
         resolved_name = PurePosixPath(self.href).name
         return resolved_name
+    
+    @cached_property
+    def checksum_with_type(self) -> str | None:
+        cval = self.get_value("file:checksum")
+        try:
+            ctype, chex = parse_multihash_hex(cval)
+            value = f"{ctype}:{chex}"
+        except Exception as err:
+           value = f"unknown:{cval}"
+        return value
 
     @cached_property
     def checksum(self) -> str | None:
-        cval = self.get_value("file:checksum")
-        try:
-            cype, chex = parse_multihash_hex(cval)
-        except Exception as err:
-            chex = cval
+        cval = self.checksum_with_type
+        if cval:
+            chex = cval.split(":")[1]
+        else:
+            chex = None
         return chex
 
     @cached_property
     def checksum_type(self) -> str | None:
-        cval = self.get_value("file:checksum")
-        try:
-            ctype, chex = parse_multihash_hex(cval)
-        except Exception as err:
-            ctype = "UNKNOWN"
+        cval = self.checksum_with_type
+        if cval:
+            ctype = cval.split(":")[0]
+        else:
+            ctype = None
         return ctype
 
     @cached_property
