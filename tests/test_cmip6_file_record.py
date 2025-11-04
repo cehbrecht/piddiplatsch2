@@ -62,7 +62,7 @@ def test_download_and_replica_urls():
 def test_checksum_and_size():
     record = CMIP6FileRecord(STAC_ITEM, "data.nc", strict=False)
     assert record.checksum == "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5"
-    assert record.checksum_type == "sha2-256"
+    assert record.checksum_method == "sha2-256"
     assert record.size == 1024
 
 

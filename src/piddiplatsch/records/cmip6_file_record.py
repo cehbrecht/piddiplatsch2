@@ -85,18 +85,18 @@ class CMIP6FileRecord(BaseCMIP6Record):
         return resolved_name
     
     @cached_property
-    def checksum_with_type(self) -> str | None:
+    def checksum_with_method(self) -> str | None:
         cval = self.get_value("file:checksum")
         try:
-            ctype, chex = parse_multihash_hex(cval)
-            value = f"{ctype}:{chex}"
+            cmethod, chex = parse_multihash_hex(cval)
+            value = f"{cmethod}:{chex}"
         except Exception as err:
            value = f"unknown:{cval}"
         return value
 
     @cached_property
     def checksum(self) -> str | None:
-        cval = self.checksum_with_type
+        cval = self.checksum_with_method
         if cval:
             chex = cval.split(":")[1]
         else:
@@ -104,13 +104,13 @@ class CMIP6FileRecord(BaseCMIP6Record):
         return chex
 
     @cached_property
-    def checksum_type(self) -> str | None:
-        cval = self.checksum_with_type
+    def checksum_method(self) -> str | None:
+        cval = self.checksum_with_method
         if cval:
-            ctype = cval.split(":")[0]
+            cmethod = cval.split(":")[0]
         else:
-            ctype = None
-        return ctype
+            cmethod = None
+        return cmethod
 
     @cached_property
     def size(self) -> int | None:
@@ -126,7 +126,7 @@ class CMIP6FileRecord(BaseCMIP6Record):
             IS_PART_OF=self.parent,
             FILE_NAME=self.filename,
             CHECKSUM=self.checksum,
-            CHECKSUM_METHOD=self.checksum_type,
+            CHECKSUM_METHOD=self.checksum_method,
             FILE_SIZE=self.size,
             DOWNLOAD_URL=self.download_url,
             REPLICA_DOWNLOAD_URLS=self.replica_download_urls,
