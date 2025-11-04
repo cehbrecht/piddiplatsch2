@@ -3,6 +3,7 @@ from datetime import datetime
 from uuid import NAMESPACE_URL, uuid3
 
 from dateutil.parser import isoparse
+from multiformats import multihash
 
 from piddiplatsch.config import config
 
@@ -60,20 +61,37 @@ def parse_pid(value: str) -> str:
     return pid_
 
 
-def detect_checksum_type(checksum: str) -> str:
-    """Guess checksum algorithm from hex length or multihash prefix."""
-    length = len(checksum)
+def parse_multihash_checksum(checksum: str) -> tuple[str, str]:
+    """
+    Parse a multihash checksum string into (checksum_method, checksum_hex).
 
-    if checksum.startswith("1220") and length == 68:
-        return "SHA256-MULTIHASH"
-    if length == 32:
-        return "MD5"
-    if length == 40:
-        return "SHA1"
-    if length == 64:
-        return "SHA256"
-    if length == 128:
-        return "SHA512"
+    Args:
+        checksum: multihash as hex string, e.g.
+            '12205994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5'
 
-    # Unknown checksum type
-    return "UNKNOWN"
+    Returns:
+        Tuple of:
+        - checksum_method: human-readable hash name, e.g., 'sha2-256'
+        - checksum_hex: raw digest as hex string
+    """
+    # Convert hex string to bytes
+    mh_bytes = bytes.fromhex(checksum)
+
+    # Decode the multihash
+    code, digest_bytes = multihash.unwrap_raw(mh_bytes)
+
+    # Get human-readable hash name
+    checksum_type = multihash.get(code).name
+
+    # Convert digest bytes to hex
+    checksum_hex = digest_bytes.hex()
+
+    return checksum_type, checksum_hex
+
+
+def is_hex(s: str) -> bool:
+    try:
+        bytes.fromhex(s)
+        return True
+    except ValueError:
+        return False

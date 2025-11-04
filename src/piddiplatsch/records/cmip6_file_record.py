@@ -5,7 +5,13 @@ from typing import Any
 
 from piddiplatsch.models import CMIP6FileModel
 from piddiplatsch.records.base import BaseCMIP6Record
-from piddiplatsch.utils.models import asset_pid, build_handle, item_pid, parse_pid
+from piddiplatsch.utils.models import (
+    asset_pid,
+    build_handle,
+    item_pid,
+    parse_multihash_checksum,
+    parse_pid,
+)
 
 
 class CMIP6FileRecord(BaseCMIP6Record):
@@ -84,8 +90,31 @@ class CMIP6FileRecord(BaseCMIP6Record):
         return resolved_name
 
     @cached_property
+    def checksum_with_method(self) -> str | None:
+        cval = self.get_value("file:checksum")
+        try:
+            cmethod, chex = parse_multihash_checksum(cval)
+            value = f"{cmethod}:{chex}"
+        except Exception:
+            value = f"unknown:{cval}"
+            logging.warning(f"Could not parse checksum: {cval}")
+        return value
+
+    @cached_property
     def checksum(self) -> str | None:
-        return self.get_value("file:checksum")
+        try:
+            chex = self.checksum_with_method.split(":")[1]
+        except Exception:
+            chex = None
+        return chex
+
+    @cached_property
+    def checksum_method(self) -> str | None:
+        try:
+            cmethod = self.checksum_with_method.split(":")[0]
+        except Exception:
+            cmethod = None
+        return cmethod
 
     @cached_property
     def size(self) -> int | None:
@@ -101,6 +130,7 @@ class CMIP6FileRecord(BaseCMIP6Record):
             IS_PART_OF=self.parent,
             FILE_NAME=self.filename,
             CHECKSUM=self.checksum,
+            CHECKSUM_METHOD=self.checksum_method,
             FILE_SIZE=self.size,
             DOWNLOAD_URL=self.download_url,
             REPLICA_DOWNLOAD_URLS=self.replica_download_urls,

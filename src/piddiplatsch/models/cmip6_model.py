@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import re
 import uuid
 from datetime import datetime
 
@@ -16,9 +15,19 @@ from pydantic import (
 )
 
 from piddiplatsch.config import config
-from piddiplatsch.utils.models import detect_checksum_type
 
 logger = logging.getLogger(__name__)
+
+
+ALLOWED_CHECKSUM_METHODs = {
+    "md5",
+    "sha1",
+    "sha2-256",
+    "sha2-512",
+    "sha3-256",
+    "sha3-512",
+    "blake2b-256",
+}
 
 
 def get_max_parts() -> int:
@@ -98,7 +107,7 @@ class CMIP6FileModel(BaseCMIP6Model):
     FILE_NAME: str
     IS_PART_OF: str
     CHECKSUM: str
-    CHECKSUM_METHOD: str = "AUTO"
+    CHECKSUM_METHOD: str
     FILE_SIZE: PositiveInt
     DOWNLOAD_URL: HttpUrl
     REPLICA_DOWNLOAD_URLS: list[HttpUrl] = Field(default_factory=list)
@@ -111,58 +120,14 @@ class CMIP6FileModel(BaseCMIP6Model):
         return str(v)
 
     @model_validator(mode="after")
-    def validate_required(self) -> CMIP6FileModel:
+    def validate_checksum(self) -> CMIP6FileModel:
         if not self.CHECKSUM:
             raise ValueError("CHECKSUM is required.")
-
-        checksum = self.CHECKSUM.lower()
-        method = self.CHECKSUM_METHOD.upper()
-
-        # AUTO-detect algorithm if requested
-        if method == "AUTO":
-            method = detect_checksum_type(checksum)
-            if method == "UNKNOWN":
-                if strict_mode():
-                    raise ValueError(
-                        f"Could not auto-detect checksum type for value "
-                        f"{checksum!r} (length={len(checksum)})"
-                    )
-                else:
-                    logger.warning(
-                        "Accepted checksum %r with UNKNOWN method (lenient mode)",
-                        checksum,
-                    )
-            self.CHECKSUM_METHOD = method
-
-        # Validate according to chosen/detected method
-        if method == "SHA1":
-            if not re.fullmatch(r"[0-9a-f]{40}", checksum):
-                raise ValueError("Invalid SHA-1 checksum (must be 40 hex chars).")
-
-        elif method == "SHA256":
-            if not re.fullmatch(r"[0-9a-f]{64}", checksum):
-                raise ValueError("Invalid SHA-256 checksum (must be 64 hex chars).")
-
-        elif method == "SHA512":
-            if not re.fullmatch(r"[0-9a-f]{128}", checksum):
-                raise ValueError("Invalid SHA-512 checksum (must be 128 hex chars).")
-
-        elif method == "SHA256-MULTIHASH":
-            if not (
-                checksum.startswith("1220") and re.fullmatch(r"[0-9a-f]{68}", checksum)
-            ):
-                raise ValueError(
-                    "Invalid multihash SHA-256 (must start with '1220' + 64 hex chars)."
-                )
-
-        elif method == "UNKNOWN":
+        if not self.CHECKSUM_METHOD:
+            raise ValueError("CHECKSUM_METHOD is required.")
+        if self.CHECKSUM_METHOD not in ALLOWED_CHECKSUM_METHODs:
             if strict_mode():
                 raise ValueError(
-                    f"Checksum {self.CHECKSUM!r} could not be validated under strict mode"
+                    f"Used CHECKSUM_METHOD is not allowed: {self.CHECKSUM_METHOD}"
                 )
-            # lenient mode → already warned, so accept
-
-        else:
-            raise ValueError(f"Unsupported CHECKSUM_METHOD: {method}")
-
         return self

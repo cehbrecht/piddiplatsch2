@@ -8,5 +8,6 @@ dependencies:
   - python-confluent-kafka>=2.9
   - jsonschema
   - pydantic>=2.11
+  - multiformats
   # dev
   - pytest
