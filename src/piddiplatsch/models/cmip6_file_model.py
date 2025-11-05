@@ -8,6 +8,7 @@ from pydantic import (
     model_validator,
 )
 
+
 class CMIP6FileModel(BaseCMIP6Model):
     AGGREGATION_LEVEL: str = "FILE"
     FILE_NAME: str

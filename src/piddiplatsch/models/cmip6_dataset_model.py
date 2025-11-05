@@ -8,6 +8,7 @@ from pydantic import (
 
 from datetime import datetime
 
+
 class CMIP6DatasetModel(BaseCMIP6Model):
     AGGREGATION_LEVEL: str = "DATASET"
     DATASET_ID: str

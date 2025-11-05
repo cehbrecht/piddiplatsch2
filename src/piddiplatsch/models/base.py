@@ -69,4 +69,3 @@ class BaseCMIP6Model(BaseModel):
 
     def get_pid(self) -> str | None:
         return self._PID
-

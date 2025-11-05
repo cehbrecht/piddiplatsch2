@@ -130,5 +130,3 @@ def test_optional_fields_defaults():
     assert dataset.IS_PART_OF is None
     assert dataset.REPLICA_NODES == []
     assert dataset._RETRACTED is False
-
-
