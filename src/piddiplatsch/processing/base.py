@@ -2,8 +2,9 @@ import logging
 import time
 from typing import Any
 
+from piddiplatsch.handles import get_handle_backend
+from piddiplatsch.handles.base import HandleBackend
 from piddiplatsch.processing.result import ProcessingResult
-from piddiplatsch.utils.handle_client import HandleClient
 
 
 class BaseProcessor:
@@ -11,10 +12,10 @@ class BaseProcessor:
 
     def __init__(
         self,
-        handle_client: HandleClient | None = None,
+        handle_backend: HandleBackend | None = None,
         retries: int = 0,
     ):
-        self.handle_client = handle_client or HandleClient.from_config()
+        self.handle_backend: HandleBackend = handle_backend or get_handle_backend()
         self.retries = retries
         self.logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ class BaseProcessor:
         last_err = None
         for attempt in range(1, self.retries + 2):
             try:
-                self.handle_client.add_record(record.pid, record.as_record())
+                self.handle_backend.add(record.pid, record.as_record())
                 return
             except Exception as e:
                 last_err = e
@@ -40,5 +41,6 @@ class BaseProcessor:
         return result, elapsed
 
     def process(self, key: str, value: dict[str, Any]) -> ProcessingResult:
-        """Child classes should implement _process_item and return (num_handles, schema_time, record_time, handle_time)."""
+        """Child classes should implement _process_item and return
+        (num_handles, schema_time, record_time, handle_time)."""
         raise NotImplementedError

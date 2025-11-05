@@ -1,6 +1,6 @@
 import pytest
 
-from piddiplatsch.utils.handle_client import _prepare_handle_data
+from piddiplatsch.handles.base import prepare_handle_data
 
 
 @pytest.fixture
@@ -17,7 +17,7 @@ def example_record():
 
 
 def test_prepare_handle_data(example_record):
-    prepared = _prepare_handle_data(example_record)
+    prepared = prepare_handle_data(example_record)
 
     assert isinstance(prepared, dict)
     print(prepared)
