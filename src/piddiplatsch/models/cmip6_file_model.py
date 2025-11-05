@@ -1,13 +1,17 @@
 from __future__ import annotations
 
-from piddiplatsch.models.base import BaseCMIP6Model, strict_mode, ALLOWED_CHECKSUM_METHODs
-
 from pydantic import (
     Field,
     HttpUrl,
     PositiveInt,
     field_serializer,
     model_validator,
+)
+
+from piddiplatsch.models.base import (
+    ALLOWED_CHECKSUM_METHODs,
+    BaseCMIP6Model,
+    strict_mode,
 )
 
 

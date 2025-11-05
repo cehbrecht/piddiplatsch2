@@ -1,14 +1,19 @@
 from __future__ import annotations
 
-from piddiplatsch.models.base import BaseCMIP6Model, strict_mode, get_max_parts, HostingNode
+from datetime import datetime
 
 from pydantic import (
-    PrivateAttr,
     Field,
+    PrivateAttr,
     model_validator,
 )
 
-from datetime import datetime
+from piddiplatsch.models.base import (
+    BaseCMIP6Model,
+    HostingNode,
+    get_max_parts,
+    strict_mode,
+)
 
 
 class CMIP6DatasetModel(BaseCMIP6Model):
