@@ -1,6 +1,5 @@
 import json
 import logging
-from datetime import datetime
 from typing import Any
 
 import pyhandle
@@ -9,34 +8,10 @@ from pyhandle.clientcredentials import PIDClientCredentials
 from pyhandle.handleexceptions import HandleAlreadyExistsException
 
 from piddiplatsch.config import config
-from piddiplatsch.handles.base import HandleBackend
+from piddiplatsch.handles.base import HandleBackend, prepare_handle_data
 from piddiplatsch.utils.models import build_handle
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-
-def _prepare_handle_data(record: dict[str, Any]) -> dict[str, str]:
-    """Prepare handle record fields: serialize list/dict values, skip None, convert datetime."""
-    prepared: dict[str, str] = {}
-
-    for key, value in record.items():
-        if value is None:
-            continue
-
-        if isinstance(value, list | dict):
-
-            def serialize(obj):
-                if isinstance(obj, datetime):
-                    return obj.isoformat()
-                return obj
-
-            value = json.dumps(value, default=serialize)
-        elif isinstance(value, datetime):
-            value = value.isoformat()
-
-        prepared[key] = value
-
-    return prepared
 
 
 class HandleClient(HandleBackend):
@@ -74,7 +49,7 @@ class HandleClient(HandleBackend):
 
     def add(self, pid: str, record: dict[str, Any]) -> None:
         handle = build_handle(pid)
-        handle_data = _prepare_handle_data(record)
+        handle_data = prepare_handle_data(record)
         location = handle_data.pop("URL", None)
         if not location:
             raise ValueError("Missing required 'URL' in record")
@@ -122,6 +97,6 @@ class HandleClient(HandleBackend):
 
     def update(self, pid: str, record: dict[str, Any]) -> None:
         handle = build_handle(pid)
-        handle_data = _prepare_handle_data(record)
+        handle_data = prepare_handle_data(record)
         location = handle_data.pop("URL", None)
         self.client.modify_handle(handle=handle, location=location, **handle_data)
