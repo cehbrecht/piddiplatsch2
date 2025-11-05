@@ -4,6 +4,7 @@ from typing import Any
 
 from piddiplatsch.config import config
 from piddiplatsch.handles.base import HandleBackend, prepare_handle_data
+from piddiplatsch.utils.models import build_handle
 
 
 class JsonlHandleBackend(HandleBackend):
@@ -19,9 +20,10 @@ class JsonlHandleBackend(HandleBackend):
 
     def add(self, pid: str, record: dict[str, Any]) -> None:
         """Add or overwrite a PID record (naive append)."""
+        handle = build_handle(pid)
         handle_data = prepare_handle_data(record)
         with self.path.open("a") as f:
-            f.write(json.dumps({"pid": pid, "record": handle_data}) + "\n")
+            f.write(json.dumps({"handle": handle, "data": handle_data}) + "\n")
 
     def get(self, pid: str) -> dict[str, Any] | None:
         """Retrieve a PID record. Return None if not found."""
