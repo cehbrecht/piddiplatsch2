@@ -9,9 +9,8 @@ from pyhandle.clientcredentials import PIDClientCredentials
 from pyhandle.handleexceptions import HandleAlreadyExistsException
 
 from piddiplatsch.config import config
+from piddiplatsch.handles.base import HandleBackend
 from piddiplatsch.utils.models import build_handle
-
-from .base import HandleBackend
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 

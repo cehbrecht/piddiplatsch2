@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .base import HandleBackend
+from piddiplatsch.handles.base import HandleBackend
 
 
 class JsonlHandleBackend(HandleBackend):
