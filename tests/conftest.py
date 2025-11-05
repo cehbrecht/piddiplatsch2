@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-from piddiplatsch.utils.handle_client import HandleClient
+from piddiplatsch.handles import get_handle_backend
 
 
 @pytest.fixture
@@ -40,4 +40,4 @@ def handle_client():
     """
     Returns a HandleClient instance connected to the test/mock Handle Service.
     """
-    return HandleClient.from_config()
+    return get_handle_backend()

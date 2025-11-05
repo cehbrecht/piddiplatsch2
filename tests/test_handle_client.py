@@ -1,6 +1,6 @@
 import pytest
 
-from piddiplatsch.utils.handle_client import _prepare_handle_data
+from piddiplatsch.handles.pyhandle_backend import _prepare_handle_data
 
 
 @pytest.fixture
