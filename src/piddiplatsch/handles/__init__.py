@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Literal
 
 from piddiplatsch.config import config
@@ -24,7 +23,6 @@ def get_handle_backend() -> HandleBackend:
         return HandleClient.from_config()
 
     if backend_type == "jsonl":
-        path = config.get("handle", "jsonl_path", fallback="handles.jsonl")
-        return JsonlHandleBackend(Path(path))
+        return JsonlHandleBackend()
 
     raise ValueError(f"Unknown handle backend type: {backend_type}")

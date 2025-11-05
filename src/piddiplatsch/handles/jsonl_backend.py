@@ -2,14 +2,19 @@ import json
 from pathlib import Path
 from typing import Any
 
+from piddiplatsch.config import config
 from piddiplatsch.handles.base import HandleBackend
 
 
 class JsonlHandleBackend(HandleBackend):
     """Store handle records locally as JSONL for testing."""
 
-    def __init__(self, path: str | Path) -> None:
-        self.path: Path = Path(path)
+    def __init__(self) -> None:
+        self.path = (
+            Path(config.get("consumer", {}).get("output_dir", "outputs"))
+            / "handles"
+            / "records.jsonl"
+        )
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
     def add(self, pid: str, record: dict[str, Any]) -> None:
