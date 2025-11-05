@@ -17,6 +17,8 @@ max_errors = 10  # -1 = unlimited, any positive int = stop after that many
 "session.timeout.ms" = 45000
 
 [handle]
+# backend = "jsonl"
+backend = "pyhandle"
 server_url = "http://localhost:8000"
 prefix = "21.TEST"
 username = "300:21.TEST/testuser"
