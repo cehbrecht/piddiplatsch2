@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from piddiplatsch.models.base import BaseCMIP6Model, strict_mode, get_max_parts, HostingNode
 
 from pydantic import (
