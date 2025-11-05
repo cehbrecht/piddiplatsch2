@@ -4,12 +4,7 @@ import logging
 import uuid
 from datetime import datetime
 
-from pydantic import (
-    BaseModel,
-    HttpUrl,
-    PrivateAttr,
-    field_serializer,
-)
+from pydantic import BaseModel, HttpUrl, PrivateAttr, field_serializer
 
 from piddiplatsch.config import config
 

@@ -2,11 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import (
-    Field,
-    PrivateAttr,
-    model_validator,
-)
+from pydantic import Field, PrivateAttr, model_validator
 
 from piddiplatsch.models.base import (
     BaseCMIP6Model,
