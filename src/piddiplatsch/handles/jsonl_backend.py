@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Any
 
 from piddiplatsch.config import config
-from piddiplatsch.handles.base import HandleBackend, prepare_handle_data
-from piddiplatsch.utils.models import build_handle
+from piddiplatsch.handles.base import HandleBackend
+from piddiplatsch.utils.models import build_handle, prepare_handle_data
 
 
 class JsonlHandleBackend(HandleBackend):
