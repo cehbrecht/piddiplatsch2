@@ -2,8 +2,7 @@ import logging
 import time
 from typing import Any
 
-from piddiplatsch.handles import get_handle_backend
-from piddiplatsch.handles.base import HandleBackend
+from piddiplatsch.handles.api import HandleAPI, HandleAPIProtocol
 from piddiplatsch.processing.result import ProcessingResult
 
 
@@ -12,10 +11,10 @@ class BaseProcessor:
 
     def __init__(
         self,
-        handle_backend: HandleBackend | None = None,
+        handle_backend: HandleAPIProtocol | None = None,
         retries: int = 0,
     ):
-        self.handle_backend: HandleBackend = handle_backend or get_handle_backend()
+        self.handle_backend: HandleAPIProtocol = handle_backend or HandleAPI()
         self.retries = retries
         self.logger = logging.getLogger(__name__)
 

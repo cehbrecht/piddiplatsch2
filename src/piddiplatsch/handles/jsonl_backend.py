@@ -1,60 +1,47 @@
+from __future__ import annotations
+
 import json
+import logging
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from piddiplatsch.config import config
-from piddiplatsch.handles.base import HandleBackend, prepare_handle_data
-from piddiplatsch.utils.models import build_handle
+from piddiplatsch.handles.base import HandleBackend
 
 
 class JsonlHandleBackend(HandleBackend):
-    """Store handle records locally as JSONL for testing."""
+    """
+    JSONL backend for testing, similar to DumpRecorder.
+    Writes one file per day under the configured dump directory.
+    Format per line:
+      {"handle": "<HANDLE>", "URL": "<location>", "data": {...}, "timestamp": "<ISO8601>"}
+    """
 
-    def __init__(self) -> None:
-        self.path = (
-            Path(config.get("consumer", {}).get("output_dir", "outputs"))
-            / "handles"
-            / "records.jsonl"
-        )
-        self.path.parent.mkdir(parents=True, exist_ok=True)
+    def __init__(self):
+        # Read output_dir from [consumer] section, fallback to outputs/handles_dump
+        base_dir = config.get("consumer", {}).get("output_dir", "outputs")
+        dump_dir = Path(base_dir) / "handles"
 
-    def add(self, pid: str, record: dict[str, Any]) -> None:
-        """Add or overwrite a PID record (naive append)."""
-        handle = build_handle(pid)
-        handle_data = prepare_handle_data(record)
-        with self.path.open("a") as f:
-            f.write(json.dumps({"handle": handle, "data": handle_data}) + "\n")
+        self.dump_dir = Path(dump_dir)
+        self.dump_dir.mkdir(parents=True, exist_ok=True)
 
-    def get(self, pid: str) -> dict[str, Any] | None:
-        """Retrieve a PID record. Return None if not found."""
-        if not self.path.exists():
-            return None
+    def _store(self, handle: str, handle_data: dict[str, Any]) -> None:
+        # Determine file name by UTC date
+        now = datetime.now(UTC)
+        dated_filename = f"handles_{now.date()}.jsonl"
+        dump_file = self.dump_dir / dated_filename
 
-        with self.path.open() as f:
-            for line in f:
-                row = json.loads(line)
-                if row["pid"] == pid:
-                    return row["record"]
+        # Include timestamp for traceability
+        record = {
+            "handle": handle,
+            "URL": handle_data.pop("URL", None),
+            "data": handle_data,
+            "timestamp": now.isoformat(),
+        }
 
-        return None
+        with dump_file.open("a", encoding="utf-8") as f:
+            json.dump(record, f, ensure_ascii=False)
+            f.write("\n")
 
-    def update(self, pid: str, record: dict[str, Any]) -> None:
-        """Update an existing PID or add if missing."""
-        lines: list[dict[str, Any]] = []
-        found: bool = False
-
-        if self.path.exists():
-            with self.path.open() as f:
-                for line in f:
-                    row = json.loads(line)
-                    if row["pid"] == pid:
-                        row["record"] = record
-                        found = True
-                    lines.append(row)
-
-        if not found:
-            lines.append({"pid": pid, "record": record})
-
-        with self.path.open("w") as f:
-            for row in lines:
-                f.write(json.dumps(row) + "\n")
+        logging.debug(f"Wrote handle {handle} to {dump_file}")

@@ -1,38 +1,29 @@
-import json
-from datetime import datetime
-from typing import Any, Protocol
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from typing import Any
+
+from piddiplatsch.utils.models import build_handle, prepare_handle_data
 
 
-def prepare_handle_data(record: dict[str, Any]) -> dict[str, str]:
-    """Prepare handle record fields: serialize list/dict values, skip None, convert datetime."""
-    prepared: dict[str, str] = {}
+class HandleBackend(ABC):
+    """
+    Abstract backend template. Implements create-or-update logic.
+    """
 
-    for key, value in record.items():
-        if value is None:
-            continue
+    def add(self, pid: str, record: dict[str, Any]) -> None:
+        handle, handle_data = self._prepare(pid, record)
+        self._store(handle, handle_data)
 
-        if isinstance(value, list | dict):
+    def _prepare(self, pid: str, record: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+        handle = build_handle(pid)
+        handle_data = prepare_handle_data(record)
 
-            def serialize(obj):
-                if isinstance(obj, datetime):
-                    return obj.isoformat()
-                return obj
+        if "URL" not in handle_data or not handle_data["URL"]:
+            raise ValueError("Missing required 'URL' in record")
 
-            value = json.dumps(value, default=serialize)
-        elif isinstance(value, datetime):
-            value = value.isoformat()
+        return handle, handle_data
 
-        prepared[key] = value
-
-    return prepared
-
-
-# --- Backend Interface ---
-class HandleBackend(Protocol):
-    """Minimal interface for PID backends, aligned with Handle API."""
-
-    def add(self, pid: str, record: dict[str, Any]) -> None: ...
-
-    def get(self, pid: str) -> dict[str, Any] | None: ...
-
-    def update(self, pid: str, record: dict[str, Any]) -> None: ...
+    @abstractmethod
+    def _store(self, handle: str, handle_data: dict[str, Any]) -> None:
+        raise NotImplementedError
