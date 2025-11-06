@@ -1,4 +1,3 @@
-import json
 import logging
 from typing import Any
 
@@ -9,7 +8,6 @@ from pyhandle.handleexceptions import HandleAlreadyExistsException
 
 from piddiplatsch.config import config
 from piddiplatsch.handles.base import HandleBackend
-from piddiplatsch.utils.models import build_handle, prepare_handle_data
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -47,13 +45,8 @@ class HandleClient(HandleBackend):
             password=config.get("handle", "password"),
         )
 
-    def add(self, pid: str, record: dict[str, Any]) -> None:
-        handle = build_handle(pid)
-        handle_data = prepare_handle_data(record)
+    def _store(self, handle: str, handle_data: dict[str, Any]) -> None:
         location = handle_data.pop("URL", None)
-        if not location:
-            raise ValueError("Missing required 'URL' in record")
-
         try:
             self.client.register_handle(
                 handle=handle,
@@ -62,41 +55,7 @@ class HandleClient(HandleBackend):
                 **handle_data,
             )
         except HandleAlreadyExistsException:
-            pass
+            logging.debug("Handle already exists (ignored with overwrite=True)")
         except Exception as e:
             logging.error(f"Failed to register handle {handle}: {e}")
             raise
-
-    def get(self, pid: str) -> dict | None:
-        handle = build_handle(pid)
-        try:
-            response = self.client.retrieve_handle_record_json(handle)
-            if not response or "values" not in response:
-                return None
-
-            record: dict[str, Any] = {}
-            for entry in response["values"]:
-                key = entry.get("type")
-                value = entry.get("data")
-
-                if key in ("HS_ADMIN", None):
-                    continue
-
-                try:
-                    record[key] = json.loads(value)
-                except (TypeError, json.JSONDecodeError):
-                    record[key] = value
-
-            return record
-
-        except pyhandle.handleexceptions.HandleNotFoundException:
-            return None
-        except Exception as e:
-            logging.error(f"Error retrieving handle {handle}: {e}")
-            raise
-
-    def update(self, pid: str, record: dict[str, Any]) -> None:
-        handle = build_handle(pid)
-        handle_data = prepare_handle_data(record)
-        location = handle_data.pop("URL", None)
-        self.client.modify_handle(handle=handle, location=location, **handle_data)
