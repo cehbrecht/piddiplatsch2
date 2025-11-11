@@ -50,7 +50,7 @@ enabled = true
 interval_seconds = 10
 
 # Number of messages processed before logging stats
-summary_interval = 100
+summary_interval = 1000
 
 # Enable SQLite reporter for persistent stats
 enable_db = true

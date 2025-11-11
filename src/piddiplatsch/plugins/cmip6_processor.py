@@ -72,6 +72,7 @@ class CMIP6Processor(BaseProcessor):
         if payload.get("method") == "PATCH":
             try:
                 item = self._apply_patch_to_stac_item(payload)
+                self.logger.info(f"Patched item with key={key}.")
             except Exception as e:
                 self.logger.error(f"Failed to apply patch for key={key}: {e}")
                 return 0, 0.0, True
