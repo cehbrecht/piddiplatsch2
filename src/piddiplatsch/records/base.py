@@ -10,9 +10,8 @@ from piddiplatsch.utils.models import drop_empty
 
 
 class BaseRecord(ABC):
-    def __init__(self, item: dict[str, Any], strict: bool):
+    def __init__(self, item: dict[str, Any]):
         self.item = item
-        self.strict = strict
 
     @abstractmethod
     def as_handle_model(self) -> BaseModel:
@@ -35,10 +34,6 @@ class BaseRecord(ABC):
     def as_json(self) -> str:
         return self.model.model_dump_json()
 
-    @property
-    def is_strict(self) -> bool:
-        return self.strict
-
     def __repr__(self) -> str:
         pid = getattr(self, "pid", lambda: "UNKNOWN")
         return f"<{self.__class__.__name__} id={self.item.get('id', 'UNKNOWN')} pid={pid()}>"
@@ -52,9 +47,8 @@ class BaseCMIP6Record(BaseRecord):
         self,
         item: dict[str, Any],
         additional_attributes: dict[str, Any] | None = None,
-        strict: bool = False,
     ):
-        super().__init__(item, strict=strict)
+        super().__init__(item)
         self.additional_attributes = additional_attributes or {}
 
     @cached_property

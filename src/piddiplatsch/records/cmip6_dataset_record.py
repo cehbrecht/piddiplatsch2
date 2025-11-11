@@ -26,11 +26,10 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
     def __init__(
         self,
         item: dict[str, Any],
-        strict: bool,
         exclude_keys: list[str] | None = None,
         additional_attributes: dict[str, Any] | None = None,
     ):
-        super().__init__(item, additional_attributes, strict=strict)
+        super().__init__(item, additional_attributes)
         self.exclude_keys = set(exclude_keys or [])
         self.max_parts = config.get("cmip6", {}).get("max_parts", -1)
         self.lookup = get_lookup()

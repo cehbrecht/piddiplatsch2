@@ -19,9 +19,8 @@ class CMIP6Processor(BaseProcessor):
 
     EXCLUDED_ASSET_KEYS = ["reference_file", "globus", "thumbnail", "quicklook"]
 
-    def __init__(self, strict=False, excluded_asset_keys=None, **kwargs):
+    def __init__(self, excluded_asset_keys=None, **kwargs):
         super().__init__(**kwargs)
-        self.strict = strict
         self.excluded_asset_keys = excluded_asset_keys or config.get("cmip6", {}).get(
             "excluded_asset_keys", self.EXCLUDED_ASSET_KEYS
         )
@@ -87,7 +86,6 @@ class CMIP6Processor(BaseProcessor):
         additional_attrs = {"publication_time": metadata.get("time")}
         record = CMIP6DatasetRecord(
             item,
-            strict=self.strict,
             exclude_keys=self.excluded_asset_keys,
             additional_attributes=additional_attrs,
         )
@@ -128,9 +126,7 @@ class CMIP6Processor(BaseProcessor):
         def add_records():
             self._safe_add_record(record)
             num_handles = 1
-            for r in extract_asset_records(
-                item, exclude_keys=self.excluded_asset_keys, strict=self.strict
-            ):
+            for r in extract_asset_records(item, exclude_keys=self.excluded_asset_keys):
                 self._safe_add_record(r)
                 num_handles += 1
             return num_handles
