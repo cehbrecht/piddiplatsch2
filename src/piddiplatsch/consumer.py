@@ -125,7 +125,7 @@ class ConsumerPipeline:
         try:
             from piddiplatsch.monitoring import get_progress
 
-            self.progress = get_progress("messages", use_tqdm=verbose)
+            self.progress = get_progress(f"{processor}", use_tqdm=verbose)
         except ImportError:
             pass
 
