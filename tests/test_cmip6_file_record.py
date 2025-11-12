@@ -22,13 +22,13 @@ STAC_ITEM = {
 
 
 def test_asset_property():
-    record = CMIP6FileRecord(STAC_ITEM, "data.nc", strict=False)
+    record = CMIP6FileRecord(STAC_ITEM, "data.nc")
     assert record.asset["href"] == "https://example.com/data.nc"
     assert record.alternates == {"mirror": {"href": "https://mirror.com/data.nc"}}
 
 
 def test_get_value_with_alternates():
-    record = CMIP6FileRecord(STAC_ITEM, "data.nc", strict=False)
+    record = CMIP6FileRecord(STAC_ITEM, "data.nc")
     # Existing key
     assert record.get_value("href") == "https://example.com/data.nc"
     # Key only in alternate
@@ -37,30 +37,30 @@ def test_get_value_with_alternates():
 
 def test_tracking_id_and_pid():
     # asset without tracking_id generates PID
-    record = CMIP6FileRecord(STAC_ITEM, "data.nc", strict=False)
+    record = CMIP6FileRecord(STAC_ITEM, "data.nc")
     pid = record.pid
     assert pid is not None
 
     # asset with existing tracking_id uses it
-    record2 = CMIP6FileRecord(STAC_ITEM, "readme.txt", strict=False)
+    record2 = CMIP6FileRecord(STAC_ITEM, "readme.txt")
     assert parse_pid(record2.tracking_id) == "readme123"
     assert record2.pid == "readme123"
 
 
 def test_parent_and_filename():
-    record = CMIP6FileRecord(STAC_ITEM, "data.nc", strict=False)
+    record = CMIP6FileRecord(STAC_ITEM, "data.nc")
     assert record.parent.startswith("hdl:")  # parent PID URI
     assert record.filename == "data.nc"
 
 
 def test_download_and_replica_urls():
-    record = CMIP6FileRecord(STAC_ITEM, "data.nc", strict=False)
+    record = CMIP6FileRecord(STAC_ITEM, "data.nc")
     assert record.download_url == "https://example.com/data.nc"
     assert record.replica_download_urls == ["https://mirror.com/data.nc"]
 
 
 def test_checksum_and_size():
-    record = CMIP6FileRecord(STAC_ITEM, "data.nc", strict=False)
+    record = CMIP6FileRecord(STAC_ITEM, "data.nc")
     assert (
         record.checksum
         == "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5"
@@ -70,7 +70,7 @@ def test_checksum_and_size():
 
 
 def test_as_handle_model_structure():
-    record = CMIP6FileRecord(STAC_ITEM, "data.nc", strict=False)
+    record = CMIP6FileRecord(STAC_ITEM, "data.nc")
     model = record.as_handle_model()
     assert str(model.URL) == record.url
     assert model.FILE_NAME == "data.nc"
@@ -88,8 +88,6 @@ def test_as_handle_model_structure():
 
 
 def test_extract_asset_records_excludes():
-    records = extract_asset_records(
-        STAC_ITEM, exclude_keys=["readme.txt"], strict=False
-    )
+    records = extract_asset_records(STAC_ITEM, exclude_keys=["readme.txt"])
     assert all(r.asset_key != "readme.txt" for r in records)
     assert any(r.asset_key == "data.nc" for r in records)
