@@ -73,7 +73,7 @@ class SQLiteReporter(StatsReporter):
                 replicas INTEGER,
                 warnings INTEGER,
                 skipped_messages INTEGER,
-                patched_messags INTEGER,
+                patched_messages INTEGER,
                 total_handle_processing_time REAL,
                 uptime REAL,
                 message_rate REAL,
