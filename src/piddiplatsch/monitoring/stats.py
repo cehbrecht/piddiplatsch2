@@ -36,6 +36,7 @@ class CounterKey(StrEnum):
     REPLICAS = "replicas"
     WARNINGS = "warnings"
     SKIPPED = "skipped_messages"
+    PATCHED = "patched_messages"
     HANDLE_TIME = "total_handle_processing_time"  # float seconds
 
 
@@ -72,6 +73,7 @@ class SQLiteReporter(StatsReporter):
                 replicas INTEGER,
                 warnings INTEGER,
                 skipped_messages INTEGER,
+                patched_messags INTEGER,
                 total_handle_processing_time REAL,
                 uptime REAL,
                 message_rate REAL,
@@ -96,9 +98,9 @@ class SQLiteReporter(StatsReporter):
             """
             INSERT INTO message_stats (ts, messages, errors, retries, handles,
                                        retracted_messages, replicas, warnings,
-                                       skipped_messages, total_handle_processing_time,
+                                       skipped_messages, patched_messages, total_handle_processing_time,
                                        uptime, message_rate, handle_rate, messages_per_sec)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 ts,
@@ -110,6 +112,7 @@ class SQLiteReporter(StatsReporter):
                 summary[CounterKey.REPLICAS.value],
                 summary[CounterKey.WARNINGS.value],
                 summary[CounterKey.SKIPPED.value],
+                summary[CounterKey.PATCHED.value],
                 summary[CounterKey.HANDLE_TIME.value],
                 summary["uptime"],
                 summary["message_rate"],
@@ -253,6 +256,9 @@ class Stats:
     def skip(self, n=1):
         self.increment(CounterKey.SKIPPED, n)
 
+    def patch(self, n=1):
+        self.increment(CounterKey.PATCHED, n)
+
     # --- Logging / persistence ---
     def _maybe_log(self):
         now = time.time()
@@ -297,6 +303,10 @@ class Stats:
     @property
     def skipped_messages(self) -> int:
         return self._counters[CounterKey.SKIPPED]
+
+    @property
+    def patched_messages(self) -> int:
+        return self._counters[CounterKey.PATCHED]
 
     @property
     def errors(self) -> int:

@@ -31,8 +31,10 @@ class CMIP6Processor(BaseProcessor):
         self.logger.debug(f"CMIP6 plugin processing key={key}")
         start_total = time.perf_counter()
 
+        result = ProcessingResult(key=key)
+
         try:
-            num_handles, handle_time, skipped = self._do_process(value, key)
+            result = self._do_process(value, key, result)
         except ValidationError as e:
             self.logger.error(f"Validation error for key={key}: {e}")
             raise
@@ -40,48 +42,47 @@ class CMIP6Processor(BaseProcessor):
             self.logger.error(f"Processing error for key={key}: {e}")
             raise
 
-        elapsed_total = time.perf_counter() - start_total
+        result.elapsed = time.perf_counter() - start_total
+        result.success = True
 
-        return ProcessingResult(
-            key=key,
-            num_handles=num_handles,
-            success=True,
-            elapsed=elapsed_total,
-            handle_processing_time=handle_time,
-            skipped=skipped,
-        )
+        return result
 
     def _do_process(
-        self, value: dict[str, Any], key: str
+        self, value: dict[str, Any], key: str, result: ProcessingResult
     ) -> tuple[int, float, float, float, bool]:
         """Check payload presence and delegate to payload processor."""
         payload = value.get("data", {}).get("payload")
         if not payload:
             self._log_skipped(key, "MISSING payload")
-            return 0, 0.0, True
+            result.skipped = True
+            return result
 
         metadata = value.get("metadata", {})
-        return self._process_payload(payload, metadata, key)
+        return self._process_payload(payload, metadata, key, result)
 
     def _process_payload(
-        self, payload: dict[str, Any], metadata: dict[str, Any], key: str
+        self,
+        payload: dict[str, Any],
+        metadata: dict[str, Any],
+        key: str,
+        result: ProcessingResult,
     ) -> tuple[int, float, float, float, bool]:
         """Decide how to process the payload: PATCH or full item."""
-        skipped = False
-
         if payload.get("method") == "PATCH":
             try:
                 item = self._apply_patch_to_stac_item(payload)
                 self.logger.info(f"Patched item with key={key}.")
+                result.patched = True
             except Exception as e:
                 self.logger.error(f"Failed to apply patch for key={key}: {e}")
-                return 0, 0.0, True
+                result.skipped = True
+                return result
         elif "item" in payload:
             item = payload["item"]
         else:
             self._log_skipped(key, "MISSING item")
-            skipped = True
-            return 0, 0.0, skipped
+            result.skipped = True
+            return result
 
         # Create record
         additional_attrs = {"publication_time": metadata.get("time")}
@@ -99,8 +100,10 @@ class CMIP6Processor(BaseProcessor):
 
         # Handle processing
         num_handles, handle_time = self._add_records_from_item(record, item)
+        result.num_handles = num_handles
+        result.handle_processing_time = handle_time
 
-        return num_handles, handle_time, skipped
+        return result
 
     def _apply_patch_to_stac_item(self, payload: dict[str, Any]) -> dict[str, Any]:
         """Fetch the STAC item and apply a JSON patch."""
