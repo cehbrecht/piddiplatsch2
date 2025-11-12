@@ -241,7 +241,7 @@ class Stats:
     def retracted(self, message: str | None = None, n=1):
         self.increment(CounterKey.RETRACTED, n)
         if message:
-            logger.warning(f"RETRACTED: {message}")
+            logger.info(f"RETRACTED: {message}")
 
     def replica(self, message: str | None = None, n=1):
         self.increment(CounterKey.REPLICAS, n)
@@ -253,11 +253,15 @@ class Stats:
         if message:
             logger.warning(f"WARNING: {message}")
 
-    def skip(self, n=1):
+    def skip(self, message: str | None = None, n=1):
         self.increment(CounterKey.SKIPPED, n)
+        if message:
+            logger.info(f"SKIPPED: {message}")
 
-    def patch(self, n=1):
+    def patch(self, message: str | None = None, n=1):
         self.increment(CounterKey.PATCHED, n)
+        if message:
+            logger.info(f"PATCHED: {message}")
 
     # --- Logging / persistence ---
     def _maybe_log(self):
