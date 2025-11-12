@@ -75,7 +75,7 @@ class Progress(BaseProgress):
             f"| m:{millify(stats.messages, precision=1)} ({stats.message_rate:.2f}/s)"
             f"| h:{millify(stats.handles, precision=1)} ({stats.handle_rate:.2f}/s)"
             f"| e:{millify(stats.errors, precision=1)}"
-            # f"| w:{millify(stats.warnings, precision=1)}"
+            f"| w:{millify(stats.warnings, precision=1)}"
             f"| d:{millify(stats.retracted_messages, precision=1)}"
             f"| r:{millify(stats.replicas, precision=1)}"
             f"| s:{millify(stats.skipped_messages, precision=1)}"
