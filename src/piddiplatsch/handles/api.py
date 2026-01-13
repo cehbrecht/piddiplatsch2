@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, Literal, Protocol
+import logging
 
 from piddiplatsch.config import config
 from piddiplatsch.handles.base import HandleBackend
@@ -12,6 +13,7 @@ class HandleAPIProtocol(Protocol):
     """Protocol defining the public Handle API for processors."""
 
     def add(self, pid: str, record: dict[str, Any]) -> None: ...
+    def get(self, pid: str) -> dict[str, Any] | None: ...
 
 
 class HandleAPI(HandleAPIProtocol):
@@ -22,6 +24,9 @@ class HandleAPI(HandleAPIProtocol):
 
     def add(self, pid: str, record: dict[str, Any]) -> None:
         self.backend.add(pid, record)
+
+    def get(self, pid: str) -> dict[str, Any] | None:
+        return self.backend.get(pid)
 
 
 # --- Factory Function ---
@@ -36,6 +41,7 @@ def get_handle_backend() -> HandleBackend:
     backend_type: Literal["pyhandle", "jsonl"] = config.get(
         "handle", "backend", fallback="pyhandle"
     )
+    logging.warning(f"Using handle backend: {backend_type}")
 
     if backend_type == "pyhandle":
         return HandleClient.from_config()
