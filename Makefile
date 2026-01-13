@@ -128,6 +128,20 @@ release: dist ## package and upload a release
 upstream: develop ## install the GitHub-based development branches of dependencies in editable mode to the active Python's site-packages
 	python -m pip install --no-user --requirement requirements_upstream.txt
 
+## Versioning targets
+
+bump-patch: ## bump patch version and create git tag
+	@echo "Bumping patch version..."
+	@bump-my-version bump patch
+
+bump-minor: ## bump minor version and create git tag
+	@echo "Bumping minor version..."
+	@bump-my-version bump minor
+
+bump-major: ## bump major version and create git tag
+	@echo "Bumping major version..."
+	@bump-my-version bump major
+
 ## Docker container targets
 
 start: ## builds and starts docker containers
