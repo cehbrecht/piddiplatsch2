@@ -1,5 +1,7 @@
 # Piddiplatsch
 
+Kafka consumer adding PIDs to CMIP6+ records.
+
 [![Build Status](https://github.com/cehbrecht/piddiplatsch2/actions/workflows/ci.yml/badge.svg)](https://github.com/cehbrecht/piddiplatsch2/actions)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
@@ -236,6 +238,21 @@ piddiplatsch retry outputs/failures/retries-0/failed_items_2025-07-23.jsonl --de
 ```
 
 This command will resend all items from that failure file to the configured Kafka retry topic, increasing their retry count automatically. If all messages succeed, the file will be deleted.
+
+---
+
+## 📦 Versioning
+
+Uses bump-my-version to update the project version and create a git tag.
+
+```bash
+# dry-run (no commit/tag)
+bump-my-version bump patch --dry-run --allow-dirty
+
+# bump and tag
+make bump-patch    # or: make bump-minor / make bump-major
+git push && git push --tags
+```
 
 ---
 
