@@ -27,3 +27,5 @@ class HandleBackend(ABC):
     @abstractmethod
     def _store(self, handle: str, handle_data: dict[str, Any]) -> None:
         raise NotImplementedError
+
+
