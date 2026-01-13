@@ -20,3 +20,13 @@ class AbstractLookup(ABC):
             LookupError: If the lookup fails.
         """
         pass
+
+
+class DummyLookup(AbstractLookup):
+    """A no-op lookup that returns empty results, ignores all init arguments."""
+
+    def __init__(self, **kwargs):
+        pass
+
+    def find_versions(self, item_id: str, limit: int = 100) -> list[str]:
+        return []

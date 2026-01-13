@@ -7,6 +7,7 @@ from piddiplatsch.models.base import (
     BaseCMIP6Model,
     strict_mode,
 )
+from piddiplatsch.monitoring import stats
 
 
 class CMIP6FileModel(BaseCMIP6Model):
@@ -36,5 +37,9 @@ class CMIP6FileModel(BaseCMIP6Model):
             if strict_mode():
                 raise ValueError(
                     f"Used CHECKSUM_METHOD is not allowed: {self.CHECKSUM_METHOD}"
+                )
+            else:
+                stats.warn(
+                    message=f"Used CHECKSUM_METHOD is not allowed: {self.CHECKSUM_METHOD}"
                 )
         return self

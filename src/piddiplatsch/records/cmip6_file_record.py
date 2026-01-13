@@ -17,8 +17,8 @@ from piddiplatsch.utils.models import (
 class CMIP6FileRecord(BaseCMIP6Record):
     """Wraps a CMIP6 STAC asset and prepares Handle record for a file."""
 
-    def __init__(self, item: dict[str, Any], asset_key: str, strict: bool):
-        super().__init__(item, strict=strict)
+    def __init__(self, item: dict[str, Any], asset_key: str):
+        super().__init__(item)
         self.asset_key = asset_key
 
     @cached_property
@@ -53,9 +53,7 @@ class CMIP6FileRecord(BaseCMIP6Record):
                 f"Creating new file pid: pid={pid_}, asset={self.asset_key}"
             )
         else:
-            logging.warning(
-                f"Using existing file pid: pid={pid_}, asset={self.asset_key}"
-            )
+            logging.info(f"Using existing file pid: pid={pid_}, asset={self.asset_key}")
         return pid_
 
     @cached_property
@@ -140,7 +138,7 @@ class CMIP6FileRecord(BaseCMIP6Record):
 
 
 def extract_asset_records(
-    item: dict[str, Any], exclude_keys: list[str], strict: bool
+    item: dict[str, Any], exclude_keys: list[str]
 ) -> list[CMIP6FileRecord]:
     """Given a CMIP6 STAC item, return a list of CMIP6FileRecord instances
     for all asset keys except those in exclude_keys.
@@ -153,9 +151,8 @@ def extract_asset_records(
         if key in exclude_keys:
             continue
         try:
-            record = CMIP6FileRecord(item, key, strict)
-            if strict:
-                record.validate()
+            record = CMIP6FileRecord(item, key)
+            record.validate()
             records.append(record)
         except ValueError as e:
             logging.warning(f"Skipping asset '{key}': {e}")

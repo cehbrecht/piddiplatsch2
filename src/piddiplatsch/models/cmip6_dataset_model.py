@@ -10,6 +10,7 @@ from piddiplatsch.models.base import (
     get_max_parts,
     strict_mode,
 )
+from piddiplatsch.monitoring import stats
 
 
 class CMIP6DatasetModel(BaseCMIP6Model):
@@ -33,6 +34,8 @@ class CMIP6DatasetModel(BaseCMIP6Model):
         if max_parts != 0 and not self.HAS_PARTS:
             if strict_mode():
                 raise ValueError("HAS_PARTS must contain at least one file.")
+            else:
+                stats.warn(message="HAS_PARTS must contain at least one file.")
         if max_parts > 0 and len(self.HAS_PARTS) > max_parts:
             raise ValueError(
                 f"Too many parts: {len(self.HAS_PARTS)} exceeds max_parts={max_parts}"

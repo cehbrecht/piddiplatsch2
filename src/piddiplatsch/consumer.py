@@ -125,7 +125,7 @@ class ConsumerPipeline:
         try:
             from piddiplatsch.monitoring import get_progress
 
-            self.progress = get_progress("messages", use_tqdm=verbose)
+            self.progress = get_progress(f"{processor}", use_tqdm=verbose)
         except ImportError:
             pass
 
@@ -138,20 +138,17 @@ class ConsumerPipeline:
             if result.success:
                 self.stats.tick()
                 self.stats.handle(
-                    n=getattr(result, "num_handles", 0),
-                    handle_time_sec=getattr(result, "handle_processing_time", 0.0),
+                    n=result.num_handles,
+                    handle_time_sec=result.handle_processing_time,
                 )
             else:
-                self.stats.error(message=getattr(result, "error", None))
+                self.stats.error(message=result.error)
 
-            if getattr(result, "skipped", False):
-                self.stats.skip()
+            if result.skipped:
+                self.stats.skip(message=f"message={key}")
 
-            if getattr(result, "retracted", False):
-                self.stats.retracted(message=f"Dataset {key} retracted")
-
-            if getattr(result, "replica", False):
-                self.stats.replica(message=f"Dataset {key} replica created")
+            if result.patched:
+                self.stats.patch(message=f"message={key}")
 
             if self.progress:
                 self.progress.refresh()

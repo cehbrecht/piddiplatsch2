@@ -4,7 +4,7 @@ from typing import Any
 
 from piddiplatsch.config import config
 from piddiplatsch.exceptions import LookupError
-from piddiplatsch.lookup import get_lookup
+from piddiplatsch.lookup.api import get_lookup
 from piddiplatsch.models import CMIP6DatasetModel, HostingNode
 from piddiplatsch.monitoring import stats
 from piddiplatsch.records.base import BaseCMIP6Record
@@ -26,11 +26,10 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
     def __init__(
         self,
         item: dict[str, Any],
-        strict: bool,
         exclude_keys: list[str] | None = None,
         additional_attributes: dict[str, Any] | None = None,
     ):
-        super().__init__(item, additional_attributes, strict=strict)
+        super().__init__(item, additional_attributes)
         self.exclude_keys = set(exclude_keys or [])
         self.max_parts = config.get("cmip6", {}).get("max_parts", -1)
         self.lookup = get_lookup()

@@ -5,10 +5,11 @@ from dataclasses import dataclass
 class ProcessingResult:
     key: str
     num_handles: int = 0
-    success: bool = True
+    success: bool = False
     error: str | None = None
     skipped: bool = False
-    elapsed: float | None = None
+    patched: bool = False
+    elapsed: float = 0.0
 
     # Detailed timings
-    handle_processing_time: float | None = None
+    handle_processing_time: float = 0.0

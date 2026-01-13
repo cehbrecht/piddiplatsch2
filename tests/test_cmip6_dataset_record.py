@@ -91,33 +91,33 @@ def disable_lookup():
 
 
 def test_dataset_id_and_version(stac_item_basic):
-    record = CMIP6DatasetRecord(stac_item_basic, strict=True)
+    record = CMIP6DatasetRecord(stac_item_basic)
     assert record.dataset_id == "CMIP6.TEST"
     assert record.dataset_version == "001"
 
 
 def test_pid_existing(stac_item_basic):
-    record = CMIP6DatasetRecord(stac_item_basic, strict=True)
+    record = CMIP6DatasetRecord(stac_item_basic)
     assert record.pid == stac_item_basic["properties"]["pid"]
 
 
 def test_has_parts_respects_max_parts(stac_item_complex):
     config._set("cmip6", "max_parts", 2)
-    record = CMIP6DatasetRecord(stac_item_complex, strict=True)
+    record = CMIP6DatasetRecord(stac_item_complex)
     parts = record.has_parts
     assert len(parts) == 2
     assert all(p.startswith("hdl:") for p in parts)
 
 
 def test_host_and_published_on(stac_item_basic):
-    record = CMIP6DatasetRecord(stac_item_basic, strict=True)
+    record = CMIP6DatasetRecord(stac_item_basic)
     assert record.host == "host1"
     expected_dt = datetime(2024, 1, 1, 0, 0, tzinfo=UTC)
     assert record.published_on == expected_dt
 
 
 def test_hosting_node_and_replicas(stac_item_complex):
-    record = CMIP6DatasetRecord(stac_item_complex, strict=True)
+    record = CMIP6DatasetRecord(stac_item_complex)
     hosting_node = record.hosting_node
     assert isinstance(hosting_node, HostingNode)
     assert hosting_node.host == "host1"
@@ -129,23 +129,23 @@ def test_hosting_node_and_replicas(stac_item_complex):
 
 
 def test_retracted_behavior(stac_item_complex):
-    record = CMIP6DatasetRecord(stac_item_complex, strict=True)
+    record = CMIP6DatasetRecord(stac_item_complex)
     assert record.retracted
     assert isinstance(record.retracted_on, datetime)
 
 
 def test_is_part_of_default(stac_item_basic):
-    record = CMIP6DatasetRecord(stac_item_basic, strict=True)
+    record = CMIP6DatasetRecord(stac_item_basic)
     assert record.is_part_of is None
 
 
 def test_previous_version_returns_none_when_lookup_disabled(stac_item_basic):
-    record = CMIP6DatasetRecord(stac_item_basic, strict=True)
+    record = CMIP6DatasetRecord(stac_item_basic)
     assert record.previous_version is None
 
 
 def test_as_handle_model_includes_expected_fields(stac_item_complex):
-    record = CMIP6DatasetRecord(stac_item_complex, strict=True)
+    record = CMIP6DatasetRecord(stac_item_complex)
     model = record.as_handle_model()
     assert model.DATASET_ID == "CMIP6.COMP"
     assert model.DATASET_VERSION == "002"
@@ -157,7 +157,7 @@ def test_as_handle_model_includes_expected_fields(stac_item_complex):
 
 def test_max_parts_limit_warning(caplog, stac_item_complex):
     config._set("cmip6", "max_parts", 1)
-    record = CMIP6DatasetRecord(stac_item_complex, strict=True)
+    record = CMIP6DatasetRecord(stac_item_complex)
     _ = record.has_parts
     assert any("Reached limit of 1 assets." in rec.message for rec in caplog.records)
 
@@ -168,7 +168,7 @@ def test_max_parts_limit_warning(caplog, stac_item_complex):
 
 
 def test_replica_nodes_published_on_fallback(stac_item_with_alternates):
-    record = CMIP6DatasetRecord(stac_item_with_alternates, strict=True)
+    record = CMIP6DatasetRecord(stac_item_with_alternates)
     replicas = {n.host: n.published_on for n in record.replica_nodes}
 
     expected_replica1 = datetime(2024, 1, 2, 0, 0, tzinfo=UTC)
@@ -181,7 +181,7 @@ def test_replica_nodes_published_on_fallback(stac_item_with_alternates):
 def test_max_parts_with_exclude_keys_and_warning(caplog, stac_item_with_alternates):
     config._set("cmip6", "max_parts", 1)
     record = CMIP6DatasetRecord(
-        stac_item_with_alternates, strict=True, exclude_keys=["reference_file"]
+        stac_item_with_alternates, exclude_keys=["reference_file"]
     )
     parts = record.has_parts
     assert len(parts) == 1
