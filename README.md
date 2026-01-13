@@ -27,7 +27,7 @@
 ## ⚙️ Installation
 
 **Prerequisites**:
-- [Miniconda or Mamba (via conda-forge)](https://conda-forge.org/download/)
+- [Miniconda (via conda-forge)](https://conda-forge.org/download/)
 
 **Setup**:
 
