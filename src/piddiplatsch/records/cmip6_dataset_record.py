@@ -4,7 +4,7 @@ from typing import Any
 
 from piddiplatsch.config import config
 from piddiplatsch.exceptions import LookupError
-from piddiplatsch.lookup import get_lookup
+from piddiplatsch.lookup.api import get_lookup
 from piddiplatsch.models import CMIP6DatasetModel, HostingNode
 from piddiplatsch.monitoring import stats
 from piddiplatsch.records.base import BaseCMIP6Record
