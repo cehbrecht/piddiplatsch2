@@ -59,3 +59,64 @@ class HandleClient(HandleBackend):
         except Exception as e:
             logging.error(f"Failed to register handle {handle}: {e}")
             raise
+
+    def _retrieve(self, handle: str) -> dict[str, Any] | None:
+        """Retrieve the handle record via PyHandle.
+
+        First tries `retrieve_handle_record()` (simple key/value dict). If that fails,
+        falls back to `retrieve_handle_record_json()` and converts entries to a dict.
+        """
+        # Primary: simple dict of key/value pairs
+        try:
+            record = self.client.retrieve_handle_record(handle, auth=True)
+            if isinstance(record, dict):
+                return record
+            if not record:
+                return None
+        except Exception as e:
+            logging.debug(f"retrieve_handle_record failed for {handle}: {e}")
+
+        # Fallback: full JSON representation with entries list
+        try:
+            data = self.client.retrieve_handle_record_json(handle, auth=True)
+            if not data:
+                return None
+
+            entries = None
+            if isinstance(data, dict):
+                # Common key for entries is 'values'
+                entries = data.get("values") or data.get("entries")
+            elif isinstance(data, list):
+                entries = data
+
+            if not entries or not isinstance(entries, list):
+                return None
+
+            result: dict[str, Any] = {}
+            url_value = None
+
+            for entry in entries:
+                if not isinstance(entry, dict):
+                    continue
+                etype = entry.get("type") or entry.get("HS_TYPE")
+                edata = entry.get("data")
+                # 'data' may be a dict with 'value' or a raw string
+                if isinstance(edata, dict):
+                    value = (
+                        edata.get("value") if "value" in edata else edata.get("data")
+                    )
+                else:
+                    value = edata
+
+                if etype == "URL":
+                    url_value = value
+                elif etype:
+                    result[etype] = value
+
+            if url_value is not None:
+                result["URL"] = url_value
+
+            return result or None
+        except Exception as e:
+            logging.error(f"Failed to retrieve handle {handle}: {e}")
+            return None

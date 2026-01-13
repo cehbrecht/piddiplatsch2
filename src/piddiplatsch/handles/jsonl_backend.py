@@ -45,3 +45,11 @@ class JsonlHandleBackend(HandleBackend):
             f.write("\n")
 
         logging.debug(f"Wrote handle {handle} to {dump_file}")
+
+    def _retrieve(self, handle: str) -> dict[str, Any] | None:
+        """Retrieval is intentionally not supported for JSONL backend.
+
+        Returning None avoids slow file scans during tests and runtime.
+        """
+        logging.debug("JSONL handle backend does not support retrieval; returning None")
+        return None

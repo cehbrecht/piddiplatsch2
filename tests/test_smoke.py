@@ -4,7 +4,7 @@ from piddiplatsch.consumer import feed_test_files
 
 
 def assert_dataset_record(handle_client, pid: str, all: bool = False):
-    record = handle_client.get_record(pid)
+    record = handle_client.get(pid)
     assert record is not None, f"PID {pid} was not registered"
     print(record)
     assert "URL" in record
@@ -17,7 +17,7 @@ def assert_dataset_record(handle_client, pid: str, all: bool = False):
 
 
 def assert_file_record(handle_client, pid: str):
-    record = handle_client.get_record(pid)
+    record = handle_client.get(pid)
     assert record is not None, f"PID {pid} was not registered"
     print(record)
     assert "URL" in record
@@ -43,7 +43,7 @@ def wait_for_pid(handle_client, pid: str, timeout: float = 5.0):
 
     start = time.time()
     while time.time() - start < timeout:
-        if handle_client.get_record(pid):
+        if handle_client.get(pid):
             return
         time.sleep(0.2)
     raise AssertionError(f"PID {pid} was not registered within {timeout:.1f} seconds")
