@@ -21,6 +21,7 @@ class AbstractLookup(ABC):
         """
         pass
 
+
 class DummyLookup(AbstractLookup):
     """A no-op lookup that returns empty results, ignores all init arguments."""
 

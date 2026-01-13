@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from typing import Any, Protocol
-from typing import Literal
+from typing import Any, Literal, Protocol
 
 from piddiplatsch.config import config
+from piddiplatsch.handles.base import HandleBackend
 from piddiplatsch.handles.jsonl_backend import JsonlHandleBackend
 from piddiplatsch.handles.pyhandle_backend import HandleClient
-from piddiplatsch.handles.base import HandleBackend
 
 
 class HandleAPIProtocol(Protocol):
