@@ -24,6 +24,7 @@ class HandleAPI(HandleAPIProtocol):
     def add(self, pid: str, record: dict[str, Any]) -> None:
         self.backend.add(pid, record)
 
+
 # --- Factory Function ---
 def get_handle_backend() -> HandleBackend:
     """
