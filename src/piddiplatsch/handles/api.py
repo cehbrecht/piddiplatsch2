@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Literal, Protocol
 import logging
+from typing import Any, Literal, Protocol
 
 from piddiplatsch.config import config
 from piddiplatsch.handles.base import HandleBackend

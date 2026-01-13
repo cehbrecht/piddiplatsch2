@@ -102,7 +102,9 @@ class HandleClient(HandleBackend):
                 edata = entry.get("data")
                 # 'data' may be a dict with 'value' or a raw string
                 if isinstance(edata, dict):
-                    value = edata.get("value") if "value" in edata else edata.get("data")
+                    value = (
+                        edata.get("value") if "value" in edata else edata.get("data")
+                    )
                 else:
                     value = edata
 
