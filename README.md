@@ -55,7 +55,7 @@ cp src/config/default.toml custom.toml
 vim custom.toml
 ```
 
-Use your config file when running:
+Use the `config` option to use your custom configuration:
 
 ```bash
 piddiplatsch --config custom.toml
@@ -75,6 +75,8 @@ piddiplatsch consume
 ```
 
 ### With verbose:
+
+In verbose mode you will get a progress bar on the console.
 
 ```bash
 piddiplatsch --verbose consume
