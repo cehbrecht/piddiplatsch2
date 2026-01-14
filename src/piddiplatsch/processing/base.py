@@ -13,8 +13,11 @@ class BaseProcessor:
         self,
         handle_backend: HandleAPIProtocol | None = None,
         retries: int = 0,
+        dry_run: bool = False,
     ):
-        self.handle_backend: HandleAPIProtocol = handle_backend or HandleAPI()
+        self.handle_backend: HandleAPIProtocol = handle_backend or HandleAPI(
+            dry_run=dry_run
+        )
         self.retries = retries
         self.logger = logging.getLogger(__name__)
 

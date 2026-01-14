@@ -106,12 +106,34 @@ The messages are written to `outputs/dump/` as json-lines files. For example:
 outputs/dump/dump_messages_2025-11-03.jsonl
 ```
 
+### Dry-run (no handle server)
+
+Write handle records to disk only without contacting the Handle Service.
+
+```bash
+piddiplatsch consume --dry-run
+```
+
+- Uses a JSONL backend and writes to `outputs/handles/handles_<date>.jsonl`.
+- Temporarily overrides any configured handle backend for this run.
+- Can be combined with message dumping:
+
+```bash
+piddiplatsch consume --dry-run --dump
+```
+
 ### Example
 
 Run consumer with custom configuration in verbose mode and dump all messages:
 
 ```bash
 piddiplatsch --config custom.toml --verbose consume --dump
+```
+
+Run consumer in dry-run mode (no Handle Service calls), still dumping messages:
+
+```bash
+piddiplatsch --config custom.toml --verbose consume --dry-run --dump
 ```
 
 ---
