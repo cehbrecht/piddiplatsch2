@@ -10,9 +10,7 @@ from piddiplatsch.consumer import ConsumerPipeline, DirectConsumer
 
 def _make_minimal_cmip6_item() -> dict:
     # Valid-looking CMIP6 dataset id with version
-    ds_id = (
-        "CMIP6.ActivityX.InstitutionY.SourceZ.ssp245.r1i1p1f1.Amon.pr.gn.v20190101"
-    )
+    ds_id = "CMIP6.ActivityX.InstitutionY.SourceZ.ssp245.r1i1p1f1.Amon.pr.gn.v20190101"
     return {
         "id": ds_id,
         "type": "Feature",
