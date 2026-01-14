@@ -110,13 +110,14 @@ class ConsumerPipeline:
         dump_messages=False,
         verbose=False,
         max_errors=-1,
+        dry_run: bool = False,
     ):
         """
         consumer: instance of BaseConsumer (KafkaConsumer or DirectConsumer)
         processor: plugin name
         """
         self.consumer = consumer
-        self.processor = load_single_plugin(processor)
+        self.processor = load_single_plugin(processor, dry_run=dry_run)
         self.dump_messages = dump_messages
         self.max_errors = int(max_errors)
 
@@ -224,6 +225,7 @@ def start_consumer(
     enable_db=False,
     db_path: str | None = None,
     direct_messages=None,
+    dry_run: bool = False,
 ):
     if enable_db:
         stats.__init__(db_path=db_path)
@@ -244,6 +246,7 @@ def start_consumer(
         dump_messages=dump_messages,
         verbose=verbose,
         max_errors=max_errors,
+        dry_run=dry_run,
     )
 
     def sigint_handler(sig, frame):

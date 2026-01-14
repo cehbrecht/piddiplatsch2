@@ -5,7 +5,7 @@ import pluggy
 from piddiplatsch.plugin import MessageProcessorSpec
 
 
-def load_single_plugin(processor_name: str):
+def load_single_plugin(processor_name: str, **plugin_kwargs):
     pm = pluggy.PluginManager("piddiplatsch")
     pm.add_hookspecs(MessageProcessorSpec)
 
@@ -18,7 +18,8 @@ def load_single_plugin(processor_name: str):
             f"Processor plugin '{processor_name}' not found among: {list(entry_point_map)}"
         )
 
-    plugin = entry_point_map[processor_name].load()()
+    plugin_cls = entry_point_map[processor_name].load()
+    plugin = plugin_cls(**plugin_kwargs)
     pm.register(plugin)
 
     # Assert that exactly one plugin is active

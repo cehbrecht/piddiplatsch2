@@ -55,14 +55,24 @@ def init():
 
 @cli.command()
 @click.option("--dump", is_flag=True, help="Dump all consumed messages to JSONL files.")
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Do not publish to handle server; write handles to JSONL only.",
+)
 @click.pass_context
-def consume(ctx, dump):
+def consume(ctx, dump, dry_run):
     """Start the Kafka consumer."""
     topic = config.get("consumer", "topic")
     kafka_cfg = config.get("kafka")
     processor = config.get("plugin", "processor")
     start_consumer(
-        topic, kafka_cfg, processor, dump_messages=dump, verbose=ctx.obj["verbose"]
+        topic,
+        kafka_cfg,
+        processor,
+        dump_messages=dump,
+        verbose=ctx.obj["verbose"],
+        dry_run=dry_run,
     )
 
 
