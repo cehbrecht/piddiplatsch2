@@ -175,15 +175,13 @@ docker-build: ## build Docker images for test services
 	@echo "Building Docker images..."
 	@docker-compose build
 
-docker-clean: stop-docker ## rebuild Docker images from scratch (clean build)
+docker-clean: stop-docker ## remove all Docker images and volumes
 	@echo "======================================================================"
-	@echo "🧹 Cleaning Docker volumes and images..."
+	@echo "🧹 Cleaning Docker images..."
 	@echo "======================================================================"
-	@docker-compose down -v --rmi local
+	@docker image prune -f
 	@echo "✅ Docker cleaned!"
 	@echo ""
-	@$(MAKE) docker-build
-	@$(MAKE) start-docker
 
 # Legacy aliases (deprecated)
 start: start-docker
