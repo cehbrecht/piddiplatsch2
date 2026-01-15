@@ -8,12 +8,6 @@ from piddiplatsch.handles.api import get_handle_backend
 
 
 @pytest.fixture
-def testdata_path() -> Path:
-    """Fixture that provides the path to the testdata directory."""
-    return Path(__file__).parent.parent / "testdata"
-
-
-@pytest.fixture
 def testfile(testdata_path: Path):
     """Fixture returning a function to resolve test file paths."""
 
