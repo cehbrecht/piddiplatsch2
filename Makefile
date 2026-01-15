@@ -110,23 +110,10 @@ test-integration: ## run integration tests only (JSONL backend, no Docker requir
 	@echo "Running integration tests ..."
 	@bash -c 'pytest -v -m "integration" tests/'
 
-test-smoke: ## run smoke tests only (requires Docker: Kafka + Handle server)
+test-smoke: start-docker ## run smoke tests only (requires Docker: Kafka + Handle server)
 	@echo "Running smoke tests ..."
-	@echo "======================================================================"
-	@echo "🐳 Starting Docker services (Kafka + Handle server)..."
-	@echo "======================================================================"
-	@docker-compose up --build -d
-	@echo "⏳ Waiting 5 seconds for services to initialize..."
-	@sleep 5
-	@echo "✅ Docker services ready!"
-	@echo ""
-	@bash -c 'pytest -v -s -m "smoke" tests/' || (echo "\n======================================================================" && echo "🐳 Stopping Docker services..." && echo "======================================================================" && docker-compose down -v && echo "✅ Docker services stopped!" && exit 1)
-	@echo ""
-	@echo "======================================================================"
-	@echo "🐳 Stopping Docker services..."
-	@echo "======================================================================"
-	@docker-compose down -v
-	@echo "✅ Docker services stopped!"
+	@bash -c 'pytest -v -s -m "smoke" tests/' || ($(MAKE) stop-docker && exit 1)
+	@$(MAKE) stop-docker
 
 test-all: test-unit test-integration test-smoke ## run all tests including smoke tests
 
@@ -164,10 +151,26 @@ bump-major: ## bump major version and create git tag
 	@echo "Bumping major version..."
 	@bump-my-version bump major
 
-## Docker container targets
+## Docker test services targets
 
-start: ## builds and starts docker containers
-	docker-compose up --build -d
+start-docker: ## start Docker services (Kafka + Handle server) for testing
+	@echo "======================================================================"
+	@echo "🐳 Starting Docker services (Kafka + Handle server)..."
+	@echo "======================================================================"
+	@docker-compose up --build -d
+	@echo "⏳ Waiting 5 seconds for services to initialize..."
+	@sleep 5
+	@echo "✅ Docker services ready!"
+	@echo ""
 
-stop: ## stops docker containers
-	docker-compose down -v
+stop-docker: ## stop Docker test services
+	@echo "======================================================================"
+	@echo "🐳 Stopping Docker services..."
+	@echo "======================================================================"
+	@docker-compose down -v
+	@echo "✅ Docker services stopped!"
+	@echo ""
+
+# Legacy aliases (deprecated)
+start: start-docker
+stop: stop-docker
