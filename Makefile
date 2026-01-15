@@ -167,7 +167,7 @@ stop-docker: ## stop Docker test services
 	@echo "======================================================================"
 	@echo "🐳 Stopping Docker services..."
 	@echo "======================================================================"
-	@docker-compose down
+	@docker-compose down -v
 	@echo "✅ Docker services stopped!"
 	@echo ""
 
