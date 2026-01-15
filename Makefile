@@ -182,7 +182,3 @@ docker-clean: stop-docker ## remove all Docker images and volumes
 	@docker image prune -f
 	@echo "✅ Docker cleaned!"
 	@echo ""
-
-# Legacy aliases (deprecated)
-start: start-docker
-stop: stop-docker
