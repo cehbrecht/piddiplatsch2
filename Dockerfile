@@ -3,8 +3,11 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY . .
+# Copy only what's needed for installation
+COPY pyproject.toml LICENSE ./
+COPY src/ ./src/
 
+# Install the package
 RUN pip install --no-cache-dir . flask
 
 EXPOSE 8000

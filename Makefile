@@ -100,13 +100,22 @@ pre-commit: ## run all pre-commit hooks
 
 ## Testing targets:
 
-test: ## run tests quickly with the default Python (skip slow and online tests)
-	@echo "Running tests (skip slow and online tests) ..."
-	@bash -c 'pytest -v -m "not slow and not online" tests/'
+test: test-unit test-integration ## run all fast tests (unit + integration, no Docker required)
 
-test-smoke: ## run smoke tests only and in parallel
-	@echo "Running smoke tests (only online tests) ..."
-	@bash -c 'pytest -v -m "online" tests/'
+test-unit: ## run unit tests only (fast, no external dependencies - unmarked tests)
+	@echo "Running unit tests ..."
+	@bash -c 'pytest -v -m "not integration and not smoke" tests/'
+
+test-integration: ## run integration tests only (JSONL backend, no Docker required)
+	@echo "Running integration tests ..."
+	@bash -c 'pytest -v -m "integration" tests/'
+
+test-smoke: start-docker ## run smoke tests only (requires Docker: Kafka + Handle server)
+	@echo "Running smoke tests ..."
+	@bash -c 'pytest -v -s -m "smoke" tests/' || ($(MAKE) stop-docker && exit 1)
+	@$(MAKE) stop-docker
+
+test-all: test-unit test-integration test-smoke ## run all tests including smoke tests
 
 smoke: test-smoke
 
@@ -142,10 +151,34 @@ bump-major: ## bump major version and create git tag
 	@echo "Bumping major version..."
 	@bump-my-version bump major
 
-## Docker container targets
+## Docker test services targets
 
-start: ## builds and starts docker containers
-	docker-compose up --build -d
+start-docker: ## start Docker services (Kafka + Handle server) for testing
+	@echo "======================================================================"
+	@echo "🐳 Starting Docker services (Kafka + Handle server)..."
+	@echo "======================================================================"
+	@docker-compose up --build -d
+	@echo "⏳ Waiting 5 seconds for services to initialize..."
+	@sleep 5
+	@echo "✅ Docker services ready!"
+	@echo ""
 
-stop: ## stops docker containers
-	docker-compose down -v
+stop-docker: ## stop Docker test services
+	@echo "======================================================================"
+	@echo "🐳 Stopping Docker services..."
+	@echo "======================================================================"
+	@docker-compose down -v
+	@echo "✅ Docker services stopped!"
+	@echo ""
+
+docker-build: ## build Docker images for test services
+	@echo "Building Docker images..."
+	@docker-compose build
+
+docker-clean: stop-docker ## remove all Docker images and volumes
+	@echo "======================================================================"
+	@echo "🧹 Cleaning Docker images..."
+	@echo "======================================================================"
+	@docker image prune -f
+	@echo "✅ Docker cleaned!"
+	@echo ""

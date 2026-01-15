@@ -152,8 +152,10 @@ minversion = "7.0"
 addopts = "-ra"
 testpaths = ["tests"]
 markers = [
-    "online: mark test that requires running Kafka and handle server"
+    "integration: Integration tests (uses JSONL backend, no Docker required)",
+    "smoke: End-to-end tests (requires Docker services: Kafka and Handle server)",
 ]
+# Note: Tests without markers are considered unit tests (fast, no external dependencies)
 
 [tool.black]
 target-version = [

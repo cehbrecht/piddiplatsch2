@@ -140,16 +140,86 @@ piddiplatsch --config custom.toml --verbose consume --dry-run --dump
 
 ## ✅ Running Tests
 
-Run all unit tests:
+This project uses a three-tier testing strategy:
+
+### Test Types
+
+**Unit Tests** (fast, no external dependencies)
+- Located in `tests/`
+- Pure logic tests with mocked dependencies
+- No markers required
+
+**Integration Tests** (medium speed, JSONL backend)
+- Located in `tests/integration/`
+- Tests component interactions using JSONL backend
+- Marked with `@pytest.mark.integration`
+- No Docker required
+
+**Smoke Tests** (end-to-end, requires Docker)
+- Located in `tests/smoke/`
+- Full workflow tests with Kafka + Handle server
+- Marked with `@pytest.mark.smoke`
+- Docker services started/stopped automatically
+- **Note:** Docker is only used for testing, not required for production
+
+### Running Tests
+
+Run all fast tests (unit + integration):
 
 ```bash
 make test
 ```
 
-Run smoke tests (Kafka and Handle service must be up):
+Run only unit tests:
+
+```bash
+make test-unit
+```
+
+Run only integration tests:
+
+```bash
+make test-integration
+```
+
+Run smoke tests (Docker services started automatically):
 
 ```bash
 make smoke
+# or
+make test-smoke
+```
+
+Run all tests including smoke tests:
+
+```bash
+make test-all
+```
+
+### Docker Management (for testing)
+
+Start Docker services manually (Kafka + Handle server):
+
+```bash
+make start-docker
+```
+
+Stop Docker services:
+
+```bash
+make stop-docker
+```
+
+Rebuild Docker images:
+
+```bash
+make docker-build
+```
+
+Clean up Docker images and volumes:
+
+```bash
+make docker-clean
 ```
 
 ---
@@ -185,22 +255,20 @@ make check-format  # Check formatting only
 
 ---
 
-## 🐳 Local Kafka with Docker
+## 🐳 Docker for Testing
 
-Start Kafka and mock Handle service:
+> 💡 **Note:** Docker services are only used for smoke tests. Production deployments use external Kafka and Handle services.
+
+Start Kafka and mock Handle service for testing:
 
 ```bash
-docker-compose up --build -d
-# OR
-make start
+make start-docker
 ```
 
 Stop all services:
 
 ```bash
-docker-compose down -v
-# OR
-make stop
+make stop-docker
 ```
 
 Initialize the Kafka topic for testing only:

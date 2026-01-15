@@ -4,8 +4,12 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
+import pytest
+
 from piddiplatsch.config import config
 from piddiplatsch.consumer import ConsumerPipeline, DirectConsumer
+
+pytestmark = pytest.mark.integration
 
 
 def _make_minimal_cmip6_item() -> dict:

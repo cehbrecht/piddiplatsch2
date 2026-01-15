@@ -1,6 +1,10 @@
+import pytest
+
 from piddiplatsch.consumer import ConsumerPipeline, DirectConsumer
 from piddiplatsch.handles.jsonl_backend import JsonlHandleBackend
 from piddiplatsch.plugin_loader import load_single_plugin
+
+pytestmark = pytest.mark.integration
 
 
 def test_plugin_uses_jsonl_backend_in_dry_run():
