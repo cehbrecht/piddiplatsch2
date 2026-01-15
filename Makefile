@@ -112,7 +112,21 @@ test-integration: ## run integration tests only (JSONL backend, no Docker requir
 
 test-smoke: ## run smoke tests only (requires Docker: Kafka + Handle server)
 	@echo "Running smoke tests ..."
-	@bash -c 'pytest -v -s -m "smoke" tests/'
+	@echo "======================================================================"
+	@echo "🐳 Starting Docker services (Kafka + Handle server)..."
+	@echo "======================================================================"
+	@docker-compose up --build -d
+	@echo "⏳ Waiting 5 seconds for services to initialize..."
+	@sleep 5
+	@echo "✅ Docker services ready!"
+	@echo ""
+	@bash -c 'pytest -v -s -m "smoke" tests/' || (echo "\n======================================================================" && echo "🐳 Stopping Docker services..." && echo "======================================================================" && docker-compose down -v && echo "✅ Docker services stopped!" && exit 1)
+	@echo ""
+	@echo "======================================================================"
+	@echo "🐳 Stopping Docker services..."
+	@echo "======================================================================"
+	@docker-compose down -v
+	@echo "✅ Docker services stopped!"
 
 test-all: test-unit test-integration test-smoke ## run all tests including smoke tests
 
