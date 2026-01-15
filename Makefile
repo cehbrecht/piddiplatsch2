@@ -167,9 +167,23 @@ stop-docker: ## stop Docker test services
 	@echo "======================================================================"
 	@echo "🐳 Stopping Docker services..."
 	@echo "======================================================================"
-	@docker-compose down -v
+	@docker-compose down
 	@echo "✅ Docker services stopped!"
 	@echo ""
+
+docker-build: ## build Docker images for test services
+	@echo "Building Docker images..."
+	@docker-compose build
+
+docker-clean: stop-docker ## rebuild Docker images from scratch (clean build)
+	@echo "======================================================================"
+	@echo "🧹 Cleaning Docker volumes and images..."
+	@echo "======================================================================"
+	@docker-compose down -v --rmi local
+	@echo "✅ Docker cleaned!"
+	@echo ""
+	@$(MAKE) docker-build
+	@$(MAKE) start-docker
 
 # Legacy aliases (deprecated)
 start: start-docker
