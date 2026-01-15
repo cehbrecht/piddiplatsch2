@@ -2,6 +2,8 @@ import pytest
 
 from piddiplatsch.consumer import feed_test_files
 
+pytestmark = pytest.mark.smoke
+
 
 def assert_dataset_record(handle_client, pid: str, all: bool = False):
     record = handle_client.get(pid)

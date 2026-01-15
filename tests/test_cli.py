@@ -2,6 +2,8 @@ import pytest
 
 from piddiplatsch.cli import cli
 
+pytestmark = pytest.mark.integration
+
 
 @pytest.mark.skip(reason="not used")
 def test_send_invalid_path(runner):
