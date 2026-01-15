@@ -56,7 +56,6 @@ def wait_for_pid(handle_client, pid: str, timeout: float = 5.0):
 # ----------------------------
 
 
-@pytest.mark.online
 def test_send_valid_cmip6_mri_6hr_dc4(testfile, handle_client):
     paths = [
         testfile(
@@ -80,7 +79,6 @@ def test_send_valid_cmip6_mri_6hr_dc4(testfile, handle_client):
     assert_record(handle_client, pid, pids)
 
 
-@pytest.mark.online
 @pytest.mark.skip(reason="checksum failure")
 def test_send_valid_cmip6_ipsl_mon_dc4(testfile, handle_client):
     paths = [
@@ -97,7 +95,6 @@ def test_send_valid_cmip6_ipsl_mon_dc4(testfile, handle_client):
     assert_record(handle_client, pid, pids)
 
 
-@pytest.mark.online
 def test_send_invalid_cmip6_dkrz_yr_dc4(testfile):
     paths = [
         testfile(
@@ -109,7 +106,6 @@ def test_send_invalid_cmip6_dkrz_yr_dc4(testfile):
     feed_test_files(paths, processor="cmip6")
 
 
-@pytest.mark.online
 def test_send_invalid_cmip6_ipsl_mon_dc4_missing_file_size(testfile):
     paths = [
         testfile(
@@ -121,7 +117,6 @@ def test_send_invalid_cmip6_ipsl_mon_dc4_missing_file_size(testfile):
     feed_test_files(paths, processor="cmip6")
 
 
-@pytest.mark.online
 def test_send_multiple_files(testfile, handle_client):
     paths = [
         testfile(
