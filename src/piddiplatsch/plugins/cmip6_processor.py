@@ -2,7 +2,6 @@ import time
 from typing import Any
 
 import jsonpatch
-from pluggy import HookimplMarker
 from pydantic import ValidationError
 
 from piddiplatsch.config import config
@@ -10,8 +9,6 @@ from piddiplatsch.processing import BaseProcessor, ProcessingResult
 from piddiplatsch.records import CMIP6DatasetRecord
 from piddiplatsch.records.cmip6_file_record import extract_asset_records
 from piddiplatsch.utils.stac import get_stac_client
-
-hookimpl = HookimplMarker("piddiplatsch")
 
 
 class CMIP6Processor(BaseProcessor):
@@ -26,7 +23,6 @@ class CMIP6Processor(BaseProcessor):
         )
         self.stac_client = get_stac_client()
 
-    @hookimpl
     def process(self, key: str, value: dict[str, Any]) -> ProcessingResult:
         self.logger.debug(f"CMIP6 plugin processing key={key}")
         start_total = time.perf_counter()
