@@ -186,6 +186,20 @@ Total: 168/175 succeeded
 
 Items are reprocessed with incremented retry counters. New failures go to `r1/`, `r2/`, etc.
 
+**Manual Testing:**
+
+A sample failure JSONL file is available for testing:
+
+```bash
+# Test retry with sample data (dry-run mode)
+piddiplatsch retry tests/testdata/sample_failures.jsonl --dry-run
+```
+
+The sample file [`tests/testdata/sample_failures.jsonl`](tests/testdata/sample_failures.jsonl) contains 3 failed CMIP6 STAC items with realistic metadata. Use this to:
+- Test the retry command without setting up Kafka
+- Verify your processor handles different failure scenarios
+- Practice working with failure recovery workflows
+
 ---
 
 ##  Examples
