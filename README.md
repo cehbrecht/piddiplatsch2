@@ -27,8 +27,9 @@ make develop
 make test            # unit + integration
 
 # 3) Run the consumer (requires Kafka + Handle)
+piddiplatsch --help  # two commands: consume and retry
 piddiplatsch consume --help
-piddiplatsch consume --verbose
+piddiplatsch --verbose consume 
 ```
 
 Optional: customize config by copying [src/piddiplatsch/config/default.toml](src/piddiplatsch/config/default.toml) to `custom.toml` and run with `--config custom.toml`.
@@ -36,9 +37,9 @@ Optional: customize config by copying [src/piddiplatsch/config/default.toml](src
 Dry-run (no Handle Service calls):
 
 ```bash
-piddiplatsch --config custom.toml consume --verbose --dry-run
+piddiplatsch --config custom.toml --verbose consume --dry-run
 # optionally also dump messages
-piddiplatsch --config custom.toml consume --verbose --dry-run --dump
+piddiplatsch --config custom.toml --verbose consume --dry-run --dump
 ```
 
 ---
@@ -284,7 +285,7 @@ git push && git push --tags
 Start consumer with custom configuration and dump messages:
 
 ```bash
-piddiplatsch --config custom.toml consume --verbose --dump
+piddiplatsch --config custom.toml --verbose consume --dump
 ```
 
 ---
