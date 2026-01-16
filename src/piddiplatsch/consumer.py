@@ -194,9 +194,9 @@ class ConsumerPipeline:
 # ----------------------------
 
 
-def feed_messages_direct(messages, processor="cmip6"):
+def feed_messages_direct(messages, processor="cmip6", dry_run=False):
     consumer = DirectConsumer(messages)
-    pipeline = ConsumerPipeline(consumer, processor=processor)
+    pipeline = ConsumerPipeline(consumer, processor=processor, dry_run=dry_run)
     pipeline.run()
 
 

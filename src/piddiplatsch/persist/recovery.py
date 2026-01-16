@@ -77,7 +77,12 @@ class FailureRecovery:
         return messages
 
     @staticmethod
-    def retry(jsonl_path: Path, processor: str, delete_after: bool = False) -> int:
+    def retry(
+        jsonl_path: Path,
+        processor: str,
+        delete_after: bool = False,
+        dry_run: bool = False,
+    ) -> int:
         """
         Retry failed items from a JSONL file by reprocessing them through the pipeline.
 
@@ -92,7 +97,7 @@ class FailureRecovery:
             return 0
 
         logging.info(f"Retrying {len(messages)} messages from {jsonl_path}...")
-        feed_messages_direct(messages, processor=processor)
+        feed_messages_direct(messages, processor=processor, dry_run=dry_run)
 
         if delete_after:
             try:
