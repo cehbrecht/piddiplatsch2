@@ -12,14 +12,44 @@
 
 ---
 
+## ⚡ Quick Start
+
+Install, run, and test in minutes:
+
+```bash
+# 1) Setup environment
+git clone git@github.com:cehbrecht/piddiplatsch2.git
+cd piddiplatsch2
+conda env create && conda activate piddiplatsch2
+make develop
+
+# 2) Run tests
+make test            # unit + integration
+
+# 3) Run the consumer (requires Kafka + Handle)
+piddiplatsch consume --help
+piddiplatsch consume --verbose
+```
+
+Optional: customize config by copying [src/piddiplatsch/config/default.toml](src/piddiplatsch/config/default.toml) to `custom.toml` and run with `--config custom.toml`.
+
+Dry-run (no Handle Service calls):
+
+```bash
+piddiplatsch --config custom.toml consume --verbose --dry-run
+# optionally also dump messages
+piddiplatsch --config custom.toml consume --verbose --dry-run --dump
+```
+
+---
+
 ## ✨ Features
 
-- Listens to a Kafka topic for CMIP6+ records
-- Adds and updates PIDs via a Handle Service
-- Includes a mock Handle Server for local testing
-- Includes a Kafka service with docker-compose for testing
-- CLI support to start kafka consumer
-- Supports multihash checksums
+- Kafka consumer for CMIP6+ records
+- Register/update PIDs via Handle Service
+- Local testing via Docker (Kafka + mock Handle)
+- CLI commands: `consume`, `retry`
+- Multihash checksum support
 
 ---
 
@@ -50,7 +80,7 @@ make develop
 You can customize Kafka or Handle settings:
 
 ```bash
-cp src/config/default.toml custom.toml
+cp src/piddiplatsch/config/default.toml custom.toml
 vim custom.toml
 ```
 
@@ -67,70 +97,21 @@ piddiplatsch --config custom.toml
 > ⚠️ **Kafka and Handle service must be running!**  
 > 💡 Use Docker setup below for local testing.
 
-### Start the Kafka consumer:
+### Start the consumer
 
 ```bash
 piddiplatsch consume
 ```
 
-### With verbose:
+### Options
 
-In verbose mode you will get a progress bar on the console.
-
-```bash
-piddiplatsch --verbose consume
-```
-
-In verbose mode the consumer shows a performance message on the console.
-
-### Change logging:
+- **Verbose**: `--verbose`
+- **Debug/log file**: `--debug --log my.log`
+- **Dump messages**: `--dump` (writes JSONL files under `outputs/dump/`)
+- **Dry-run**: `--dry-run` (writes handle records to JSONL without contacting Handle Service)
 
 ```bash
-piddiplatsch --debug --log my.log consume
-```
-
-You can enable debug logging and also change the default log file (`pid.log`).
-
-### Optionally dump all messages:
-
-```bash
-piddiplatsch consume --dump
-```
-
-The messages are written to `outputs/dump/` as json-lines files. For example:
-
-```bash
-outputs/dump/dump_messages_2025-11-03.jsonl
-```
-
-### Dry-run (no handle server)
-
-Write handle records to disk only without contacting the Handle Service.
-
-```bash
-piddiplatsch consume --dry-run
-```
-
-- Uses a JSONL backend and writes to `outputs/handles/handles_<date>.jsonl`.
-- Temporarily overrides any configured handle backend for this run.
-- Can be combined with message dumping:
-
-```bash
-piddiplatsch consume --dry-run --dump
-```
-
-### Example
-
-Run consumer with custom configuration in verbose mode and dump all messages:
-
-```bash
-piddiplatsch --config custom.toml --verbose consume --dump
-```
-
-Run consumer in dry-run mode (no Handle Service calls), still dumping messages:
-
-```bash
-piddiplatsch --config custom.toml --verbose consume --dry-run --dump
+piddiplatsch --config custom.toml --verbose --debug --log my.log consume --dump
 ```
 
 ---
@@ -158,6 +139,7 @@ This project uses a three-tier testing strategy:
 - Marked with `@pytest.mark.smoke`
 - Docker services started/stopped automatically
 - **Note:** Docker is only used for testing, not required for production
+ - Shared test configuration: tests use [tests/config.toml](tests/config.toml)
 
 ### Running Tests
 
@@ -252,56 +234,13 @@ make check-format  # Check formatting only
 
 ---
 
-## 🐳 Docker for Testing
-
-> 💡 **Note:** Docker services are only used for smoke tests. Production deployments use external Kafka and Handle services.
-
-Start Kafka and mock Handle service for testing:
-
-```bash
-make start-docker
-```
-
-Stop all services:
-
-```bash
-make stop-docker
-```
-
-Smoke tests exercise Kafka (Docker services started automatically). To run them:
-
-```bash
-make smoke
-```
-
-This command also starts the production consumer in the background and stops it (and Docker services) after the tests finish.
-
- 
-
----
-
 ## Failure Recovery and Retry
 
 When `piddiplatsch` fails to register or process a STAC item from Kafka, the failed item is saved for recovery in a JSON Lines (`.jsonl`) format. This enables you to preserve thousands of failure records for later inspection and retry.
 
-### How Failures Are Stored
+### Where failures are stored
 
-* Failed items are saved under the configured `output_dir` (default: `outputs/failures`).
-* Failures are grouped by UTC date in files named like `failed_items_YYYY-MM-DD.jsonl`.
-* To track retry attempts, failures are stored in subfolders named by retry count:
-
-```
-outputs/
-└── failures/
-    ├── retries-0/          # First failures (no retries yet)
-    │   └── failed_items_2025-07-23.jsonl
-    ├── retries-1/          # First retry attempt
-    │   └── failed_items_2025-07-23.jsonl
-    └── retries-2/          # Second retry attempt
-        └── failed_items_2025-07-23.jsonl
-```
-
-* Each JSON object includes a `"failure_timestamp"` (UTC ISO8601) and `"retries"` count.
+- Saved under `outputs/failures/retries-<n>/failed_items_<date>.jsonl` in the configured `output_dir`.
 
 ### Retrying Failed Items
 
@@ -312,9 +251,8 @@ piddiplatsch retry <failure-file.jsonl> [--delete-after]
 ```
 
 Options:
-
-* `<failure-file.jsonl>`: Path to the failure file to retry.
-* `--delete-after`: Delete the file after all messages have been retried successfully.
+- `<failure-file.jsonl>`: failure file to retry
+- `--delete-after`: delete file after successful retry
 
 ### Example
 
@@ -322,7 +260,7 @@ Options:
 piddiplatsch retry outputs/failures/retries-0/failed_items_2025-07-23.jsonl --delete-after
 ```
 
-This command will resend all items from that failure file to the configured Kafka retry topic, increasing their retry count automatically. If all messages succeed, the file will be deleted.
+Resends items to the configured Kafka retry topic, incrementing retry count. With `--delete-after`, removes the file on success.
 
 ---
 
@@ -343,16 +281,10 @@ git push && git push --tags
 
 ## 📓 Examples
 
-Run consumer with custom configuration in verbose mode and dump all messages:
+Start consumer with custom configuration and dump messages:
 
 ```bash
-piddiplatsch --config custom.toml --verbose consume --dump
-```
-
-Run consumer in dry-run mode (no Handle Service calls), still dumping messages:
-
-```bash
-piddiplatsch --config custom.toml --verbose consume --dry-run --dump
+piddiplatsch --config custom.toml consume --verbose --dump
 ```
 
 ---
