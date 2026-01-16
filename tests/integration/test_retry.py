@@ -157,3 +157,56 @@ def test_retry_handles_empty_file(tmp_path: Path):
 
     count = FailureRecovery.retry(empty_file, processor="cmip6")
     assert count == 0
+
+
+def test_find_retry_files_single_file(tmp_path: Path):
+    """Test find_retry_files with a single file."""
+    file1 = tmp_path / "test1.jsonl"
+    file1.touch()
+
+    files = FailureRecovery.find_retry_files((file1,))
+    assert files == [file1]
+
+
+def test_find_retry_files_directory(tmp_path: Path):
+    """Test find_retry_files with a directory."""
+    (tmp_path / "file1.jsonl").touch()
+    (tmp_path / "file2.jsonl").touch()
+    (tmp_path / "file3.txt").touch()  # Non-JSONL file
+
+    files = FailureRecovery.find_retry_files((tmp_path,))
+    assert len(files) == 2
+    assert all(f.suffix == ".jsonl" for f in files)
+
+
+def test_find_retry_files_multiple_paths(tmp_path: Path):
+    """Test find_retry_files with multiple paths."""
+    file1 = tmp_path / "test1.jsonl"
+    file2 = tmp_path / "test2.jsonl"
+    file1.touch()
+    file2.touch()
+
+    files = FailureRecovery.find_retry_files((file1, file2))
+    assert len(files) == 2
+    assert file1 in files
+    assert file2 in files
+
+
+def test_find_retry_files_removes_duplicates(tmp_path: Path):
+    """Test find_retry_files removes duplicate paths."""
+    file1 = tmp_path / "test1.jsonl"
+    file1.touch()
+
+    # Pass same file twice
+    files = FailureRecovery.find_retry_files((file1, file1))
+    assert len(files) == 1
+    assert files[0] == file1
+
+
+def test_find_retry_files_skips_non_jsonl(tmp_path: Path):
+    """Test find_retry_files skips non-JSONL files."""
+    txt_file = tmp_path / "test.txt"
+    txt_file.touch()
+
+    files = FailureRecovery.find_retry_files((txt_file,))
+    assert len(files) == 0

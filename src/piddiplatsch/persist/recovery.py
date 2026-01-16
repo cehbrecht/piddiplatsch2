@@ -77,6 +77,39 @@ class FailureRecovery:
         return messages
 
     @staticmethod
+    def find_retry_files(paths: tuple[Path, ...]) -> list[Path]:
+        """
+        Find all JSONL files from the given paths.
+
+        Supports:
+        - Individual files
+        - Directories (finds all .jsonl files)
+        - Glob patterns
+
+        Returns sorted list of unique file paths.
+        """
+        files = set()
+
+        for path in paths:
+            if path.is_file():
+                if path.suffix == ".jsonl":
+                    files.add(path)
+                else:
+                    logging.warning(f"Skipping non-JSONL file: {path}")
+            elif path.is_dir():
+                # Find all .jsonl files in directory (non-recursive)
+                jsonl_files = path.glob("*.jsonl")
+                files.update(jsonl_files)
+            else:
+                # Treat as glob pattern
+                parent = path.parent
+                pattern = path.name
+                matched = parent.glob(pattern)
+                files.update(f for f in matched if f.is_file() and f.suffix == ".jsonl")
+
+        return sorted(files)
+
+    @staticmethod
     def retry(
         jsonl_path: Path,
         processor: str,

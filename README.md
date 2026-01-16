@@ -137,20 +137,31 @@ Failed items are saved to `outputs/failures/r<N>/failed_items_<date>.jsonl` for 
 Reprocess failed items directly through the pipeline (no Kafka write required):
 
 ```bash
-piddiplatsch retry <failure-file.jsonl> [--delete-after]
+piddiplatsch retry <path...> [--delete-after] [--dry-run]
 ```
+
+Supports:
+- Individual files: `retry file1.jsonl file2.jsonl`
+- Directories: `retry outputs/failures/r0/`
+- Multiple paths: `retry outputs/failures/r0/ outputs/failures/r1/`
 
 **Examples:**
 
 ```bash
-# Retry failed items
+# Retry a single file
 piddiplatsch retry outputs/failures/r0/failed_items_2026-01-16.jsonl
 
-# Retry in dry-run mode (test without contacting Handle Service)
-piddiplatsch retry outputs/failures/r0/failed_items_2026-01-16.jsonl --dry-run
+# Retry all files in a directory
+piddiplatsch retry outputs/failures/r0/
 
-# Retry and delete file on success
-piddiplatsch retry outputs/failures/r0/failed_items_2026-01-16.jsonl --delete-after
+# Retry multiple files
+piddiplatsch retry file1.jsonl file2.jsonl file3.jsonl
+
+# Retry in dry-run mode (test without contacting Handle Service)
+piddiplatsch retry outputs/failures/r0/ --dry-run
+
+# Retry and delete files on success
+piddiplatsch retry outputs/failures/r0/ --delete-after
 ```
 
 Items are reprocessed with incremented retry counters. New failures go to `r1/`, `r2/`, etc.

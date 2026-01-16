@@ -68,25 +68,47 @@ def consume(ctx, dump, dry_run):
 
 @cli.command("retry")
 @click.argument(
-    "filename", type=click.Path(exists=True, dir_okay=False, path_type=Path)
+    "path",
+    type=click.Path(exists=True, path_type=Path),
+    nargs=-1,
+    required=True,
 )
 @click.option(
     "--delete-after",
     is_flag=True,
-    help="Delete the file if all messages are retried successfully.",
+    help="Delete files after successful retry.",
 )
 @click.option(
     "--dry-run",
     is_flag=True,
     help="Write handles to JSONL without contacting Handle Service.",
 )
-def retry(filename: Path, delete_after: bool, dry_run: bool):
-    """Retry failed items from a failure .jsonl file by reprocessing them."""
+def retry(path: tuple[Path, ...], delete_after: bool, dry_run: bool):
+    """Retry failed items from failure .jsonl file(s) or directory.
+
+    Accepts multiple arguments:
+    - Individual files: retry file1.jsonl file2.jsonl
+    - Directories: retry outputs/failures/r0/
+    - Glob patterns: retry outputs/failures/r0/*.jsonl
+    """
     processor = config.get("plugin", "processor")
-    count = FailureRecovery.retry(
-        filename, processor=processor, delete_after=delete_after, dry_run=dry_run
-    )
-    click.echo(f"Retried {count} messages.")
+
+    files = FailureRecovery.find_retry_files(path)
+
+    if not files:
+        click.echo("No retry files found.")
+        return
+
+    click.echo(f"Found {len(files)} file(s) to retry.")
+
+    total_count = 0
+    for file in files:
+        count = FailureRecovery.retry(
+            file, processor=processor, delete_after=delete_after, dry_run=dry_run
+        )
+        total_count += count
+
+    click.echo(f"Total: Retried {total_count} messages from {len(files)} file(s).")
 
 
 if __name__ == "__main__":
