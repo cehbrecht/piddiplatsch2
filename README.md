@@ -160,8 +160,29 @@ piddiplatsch retry file1.jsonl file2.jsonl file3.jsonl
 # Retry in dry-run mode (test without contacting Handle Service)
 piddiplatsch retry outputs/failures/r0/ --dry-run
 
+# Retry with progress indicators (verbose mode)
+piddiplatsch --verbose retry outputs/failures/r0/
+
 # Retry and delete files on success
 piddiplatsch retry outputs/failures/r0/ --delete-after
+```
+
+**Progress Indicators:**
+
+Use `--verbose` flag to see per-file progress during retry:
+
+```bash
+piddiplatsch --verbose retry outputs/failures/r0/
+
+# Output:
+# [1/3] failed_items_2026-01-15.jsonl: 45/50 succeeded, 5 failed
+# [2/3] failed_items_2026-01-16.jsonl: 100/100 succeeded
+# [3/3] failed_items_2026-01-17.jsonl: 23/25 succeeded, 2 failed
+#
+# Total: 168/175 succeeded
+#   ⚠️  7 items failed again (96.0% success rate)
+#   New failures saved to:
+#     - r1/failed_items_2026-01-16.jsonl
 ```
 
 **Detailed Feedback:**

@@ -83,7 +83,8 @@ def consume(ctx, dump, dry_run):
     is_flag=True,
     help="Write handles to JSONL without contacting Handle Service.",
 )
-def retry(path: tuple[Path, ...], delete_after: bool, dry_run: bool):
+@click.pass_context
+def retry(ctx, path: tuple[Path, ...], delete_after: bool, dry_run: bool):
     """Retry failed items from failure .jsonl file(s) or directory.
 
     Accepts multiple arguments:
@@ -92,9 +93,27 @@ def retry(path: tuple[Path, ...], delete_after: bool, dry_run: bool):
     - Glob patterns: retry outputs/failures/r0/*.jsonl
     """
     processor = config.get("plugin", "processor")
+    verbose = ctx.obj.get("verbose", False)
+
+    # Define progress callback for verbose mode
+    def show_progress(file, idx, total, result):
+        if verbose:
+            click.echo(f"[{idx}/{total}] {file.name}: ", nl=False)
+            if result.total > 0:
+                click.echo(
+                    f"{result.succeeded}/{result.total} succeeded"
+                    + (f", {result.failed} failed" if result.failed > 0 else "")
+                )
+            else:
+                click.echo("(empty)")
 
     result = FailureRecovery.retry_batch(
-        path, processor=processor, delete_after=delete_after, dry_run=dry_run
+        path,
+        processor=processor,
+        delete_after=delete_after,
+        dry_run=dry_run,
+        verbose=verbose,
+        progress_callback=show_progress if verbose else None,
     )
 
     if result.total == 0:

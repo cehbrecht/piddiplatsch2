@@ -169,11 +169,21 @@ class FailureRecovery:
         processor: str,
         delete_after: bool = False,
         dry_run: bool = False,
+        verbose: bool = False,
+        progress_callback=None,
     ) -> RetryResult:
         """
         Retry failed items from multiple files/directories.
 
         Resolves paths to JSONL files and processes them, aggregating results.
+
+        Args:
+            paths: File/directory paths to retry
+            processor: Processor name
+            delete_after: Delete files after successful retry
+            dry_run: Run without contacting Handle Service
+            verbose: Show progress information
+            progress_callback: Optional callback for progress updates (file, index, total, result)
 
         Returns:
             RetryResult with overall statistics across all files.
@@ -187,8 +197,9 @@ class FailureRecovery:
         logging.info(f"Found {len(files)} file(s) to retry.")
 
         overall = RetryResult()
+        total_files = len(files)
 
-        for file in files:
+        for idx, file in enumerate(files, 1):
             result = FailureRecovery.retry(
                 file, processor=processor, delete_after=delete_after, dry_run=dry_run
             )
@@ -196,5 +207,9 @@ class FailureRecovery:
             overall.succeeded += result.succeeded
             overall.failed += result.failed
             overall.failure_files.update(result.failure_files)
+
+            # Call progress callback if provided (for CLI progress display)
+            if progress_callback:
+                progress_callback(file, idx, total_files, result)
 
         return overall
