@@ -1,6 +1,5 @@
 import json
 import logging
-import uuid
 from pathlib import Path
 
 from confluent_kafka import Producer
@@ -81,8 +80,8 @@ def ensure_topic_exists_from_config():
     ensure_topic_exists(topic, kafka_cfg)
 
 
-def send_json_file_to_kafka_from_config(json_path: Path, *, verbose: bool = False):
-    """Send a JSON file to Kafka using config defaults (smoke tests)."""
+def send_message_to_kafka(json_path: Path, *, verbose: bool = False):
+    """Send a JSON message (from file) to Kafka using config defaults (smoke tests)."""
     key, value = build_message_from_path(json_path)
 
     if verbose:

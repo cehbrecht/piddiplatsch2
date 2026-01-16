@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 import click
@@ -36,8 +35,6 @@ def cli(ctx, config_file, debug, verbose, log):
     ctx.obj["verbose"] = verbose
     config.load_user_config(config_file)
     config.configure_logging(debug=debug, log=log)
-
-
 
 
 # consume command
@@ -89,8 +86,6 @@ def retry(filename: Path, delete_after: bool):
         delete_after=delete_after,
     )
     click.echo(f"Retried {success} messages, {failed} failed.")
-
-
 
 
 if __name__ == "__main__":

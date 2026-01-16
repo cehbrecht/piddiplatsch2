@@ -112,6 +112,9 @@ test-integration: ## run integration tests only (JSONL backend, no Docker requir
 
 test-smoke: start-docker ## run smoke tests only (requires Docker: Kafka + Handle server)
 	@echo "Running smoke tests ..."
+	# Ensure Kafka topic exists before starting consumer
+	@echo "Ensuring Kafka topic exists (from config) ..."
+	@bash -c 'python -c "from piddiplatsch.testing.kafka_client import ensure_topic_exists_from_config; ensure_topic_exists_from_config()"'
 	# Start production consumer in background
 	@echo "Starting piddiplatsch consumer (background) ..."
 	@bash -c 'piddiplatsch consume & echo $$! > .consumer.pid && echo "Consumer PID: $$(cat .consumer.pid)"'
@@ -180,6 +183,9 @@ stop-docker: ## stop Docker test services
 # Local consumer management
 start-consumer:
 	@echo "Starting piddiplatsch consumer ..."
+	# Ensure Kafka topic exists before starting consumer
+	@echo "Ensuring Kafka topic exists (from config) ..."
+	@bash -c 'python -c "from piddiplatsch.testing.kafka_client import ensure_topic_exists_from_config; ensure_topic_exists_from_config()"'
 	@bash -c 'piddiplatsch consume & echo $$! > .consumer.pid && echo "Consumer PID: $$(cat .consumer.pid)"'
 
 stop-consumer:

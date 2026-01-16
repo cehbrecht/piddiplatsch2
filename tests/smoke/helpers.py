@@ -4,8 +4,8 @@ These helpers replicate the previous CLI-only commands `init` and `send`
 so smoke tests can create topics and push messages when needed.
 """
 
-from pathlib import Path
 import json
+from pathlib import Path
 
 from piddiplatsch.config import config
 from piddiplatsch.testing import kafka_client
