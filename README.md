@@ -1,12 +1,10 @@
 # Piddiplatsch
 
-Kafka consumer adding PIDs to CMIP6+ records.
-
 [![Build Status](https://github.com/cehbrecht/piddiplatsch2/actions/workflows/ci.yml/badge.svg)](https://github.com/cehbrecht/piddiplatsch2/actions)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![pre-commit enabled](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://pre-commit.com/)
-[![View Notebooks on nbviewer](https://img.shields.io/badge/nbviewer-view%20notebooks-orange)](https://nbviewer.org/github/cehbrecht/piddiplatsch2/tree/main/notebooks/)
+
 
 ---
 
@@ -17,12 +15,11 @@ Kafka consumer adding PIDs to CMIP6+ records.
 ## ✨ Features
 
 - Listens to a Kafka topic for CMIP6+ records
-- Adds, updates, and deletes PIDs via a Handle Service
+- Adds and updates PIDs via a Handle Service
 - Includes a mock Handle Server for local testing
 - Includes a Kafka service with docker-compose for testing
-- CLI and plugin support
+- CLI support to start kafka consumer
 - Supports multihash checksums
-- Example notebooks
 
 ---
 
@@ -346,15 +343,21 @@ git push && git push --tags
 
 ## 📓 Examples
 
-Explore the example notebooks here:  
-🔗 [nbviewer.org/github/cehbrecht/piddiplatsch2/tree/main/notebooks/](https://nbviewer.org/github/cehbrecht/piddiplatsch2/tree/main/notebooks/)
+Run consumer with custom configuration in verbose mode and dump all messages:
+
+```bash
+piddiplatsch --config custom.toml --verbose consume --dump
+```
+
+Run consumer in dry-run mode (no Handle Service calls), still dumping messages:
+
+```bash
+piddiplatsch --config custom.toml --verbose consume --dry-run --dump
+```
 
 ---
 
 ## ✅ TODO
-
-- [ ] **Dummy Handle Writer**  
-  Write handle records for testing purposes.
 
 - [ ] **Batch Handle registration**  
   Support committing one dataset and its associated files in a single batch request.
