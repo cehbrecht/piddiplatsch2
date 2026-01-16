@@ -76,16 +76,12 @@ def consume(ctx, dump, dry_run):
     help="Delete the file if all messages are retried successfully.",
 )
 def retry(filename: Path, delete_after: bool):
-    """Retry failed items from a failure .jsonl file."""
-    retry_topic = config.get("consumer", "retry_topic")
-    kafka_cfg = config.get("kafka", {})
-    success, failed = FailureRecovery.retry(
-        retry_topic=retry_topic,
-        kafka_cfg=kafka_cfg,
-        jsonl_path=filename,
-        delete_after=delete_after,
+    """Retry failed items from a failure .jsonl file by reprocessing them."""
+    processor = config.get("plugin", "processor")
+    count = FailureRecovery.retry(
+        filename, processor=processor, delete_after=delete_after
     )
-    click.echo(f"Retried {success} messages, {failed} failed.")
+    click.echo(f"Retried {count} messages.")
 
 
 if __name__ == "__main__":
