@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from piddiplatsch.handles.api import get_handle_backend
+from piddiplatsch.testing.kafka_client import ensure_topic_exists_from_config
 
 
 @pytest.fixture
@@ -27,3 +28,9 @@ def handle_client():
     Requires Docker services to be running.
     """
     return get_handle_backend()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def ensure_kafka_topic_exists_for_smoke():
+    """Ensure Kafka topic exists before running smoke tests (auto-used)."""
+    ensure_topic_exists_from_config()
