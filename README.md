@@ -277,6 +277,8 @@ Smoke tests exercise Kafka (Docker services started automatically). To run them:
 make smoke
 ```
 
+This command also starts the production consumer in the background and stops it (and Docker services) after the tests finish.
+
  
 
 ---

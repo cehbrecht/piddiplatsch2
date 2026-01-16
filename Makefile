@@ -112,7 +112,13 @@ test-integration: ## run integration tests only (JSONL backend, no Docker requir
 
 test-smoke: start-docker ## run smoke tests only (requires Docker: Kafka + Handle server)
 	@echo "Running smoke tests ..."
-	@bash -c 'pytest -v -s -m "smoke" tests/' || ($(MAKE) stop-docker && exit 1)
+	# Start production consumer in background
+	@echo "Starting piddiplatsch consumer (background) ..."
+	@bash -c 'piddiplatsch consume & echo $$! > .consumer.pid && echo "Consumer PID: $$(cat .consumer.pid)"'
+	# Run smoke tests; on failure, ensure consumer and docker are stopped
+	@bash -c 'pytest -v -s -m "smoke" tests/' || ($(MAKE) stop-consumer; $(MAKE) stop-docker; exit 1)
+	# Stop consumer and docker after tests
+	@$(MAKE) stop-consumer
 	@$(MAKE) stop-docker
 
 test-all: test-unit test-integration test-smoke ## run all tests including smoke tests
@@ -170,6 +176,15 @@ stop-docker: ## stop Docker test services
 	@docker-compose down -v
 	@echo "✅ Docker services stopped!"
 	@echo ""
+
+# Local consumer management
+start-consumer:
+	@echo "Starting piddiplatsch consumer ..."
+	@bash -c 'piddiplatsch consume & echo $$! > .consumer.pid && echo "Consumer PID: $$(cat .consumer.pid)"'
+
+stop-consumer:
+	@echo "Stopping piddiplatsch consumer ..."
+	@bash -c 'if [ -f .consumer.pid ]; then kill $$(cat .consumer.pid) >/dev/null 2>&1 || true; rm -f .consumer.pid; else echo "No consumer PID file"; fi'
 
 docker-build: ## build Docker images for test services
 	@echo "Building Docker images..."

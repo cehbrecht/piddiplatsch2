@@ -4,7 +4,6 @@ from pathlib import Path
 
 from piddiplatsch.testing.kafka_client import (
     send_json_file_to_kafka_from_config,
-    consume_available_messages,
 )
 
 pytestmark = pytest.mark.smoke
@@ -68,7 +67,6 @@ def test_send_valid_cmip6_mri_6hr_dc4(testfile, handle_client):
         "CMIP6.HighResMIP.MRI.MRI-AGCM3-2-H.highresSST-present.r1i1p1f1.6hrPlevPt.psl.gn.v20190820.json",
     )
     send_json_file_to_kafka_from_config(p, verbose=True)
-    consume_available_messages(processor="cmip6", idle_timeout=2.0)
 
     pid = "b06058a6-1077-35cb-9500-1ccbd341d309"
     pids = [
@@ -91,7 +89,6 @@ def test_send_valid_cmip6_ipsl_mon_dc4(testfile, handle_client):
         "CMIP6.ScenarioMIP.IPSL.IPSL-CM6A-LR.ssp245.r1i1p1f1.Amon.pr.gr.v20190119.json",
     )
     send_json_file_to_kafka_from_config(p)
-    consume_available_messages(processor="cmip6", idle_timeout=2.0)
 
     pid = "11da5bd1-157f-3158-b775-ba42ed4e193b"
     pids = ["d1e2181e-1066-3d33-b56a-f45bf7a40ab5"]
@@ -105,7 +102,6 @@ def test_send_invalid_cmip6_dkrz_yr_dc4(testfile):
         "CMIP6.ScenarioMIP.DKRZ.MPI-ESM1-2-HR.ssp126.r1i1p1f1.Eyr.baresoilFrac.gn.v20190710.json",
     )
     send_json_file_to_kafka_from_config(p)
-    consume_available_messages(processor="cmip6", idle_timeout=2.0)
 
 
 def test_send_invalid_cmip6_ipsl_mon_dc4_missing_file_size(testfile):
@@ -115,7 +111,6 @@ def test_send_invalid_cmip6_ipsl_mon_dc4_missing_file_size(testfile):
         "CMIP6.ScenarioMIP.IPSL.IPSL-CM6A-LR.ssp245.r1i1p1f1.Amon.pr.gr.v20190119_missing_file_size.json",
     )
     send_json_file_to_kafka_from_config(p)
-    consume_available_messages(processor="cmip6", idle_timeout=2.0)
 
 
 def test_send_multiple_files(testfile, handle_client):
@@ -133,4 +128,3 @@ def test_send_multiple_files(testfile, handle_client):
     ]
     for p in files:
         send_json_file_to_kafka_from_config(p)
-    consume_available_messages(processor="cmip6", idle_timeout=2.0)
