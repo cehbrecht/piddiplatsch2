@@ -75,11 +75,16 @@ def consume(ctx, dump, dry_run):
     is_flag=True,
     help="Delete the file if all messages are retried successfully.",
 )
-def retry(filename: Path, delete_after: bool):
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Write handles to JSONL without contacting Handle Service.",
+)
+def retry(filename: Path, delete_after: bool, dry_run: bool):
     """Retry failed items from a failure .jsonl file by reprocessing them."""
     processor = config.get("plugin", "processor")
     count = FailureRecovery.retry(
-        filename, processor=processor, delete_after=delete_after
+        filename, processor=processor, delete_after=delete_after, dry_run=dry_run
     )
     click.echo(f"Retried {count} messages.")
 

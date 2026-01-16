@@ -146,6 +146,9 @@ piddiplatsch retry <failure-file.jsonl> [--delete-after]
 # Retry failed items
 piddiplatsch retry outputs/failures/r0/failed_items_2026-01-16.jsonl
 
+# Retry in dry-run mode (test without contacting Handle Service)
+piddiplatsch retry outputs/failures/r0/failed_items_2026-01-16.jsonl --dry-run
+
 # Retry and delete file on success
 piddiplatsch retry outputs/failures/r0/failed_items_2026-01-16.jsonl --delete-after
 ```
