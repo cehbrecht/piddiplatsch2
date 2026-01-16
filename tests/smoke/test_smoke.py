@@ -2,9 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from piddiplatsch.testing.kafka_client import (
-    send_message_to_kafka,
-)
+from piddiplatsch.testing.kafka_client import send_message_to_kafka
 
 pytestmark = pytest.mark.smoke
 
