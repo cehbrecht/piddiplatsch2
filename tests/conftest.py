@@ -1,3 +1,5 @@
+"""Shared fixtures for all tests."""
+
 from pathlib import Path
 
 import pytest
@@ -10,11 +12,6 @@ def _load_tests_config():
     """Load shared test config for all suites (unit, integration, smoke)."""
     cfg_path = Path(__file__).parent / "config.toml"
     _config.load_user_config(str(cfg_path))
-"""Shared fixtures for all tests."""
-
-from pathlib import Path
-
-import pytest
 
 
 @pytest.fixture

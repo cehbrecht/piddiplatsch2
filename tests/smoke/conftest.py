@@ -30,7 +30,6 @@ def handle_client():
     return get_handle_backend()
 
 
-
 @pytest.fixture(scope="session", autouse=True)
 def ensure_kafka_topic_exists_for_smoke():
     """Ensure Kafka topic exists before running smoke tests (auto-used)."""
