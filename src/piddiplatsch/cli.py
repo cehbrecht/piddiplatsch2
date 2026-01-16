@@ -68,24 +68,71 @@ def consume(ctx, dump, dry_run):
 
 @cli.command("retry")
 @click.argument(
-    "filename", type=click.Path(exists=True, dir_okay=False, path_type=Path)
+    "path",
+    type=click.Path(exists=True, path_type=Path),
+    nargs=-1,
+    required=True,
 )
 @click.option(
     "--delete-after",
     is_flag=True,
-    help="Delete the file if all messages are retried successfully.",
+    help="Delete files after successful retry.",
 )
-def retry(filename: Path, delete_after: bool):
-    """Retry failed items from a failure .jsonl file."""
-    retry_topic = config.get("consumer", "retry_topic")
-    kafka_cfg = config.get("kafka", {})
-    success, failed = FailureRecovery.retry(
-        retry_topic=retry_topic,
-        kafka_cfg=kafka_cfg,
-        jsonl_path=filename,
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Write handles to JSONL without contacting Handle Service.",
+)
+@click.pass_context
+def retry(ctx, path: tuple[Path, ...], delete_after: bool, dry_run: bool):
+    """Retry failed items from failure .jsonl file(s) or directory.
+
+    Accepts multiple arguments:
+    - Individual files: retry file1.jsonl file2.jsonl
+    - Directories: retry outputs/failures/r0/
+    - Glob patterns: retry outputs/failures/r0/*.jsonl
+    """
+    processor = config.get("plugin", "processor")
+    verbose = ctx.obj.get("verbose", False)
+
+    # Define progress callback for verbose mode
+    def show_progress(file, idx, total, result):
+        if verbose:
+            click.echo(f"[{idx}/{total}] {file.name}: ", nl=False)
+            if result.total > 0:
+                click.echo(
+                    f"{result.succeeded}/{result.total} succeeded"
+                    + (f", {result.failed} failed" if result.failed > 0 else "")
+                )
+            else:
+                click.echo("(empty)")
+
+    result = FailureRecovery.retry_batch(
+        path,
+        processor=processor,
         delete_after=delete_after,
+        dry_run=dry_run,
+        verbose=verbose,
+        progress_callback=show_progress if verbose else None,
     )
-    click.echo(f"Retried {success} messages, {failed} failed.")
+
+    if result.total == 0:
+        click.echo("No retry files found.")
+        return
+
+    # Show overall summary
+    click.echo(f"\nTotal: {result.succeeded}/{result.total} succeeded")
+    if result.failed > 0:
+        click.echo(
+            f"  ⚠️  {result.failed} items failed again ({result.success_rate:.1f}% success rate)"
+        )
+        if result.failure_files:
+            click.echo("  New failures saved to:")
+            for failure_file in sorted(result.failure_files):
+                rel_path = failure_file.relative_to(FailureRecovery.FAILURE_DIR)
+                click.echo(f"    - {rel_path}")
+    else:
+        click.echo("  ✓ All items processed successfully!")
 
 
 if __name__ == "__main__":

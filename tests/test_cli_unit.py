@@ -1,0 +1,269 @@
+"""Unit tests for CLI module."""
+
+from unittest.mock import patch
+
+import pytest
+from click.testing import CliRunner
+
+from piddiplatsch.cli import cli
+
+
+@pytest.fixture
+def runner():
+    """Provides a Click CLI test runner."""
+    return CliRunner()
+
+
+class TestCLIBasics:
+    """Test basic CLI functionality."""
+
+    def test_cli_help(self, runner):
+        """Test that CLI shows help message."""
+        result = runner.invoke(cli, ["--help"])
+        assert result.exit_code == 0
+        assert "CLI to interact with Kafka and Handle Service" in result.output
+        assert "consume" in result.output
+        assert "retry" in result.output
+
+    def test_cli_help_short(self, runner):
+        """Test that CLI shows help with -h flag."""
+        result = runner.invoke(cli, ["-h"])
+        assert result.exit_code == 0
+        assert "CLI to interact with Kafka and Handle Service" in result.output
+
+    def test_cli_version(self, runner):
+        """Test that CLI shows version."""
+        result = runner.invoke(cli, ["--version"])
+        assert result.exit_code == 0
+        # Version output varies, just check it doesn't error
+
+    def test_cli_no_command(self, runner):
+        """Test that CLI shows usage when no command is provided."""
+        result = runner.invoke(cli, [])
+        # Click returns exit code 2 when required command is missing
+        assert result.exit_code == 2 or result.exit_code == 0
+        assert "Usage:" in result.output or "Commands:" in result.output
+
+
+class TestConsumeCommand:
+    """Test consume command."""
+
+    def test_consume_help(self, runner):
+        """Test consume command help."""
+        result = runner.invoke(cli, ["consume", "--help"])
+        assert result.exit_code == 0
+        assert "Start the Kafka consumer" in result.output
+        assert "--dump" in result.output
+        assert "--dry-run" in result.output
+
+    @patch("piddiplatsch.cli.start_consumer")
+    def test_consume_basic(self, mock_start_consumer, runner):
+        """Test consume command calls start_consumer."""
+        runner.invoke(cli, ["consume"])
+        # Will fail without Kafka, but should call start_consumer
+        assert mock_start_consumer.called
+
+    @patch("piddiplatsch.cli.start_consumer")
+    def test_consume_with_dump(self, mock_start_consumer, runner):
+        """Test consume command with --dump flag."""
+        runner.invoke(cli, ["consume", "--dump"])
+        assert mock_start_consumer.called
+        # Check that dump_messages=True was passed
+        call_kwargs = mock_start_consumer.call_args.kwargs
+        assert call_kwargs.get("dump_messages") is True
+
+    @patch("piddiplatsch.cli.start_consumer")
+    def test_consume_with_dry_run(self, mock_start_consumer, runner):
+        """Test consume command with --dry-run flag."""
+        runner.invoke(cli, ["consume", "--dry-run"])
+        assert mock_start_consumer.called
+        call_kwargs = mock_start_consumer.call_args.kwargs
+        assert call_kwargs.get("dry_run") is True
+
+    @patch("piddiplatsch.cli.start_consumer")
+    def test_consume_with_verbose(self, mock_start_consumer, runner):
+        """Test consume command with --verbose flag."""
+        runner.invoke(cli, ["--verbose", "consume"])
+        assert mock_start_consumer.called
+        call_kwargs = mock_start_consumer.call_args.kwargs
+        assert call_kwargs.get("verbose") is True
+
+
+class TestRetryCommand:
+    """Test retry command."""
+
+    def test_retry_help(self, runner):
+        """Test retry command help."""
+        result = runner.invoke(cli, ["retry", "--help"])
+        assert result.exit_code == 0
+        assert "Retry failed items" in result.output
+        assert "--delete-after" in result.output
+        assert "--dry-run" in result.output
+
+    def test_retry_no_path(self, runner):
+        """Test retry command without path argument fails."""
+        result = runner.invoke(cli, ["retry"])
+        assert result.exit_code == 2
+        assert "Missing argument" in result.output
+
+    def test_retry_nonexistent_path(self, runner):
+        """Test retry command with nonexistent path fails."""
+        result = runner.invoke(cli, ["retry", "nonexistent.jsonl"])
+        assert result.exit_code == 2
+        assert "does not exist" in result.output
+
+    @patch("piddiplatsch.cli.FailureRecovery.retry_batch")
+    def test_retry_calls_retry_batch(self, mock_retry_batch, runner, tmp_path):
+        """Test that retry command calls FailureRecovery.retry_batch."""
+        # Create a dummy file
+        test_file = tmp_path / "test.jsonl"
+        test_file.write_text("{}\n")
+
+        # Mock the return value
+        from piddiplatsch.processing import RetryResult
+
+        mock_retry_batch.return_value = RetryResult(total=0)
+
+        result = runner.invoke(cli, ["retry", str(test_file)])
+        assert result.exit_code == 0
+        assert mock_retry_batch.called
+        assert "No retry files found" in result.output
+
+    @patch("piddiplatsch.cli.FailureRecovery.retry_batch")
+    def test_retry_with_success(self, mock_retry_batch, runner, tmp_path):
+        """Test retry command with successful result."""
+        test_file = tmp_path / "test.jsonl"
+        test_file.write_text("{}\n")
+
+        from piddiplatsch.processing import RetryResult
+
+        mock_retry_batch.return_value = RetryResult(
+            total=5, succeeded=5, failed=0, failure_files=set()
+        )
+
+        result = runner.invoke(cli, ["retry", str(test_file)])
+        assert result.exit_code == 0
+        assert "5/5 succeeded" in result.output
+        assert "All items processed successfully" in result.output
+
+    @patch("piddiplatsch.cli.FailureRecovery.retry_batch")
+    def test_retry_with_failures(self, mock_retry_batch, runner, tmp_path):
+        """Test retry command with some failures."""
+        test_file = tmp_path / "test.jsonl"
+        test_file.write_text("{}\n")
+
+        from piddiplatsch.processing import RetryResult
+
+        mock_retry_batch.return_value = RetryResult(
+            total=10, succeeded=7, failed=3, failure_files=set()
+        )
+
+        result = runner.invoke(cli, ["retry", str(test_file)])
+        assert result.exit_code == 0
+        assert "7/10 succeeded" in result.output
+        assert "3 items failed again" in result.output
+        assert "70.0% success rate" in result.output
+
+    @patch("piddiplatsch.cli.FailureRecovery.retry_batch")
+    def test_retry_with_new_failure_files(self, mock_retry_batch, runner, tmp_path):
+        """Test retry command shows new failure files."""
+        test_file = tmp_path / "test.jsonl"
+        test_file.write_text("{}\n")
+
+        # Create a mock failure directory structure
+        failures_dir = tmp_path / "failures" / "r1"
+        failures_dir.mkdir(parents=True)
+        new_failure = failures_dir / "failed_items_2026-01-16.jsonl"
+        new_failure.write_text("{}\n")
+
+        from piddiplatsch.processing import RetryResult
+
+        mock_retry_batch.return_value = RetryResult(
+            total=5, succeeded=3, failed=2, failure_files={new_failure}
+        )
+
+        # Mock FAILURE_DIR to point to our tmp directory
+        with patch(
+            "piddiplatsch.cli.FailureRecovery.FAILURE_DIR", tmp_path / "failures"
+        ):
+            result = runner.invoke(cli, ["retry", str(test_file)])
+            assert result.exit_code == 0
+            assert "3/5 succeeded" in result.output
+            assert "New failures saved to:" in result.output
+            assert "r1/failed_items_2026-01-16.jsonl" in result.output
+
+    @patch("piddiplatsch.cli.FailureRecovery.retry_batch")
+    def test_retry_passes_delete_after(self, mock_retry_batch, runner, tmp_path):
+        """Test retry command passes --delete-after flag."""
+        test_file = tmp_path / "test.jsonl"
+        test_file.write_text("{}\n")
+
+        from piddiplatsch.processing import RetryResult
+
+        mock_retry_batch.return_value = RetryResult(total=0)
+
+        result = runner.invoke(cli, ["retry", str(test_file), "--delete-after"])
+        assert result.exit_code == 0
+        call_kwargs = mock_retry_batch.call_args.kwargs
+        assert call_kwargs.get("delete_after") is True
+
+    @patch("piddiplatsch.cli.FailureRecovery.retry_batch")
+    def test_retry_passes_dry_run(self, mock_retry_batch, runner, tmp_path):
+        """Test retry command passes --dry-run flag."""
+        test_file = tmp_path / "test.jsonl"
+        test_file.write_text("{}\n")
+
+        from piddiplatsch.processing import RetryResult
+
+        mock_retry_batch.return_value = RetryResult(total=0)
+
+        result = runner.invoke(cli, ["retry", str(test_file), "--dry-run"])
+        assert result.exit_code == 0
+        call_kwargs = mock_retry_batch.call_args.kwargs
+        assert call_kwargs.get("dry_run") is True
+
+    @patch("piddiplatsch.cli.FailureRecovery.retry_batch")
+    def test_retry_multiple_paths(self, mock_retry_batch, runner, tmp_path):
+        """Test retry command with multiple file paths."""
+        file1 = tmp_path / "test1.jsonl"
+        file2 = tmp_path / "test2.jsonl"
+        file1.write_text("{}\n")
+        file2.write_text("{}\n")
+
+        from piddiplatsch.processing import RetryResult
+
+        mock_retry_batch.return_value = RetryResult(total=0)
+
+        result = runner.invoke(cli, ["retry", str(file1), str(file2)])
+        assert result.exit_code == 0
+        assert mock_retry_batch.called
+        # Check that paths were passed as tuple
+        call_args = mock_retry_batch.call_args.args
+        assert len(call_args[0]) == 2
+
+
+class TestCLIOptions:
+    """Test global CLI options."""
+
+    @patch("piddiplatsch.cli.start_consumer")
+    def test_debug_flag(self, mock_start_consumer, runner):
+        """Test --debug flag."""
+        runner.invoke(cli, ["--debug", "consume"])
+        # Debug should configure logging but not affect command execution
+        assert mock_start_consumer.called
+
+    @patch("piddiplatsch.cli.start_consumer")
+    def test_log_file_option(self, mock_start_consumer, runner, tmp_path):
+        """Test --log option."""
+        log_file = tmp_path / "test.log"
+        runner.invoke(cli, ["--log", str(log_file), "consume"])
+        assert mock_start_consumer.called
+
+    @patch("piddiplatsch.cli.start_consumer")
+    def test_config_file_option(self, mock_start_consumer, runner, tmp_path):
+        """Test --config option."""
+        config_file = tmp_path / "custom.toml"
+        config_file.write_text('[plugin]\nprocessor = "test"\n')
+
+        runner.invoke(cli, ["--config", str(config_file), "consume"])
+        assert mock_start_consumer.called

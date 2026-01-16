@@ -128,33 +128,98 @@ Interested in contributing? Check out our [CONTRIBUTING.md](CONTRIBUTING.md) for
 
 ---
 
-## Failure Recovery and Retry
+## 🔄 Failure Recovery
 
-When `piddiplatsch` fails to register or process a STAC item from Kafka, the failed item is saved for recovery in a JSON Lines (`.jsonl`) format. This enables you to preserve thousands of failure records for later inspection and retry.
+Failed items are saved to `outputs/failures/r<N>/failed_items_<date>.jsonl` for later retry.
 
-### Where failures are stored
+### Retry Command
 
-- Saved under `outputs/failures/retries-<n>/failed_items_<date>.jsonl` in the configured `output_dir`.
-
-### Retrying Failed Items
-
-Use the `retry` CLI command to resend failed items from a `.jsonl` file back into Kafka for reprocessing.
+Reprocess failed items directly through the pipeline (no Kafka write required):
 
 ```bash
-piddiplatsch retry <failure-file.jsonl> [--delete-after]
+piddiplatsch retry <path...> [--delete-after] [--dry-run]
 ```
 
-Options:
-- `<failure-file.jsonl>`: failure file to retry
-- `--delete-after`: delete file after successful retry
+Supports:
+- Individual files: `retry file1.jsonl file2.jsonl`
+- Directories: `retry outputs/failures/r0/`
+- Multiple paths: `retry outputs/failures/r0/ outputs/failures/r1/`
 
-### Example
+**Examples:**
 
 ```bash
-piddiplatsch retry outputs/failures/retries-0/failed_items_2025-07-23.jsonl --delete-after
+# Retry a single file
+piddiplatsch retry outputs/failures/r0/failed_items_2026-01-16.jsonl
+
+# Retry all files in a directory
+piddiplatsch retry outputs/failures/r0/
+
+# Retry multiple files
+piddiplatsch retry file1.jsonl file2.jsonl file3.jsonl
+
+# Retry in dry-run mode (test without contacting Handle Service)
+piddiplatsch retry outputs/failures/r0/ --dry-run
+
+# Retry with progress indicators (verbose mode)
+piddiplatsch --verbose retry outputs/failures/r0/
+
+# Retry and delete files on success
+piddiplatsch retry outputs/failures/r0/ --delete-after
 ```
 
-Resends items to the configured Kafka retry topic, incrementing retry count. With `--delete-after`, removes the file on success.
+**Progress Indicators:**
+
+Use `--verbose` flag to see per-file progress during retry:
+
+```bash
+piddiplatsch --verbose retry outputs/failures/r0/
+
+# Output:
+# [1/3] failed_items_2026-01-15.jsonl: 45/50 succeeded, 5 failed
+# [2/3] failed_items_2026-01-16.jsonl: 100/100 succeeded
+# [3/3] failed_items_2026-01-17.jsonl: 23/25 succeeded, 2 failed
+#
+# Total: 168/175 succeeded
+#   ⚠️  7 items failed again (96.0% success rate)
+#   New failures saved to:
+#     - r1/failed_items_2026-01-16.jsonl
+```
+
+**Detailed Feedback:**
+
+The retry command provides comprehensive feedback:
+- Per-file success/failure counts
+- Overall statistics and success rate
+- Location of new failure files (if any items fail again)
+
+Example output:
+```
+Found 3 file(s) to retry.
+  failed_items_2026-01-15.jsonl: 45/50 succeeded, 5 failed
+  failed_items_2026-01-16.jsonl: 100/100 succeeded
+  failed_items_2026-01-17.jsonl: 23/25 succeeded, 2 failed
+
+Total: 168/175 succeeded
+  ⚠️  7 items failed again (96.0% success rate)
+  New failures saved to:
+    - r1/failed_items_2026-01-16.jsonl
+```
+
+Items are reprocessed with incremented retry counters. New failures go to `r1/`, `r2/`, etc.
+
+**Manual Testing:**
+
+A sample failure JSONL file is available for testing:
+
+```bash
+# Test retry with sample data (dry-run mode)
+piddiplatsch retry tests/testdata/sample_failures.jsonl --dry-run
+```
+
+The sample file [`tests/testdata/sample_failures.jsonl`](tests/testdata/sample_failures.jsonl) contains 3 failed CMIP6 STAC items with realistic metadata. Use this to:
+- Test the retry command without setting up Kafka
+- Verify your processor handles different failure scenarios
+- Practice working with failure recovery workflows
 
 ---
 
