@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from pathlib import Path
 
 
 @dataclass
@@ -13,3 +14,27 @@ class ProcessingResult:
 
     # Detailed timings
     handle_processing_time: float = 0.0
+
+
+@dataclass
+class FeedResult:
+    """Result of feeding messages directly through the pipeline."""
+
+    total: int = 0
+    succeeded: int = 0
+    failed: int = 0
+
+
+@dataclass
+class RetryResult:
+    """Result of retrying failed items."""
+
+    total: int = 0
+    succeeded: int = 0
+    failed: int = 0
+    failure_files: set[Path] = field(default_factory=set)
+
+    @property
+    def success_rate(self) -> float:
+        """Calculate success rate as a percentage."""
+        return (self.succeeded / self.total * 100) if self.total > 0 else 0.0

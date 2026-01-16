@@ -93,22 +93,27 @@ def retry(path: tuple[Path, ...], delete_after: bool, dry_run: bool):
     """
     processor = config.get("plugin", "processor")
 
-    files = FailureRecovery.find_retry_files(path)
+    result = FailureRecovery.retry_batch(
+        path, processor=processor, delete_after=delete_after, dry_run=dry_run
+    )
 
-    if not files:
+    if result.total == 0:
         click.echo("No retry files found.")
         return
 
-    click.echo(f"Found {len(files)} file(s) to retry.")
-
-    total_count = 0
-    for file in files:
-        count = FailureRecovery.retry(
-            file, processor=processor, delete_after=delete_after, dry_run=dry_run
+    # Show overall summary
+    click.echo(f"\nTotal: {result.succeeded}/{result.total} succeeded")
+    if result.failed > 0:
+        click.echo(
+            f"  ⚠️  {result.failed} items failed again ({result.success_rate:.1f}% success rate)"
         )
-        total_count += count
-
-    click.echo(f"Total: Retried {total_count} messages from {len(files)} file(s).")
+        if result.failure_files:
+            click.echo("  New failures saved to:")
+            for failure_file in sorted(result.failure_files):
+                rel_path = failure_file.relative_to(FailureRecovery.FAILURE_DIR)
+                click.echo(f"    - {rel_path}")
+    else:
+        click.echo("  ✓ All items processed successfully!")
 
 
 if __name__ == "__main__":

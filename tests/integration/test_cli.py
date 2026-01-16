@@ -55,7 +55,8 @@ def test_retry_with_dry_run(runner, tmp_path):
     result = runner.invoke(cli, ["retry", str(failure_file), "--dry-run"])
 
     assert result.exit_code == 0
-    assert "Retried 1 messages" in result.output
+    assert "1/1 succeeded" in result.output
+    assert "All items processed successfully!" in result.output
 
     # Verify handles were created in dry-run mode
     handles_dir = tmp_path / "handles"
@@ -110,8 +111,7 @@ def test_retry_with_directory(runner, tmp_path):
     result = runner.invoke(cli, ["retry", str(failures_dir), "--dry-run"])
 
     assert result.exit_code == 0
-    assert "Found 3 file(s) to retry" in result.output
-    assert "Total: Retried 3 messages from 3 file(s)" in result.output
+    assert "3/3 succeeded" in result.output
 
 
 def test_retry_with_multiple_files(runner, tmp_path):
@@ -154,5 +154,4 @@ def test_retry_with_multiple_files(runner, tmp_path):
     result = runner.invoke(cli, ["retry", str(file1), str(file2), "--dry-run"])
 
     assert result.exit_code == 0
-    assert "Found 2 file(s) to retry" in result.output
-    assert "Total: Retried 2 messages from 2 file(s)" in result.output
+    assert "2/2 succeeded" in result.output

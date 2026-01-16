@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from piddiplatsch.config import config
+from piddiplatsch.processing import RetryResult
 
 
 class FailureRecovery:
@@ -115,28 +116,85 @@ class FailureRecovery:
         processor: str,
         delete_after: bool = False,
         dry_run: bool = False,
-    ) -> int:
+    ) -> RetryResult:
         """
         Retry failed items from a JSONL file by reprocessing them through the pipeline.
 
-        Returns the number of messages retried.
+        Returns a RetryResult with statistics about the retry operation.
         """
         from piddiplatsch.consumer import feed_messages_direct
 
         messages = FailureRecovery.load_failed_messages(jsonl_path)
 
+        result = RetryResult(total=len(messages))
+
         if not messages:
             logging.warning("No messages to retry.")
-            return 0
+            return result
 
         logging.info(f"Retrying {len(messages)} messages from {jsonl_path}...")
-        feed_messages_direct(messages, processor=processor, dry_run=dry_run)
 
-        if delete_after:
+        # Track failure files before retry
+        failure_files_before = set(FailureRecovery.FAILURE_DIR.rglob("*.jsonl"))
+
+        # Process messages through pipeline
+        feed_result = feed_messages_direct(
+            messages, processor=processor, dry_run=dry_run
+        )
+
+        # Find new failure files created during retry
+        failure_files_after = set(FailureRecovery.FAILURE_DIR.rglob("*.jsonl"))
+        result.failure_files = failure_files_after - failure_files_before
+
+        # Use stats from feed_result
+        result.succeeded = feed_result.succeeded
+        result.failed = feed_result.failed
+
+        if delete_after and result.failed == 0:
             try:
                 jsonl_path.unlink()
                 logging.info(f"Deleted retry file: {jsonl_path}")
             except Exception as e:
                 logging.warning(f"Could not delete {jsonl_path}: {e}")
+        elif delete_after and result.failed > 0:
+            logging.info(
+                f"Skipping deletion of {jsonl_path} because {result.failed} items failed again"
+            )
 
-        return len(messages)
+        return result
+
+    @staticmethod
+    def retry_batch(
+        paths: tuple[Path, ...],
+        processor: str,
+        delete_after: bool = False,
+        dry_run: bool = False,
+    ) -> RetryResult:
+        """
+        Retry failed items from multiple files/directories.
+
+        Resolves paths to JSONL files and processes them, aggregating results.
+
+        Returns:
+            RetryResult with overall statistics across all files.
+        """
+        files = FailureRecovery.find_retry_files(paths)
+
+        if not files:
+            logging.warning("No retry files found.")
+            return RetryResult()
+
+        logging.info(f"Found {len(files)} file(s) to retry.")
+
+        overall = RetryResult()
+
+        for file in files:
+            result = FailureRecovery.retry(
+                file, processor=processor, delete_after=delete_after, dry_run=dry_run
+            )
+            overall.total += result.total
+            overall.succeeded += result.succeeded
+            overall.failed += result.failed
+            overall.failure_files.update(result.failure_files)
+
+        return overall

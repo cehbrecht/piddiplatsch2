@@ -14,7 +14,7 @@ from piddiplatsch.monitoring.stats import CounterKey, stats
 from piddiplatsch.persist.dump import DumpRecorder
 from piddiplatsch.persist.recovery import FailureRecovery
 from piddiplatsch.plugin_loader import load_single_plugin
-from piddiplatsch.processing import ProcessingResult
+from piddiplatsch.processing import FeedResult, ProcessingResult
 
 logger = logging.getLogger(__name__)
 
@@ -194,10 +194,21 @@ class ConsumerPipeline:
 # ----------------------------
 
 
-def feed_messages_direct(messages, processor="cmip6", dry_run=False):
+def feed_messages_direct(messages, processor="cmip6", dry_run=False) -> FeedResult:
     consumer = DirectConsumer(messages)
     pipeline = ConsumerPipeline(consumer, processor=processor, dry_run=dry_run)
+
+    # Track stats before run
+    messages_before = pipeline.stats.messages
+    errors_before = pipeline.stats.errors
+
     pipeline.run()
+
+    # Calculate delta from pipeline stats
+    succeeded = pipeline.stats.messages - messages_before
+    failed = pipeline.stats.errors - errors_before
+
+    return FeedResult(total=len(messages), succeeded=succeeded, failed=failed)
 
 
 def feed_test_files(testfile_paths, processor="cmip6"):

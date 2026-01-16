@@ -164,6 +164,26 @@ piddiplatsch retry outputs/failures/r0/ --dry-run
 piddiplatsch retry outputs/failures/r0/ --delete-after
 ```
 
+**Detailed Feedback:**
+
+The retry command provides comprehensive feedback:
+- Per-file success/failure counts
+- Overall statistics and success rate
+- Location of new failure files (if any items fail again)
+
+Example output:
+```
+Found 3 file(s) to retry.
+  failed_items_2026-01-15.jsonl: 45/50 succeeded, 5 failed
+  failed_items_2026-01-16.jsonl: 100/100 succeeded
+  failed_items_2026-01-17.jsonl: 23/25 succeeded, 2 failed
+
+Total: 168/175 succeeded
+  ⚠️  7 items failed again (96.0% success rate)
+  New failures saved to:
+    - r1/failed_items_2026-01-16.jsonl
+```
+
 Items are reprocessed with incremented retry counters. New failures go to `r1/`, `r2/`, etc.
 
 ---

@@ -75,12 +75,14 @@ def test_retry_loads_and_processes_failed_messages(tmp_path: Path):
     assert len(lines) == 3
 
     # Retry the failed messages
-    count = FailureRecovery.retry(
+    result = FailureRecovery.retry(
         failure_file, processor="cmip6", delete_after=False, dry_run=True
     )
 
     # Should have retried 3 messages
-    assert count == 3
+    assert result.total == 3
+    assert result.succeeded == 3
+    assert result.failed == 0
 
     # File should still exist (delete_after=False)
     assert failure_file.exists()
@@ -128,12 +130,13 @@ def test_retry_deletes_file_when_delete_after_true(tmp_path: Path):
     assert failure_file.exists()
 
     # Retry with delete_after=True
-    count = FailureRecovery.retry(
+    result = FailureRecovery.retry(
         failure_file, processor="cmip6", delete_after=True, dry_run=True
     )
 
-    assert count == 2
-    # File should be deleted
+    assert result.total == 2
+    assert result.succeeded == 2
+    # File should be deleted (no failures)
     assert not failure_file.exists()
 
 
@@ -143,9 +146,11 @@ def test_retry_handles_nonexistent_file(tmp_path: Path):
 
     nonexistent_file = tmp_path / "does_not_exist.jsonl"
 
-    # Should return 0 and not raise an exception
-    count = FailureRecovery.retry(nonexistent_file, processor="cmip6")
-    assert count == 0
+    # Should return empty result and not raise an exception
+    result = FailureRecovery.retry(nonexistent_file, processor="cmip6")
+    assert result.total == 0
+    assert result.succeeded == 0
+    assert result.failed == 0
 
 
 def test_retry_handles_empty_file(tmp_path: Path):
@@ -155,8 +160,10 @@ def test_retry_handles_empty_file(tmp_path: Path):
     empty_file = tmp_path / "empty.jsonl"
     empty_file.touch()
 
-    count = FailureRecovery.retry(empty_file, processor="cmip6")
-    assert count == 0
+    result = FailureRecovery.retry(empty_file, processor="cmip6")
+    assert result.total == 0
+    assert result.succeeded == 0
+    assert result.failed == 0
 
 
 def test_find_retry_files_single_file(tmp_path: Path):
