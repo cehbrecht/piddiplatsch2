@@ -66,7 +66,7 @@ def test_send_valid_cmip6_mri_6hr_dc4(testfile, handle_client):
         "CMIP6",
         "CMIP6.HighResMIP.MRI.MRI-AGCM3-2-H.highresSST-present.r1i1p1f1.6hrPlevPt.psl.gn.v20190820.json",
     )
-    send_message_to_kafka(p, verbose=True)
+    send_message_to_kafka(p)
 
     pid = "b06058a6-1077-35cb-9500-1ccbd341d309"
     pids = [

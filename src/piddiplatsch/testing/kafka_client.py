@@ -80,17 +80,11 @@ def ensure_topic_exists_from_config():
     ensure_topic_exists(topic, kafka_cfg)
 
 
-def send_message_to_kafka(json_path: Path, *, verbose: bool = False):
-    """Send a JSON message (from file) to Kafka using config defaults (smoke tests)."""
+def send_message_to_kafka(json_path: Path):
+    """Send a JSON message (from file) to Kafka using config defaults."""
     key, value = build_message_from_path(json_path)
 
-    if verbose:
-        try:
-            obj = json.loads(value)
-            info = f"{len(value)} bytes, keys: {', '.join(obj.keys())}"
-        except Exception:
-            info = f"{len(value)} bytes"
-        logging.info(f"[smoke] key={key}, payload={info}")
+    logging.info(f"[smoke] sending file={json_path.name} as key={key}")
 
     def _report(err, msg):
         if err:
@@ -101,6 +95,3 @@ def send_message_to_kafka(json_path: Path, *, verbose: bool = False):
     topic = config.get("consumer", "topic")
     kafka_cfg = config.get("kafka")
     send_message(topic, kafka_cfg, key, value, on_delivery=_report)
-
-
-# (bounded consumption helpers removed; smoke tests run the production consumer)
