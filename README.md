@@ -128,33 +128,29 @@ Interested in contributing? Check out our [CONTRIBUTING.md](CONTRIBUTING.md) for
 
 ---
 
-## Failure Recovery and Retry
+## 🔄 Failure Recovery
 
-When `piddiplatsch` fails to register or process a STAC item from Kafka, the failed item is saved for recovery in a JSON Lines (`.jsonl`) format. This enables you to preserve thousands of failure records for later inspection and retry.
+Failed items are saved to `outputs/failures/r<N>/failed_items_<date>.jsonl` for later retry.
 
-### Where failures are stored
+### Retry Command
 
-- Saved under `outputs/failures/retries-<n>/failed_items_<date>.jsonl` in the configured `output_dir`.
-
-### Retrying Failed Items
-
-Use the `retry` CLI command to resend failed items from a `.jsonl` file back into Kafka for reprocessing.
+Reprocess failed items directly through the pipeline (no Kafka write required):
 
 ```bash
 piddiplatsch retry <failure-file.jsonl> [--delete-after]
 ```
 
-Options:
-- `<failure-file.jsonl>`: failure file to retry
-- `--delete-after`: delete file after successful retry
-
-### Example
+**Examples:**
 
 ```bash
-piddiplatsch retry outputs/failures/retries-0/failed_items_2025-07-23.jsonl --delete-after
+# Retry failed items
+piddiplatsch retry outputs/failures/r0/failed_items_2026-01-16.jsonl
+
+# Retry and delete file on success
+piddiplatsch retry outputs/failures/r0/failed_items_2026-01-16.jsonl --delete-after
 ```
 
-Resends items to the configured Kafka retry topic, incrementing retry count. With `--delete-after`, removes the file on success.
+Items are reprocessed with incremented retry counters. New failures go to `r1/`, `r2/`, etc.
 
 ---
 
