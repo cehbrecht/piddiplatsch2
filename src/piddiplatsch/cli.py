@@ -6,7 +6,6 @@ import click
 from piddiplatsch.config import config
 from piddiplatsch.consumer import start_consumer
 from piddiplatsch.persist.recovery import FailureRecovery
-from piddiplatsch.testing import kafka_client
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -39,15 +38,6 @@ def cli(ctx, config_file, debug, verbose, log):
     config.configure_logging(debug=debug, log=log)
 
 
-# init command
-
-
-@cli.command()
-def init():
-    """Creates the kafka topic."""
-    topic = config.get("consumer", "topic")
-    kafka_cfg = config.get("kafka")
-    kafka_client.ensure_topic_exists(topic, kafka_cfg)
 
 
 # consume command
@@ -101,42 +91,6 @@ def retry(filename: Path, delete_after: bool):
     click.echo(f"Retried {success} messages, {failed} failed.")
 
 
-# send command
-
-
-@cli.command("send")
-@click.argument(
-    "filename", type=click.Path(exists=True, dir_okay=False, path_type=Path)
-)
-@click.option(
-    "--verbose", is_flag=True, help="Show message key and value before sending."
-)
-@click.pass_context
-def send(ctx, filename: Path, verbose: bool):
-    """Send a message to the Kafka queue."""
-    try:
-        key, value = kafka_client.build_message_from_path(filename)
-    except (FileNotFoundError, json.JSONDecodeError) as e:
-        click.echo(f"❌ {e}", err=True)
-        ctx.exit(1)
-
-    if verbose:
-        click.echo(f"🔑 Key: {key}")
-        click.echo(f"📦 Value: {value}")
-
-    def report(err, msg):
-        if err:
-            click.echo(f"❌ Delivery failed: {err}", err=True)
-        else:
-            click.echo(f"📤 Message delivered to {msg.topic()} [{msg.partition()}]")
-
-    try:
-        topic = config.get("consumer", "topic")
-        kafka_cfg = config.get("kafka")
-        kafka_client.send_message(topic, kafka_cfg, key, value, on_delivery=report)
-    except Exception as e:
-        click.echo(f"❌ {e}", err=True)
-        ctx.exit(1)
 
 
 if __name__ == "__main__":

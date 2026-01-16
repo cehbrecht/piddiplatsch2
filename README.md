@@ -271,16 +271,20 @@ Stop all services:
 make stop-docker
 ```
 
-Initialize the Kafka topic for testing only:
+Smoke tests feed records directly without Kafka. To run them:
 
 ```bash
-piddiplatsch init
+make smoke
 ```
 
-Send a record (JSON format) for testing only:
+If you need to create the Kafka topic or push a single JSON to Kafka during smoke/integration experiments, use the test helpers:
 
-```bash
-piddiplatsch send tests/testdata/CMIP6/<your_file>.json
+```python
+from pathlib import Path
+from piddiplatsch2.tests.smoke.helpers import ensure_kafka_topic_exists, send_json_file_to_kafka
+
+ensure_kafka_topic_exists()
+send_json_file_to_kafka(Path("tests/testdata/CMIP6/<your_file>.json"), verbose=True)
 ```
 
 ---
