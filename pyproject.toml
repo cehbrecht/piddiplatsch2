@@ -19,7 +19,6 @@ dependencies = [
     "colorlog",
     "toml",
     "requests",
-    "pluggy",
     "pydantic >=2.11",
     "python-dateutil",
     "tqdm",
@@ -174,11 +173,6 @@ use_parentheses = true
 ensure_newline_before_comments = true
 known_first_party = ["piddiplatsch"]
 skip_gitignore = true
-
-
-# pluggy plugins
-[project.entry-points.piddiplatsch]
-cmip6 = "piddiplatsch.plugins.cmip6_processor:CMIP6Processor"
 
 # bump-my-version configuration
 [tool.bumpversion]

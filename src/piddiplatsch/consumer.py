@@ -13,8 +13,8 @@ from piddiplatsch.exceptions import MaxErrorsExceededError
 from piddiplatsch.monitoring.stats import CounterKey, stats
 from piddiplatsch.persist.dump import DumpRecorder
 from piddiplatsch.persist.recovery import FailureRecovery
-from piddiplatsch.plugin_loader import load_single_plugin
 from piddiplatsch.processing import FeedResult, ProcessingResult
+from piddiplatsch.processor_registry import get_processor
 
 logger = logging.getLogger(__name__)
 
@@ -114,10 +114,10 @@ class ConsumerPipeline:
     ):
         """
         consumer: instance of BaseConsumer (KafkaConsumer or DirectConsumer)
-        processor: plugin name
+        processor: processor name
         """
         self.consumer = consumer
-        self.processor = load_single_plugin(processor, dry_run=dry_run)
+        self.processor = get_processor(processor, dry_run=dry_run)
         self.dump_messages = dump_messages
         self.max_errors = int(max_errors)
 
