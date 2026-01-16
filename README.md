@@ -95,8 +95,8 @@ piddiplatsch --config custom.toml
 
 ## 🚀 Usage
 
-> ⚠️ **Kafka and Handle service must be running!**  
-> 💡 Use Docker setup below for local testing.
+> ⚠️ **Requires external Kafka and Handle services to be running.**  
+> 💡 For local testing/development, see [CONTRIBUTING.md](CONTRIBUTING.md) for Docker setup.
 
 ### Start the consumer
 
@@ -117,121 +117,14 @@ piddiplatsch --config custom.toml --verbose --debug --log my.log consume --dump
 
 ---
 
-## ✅ Running Tests
+## 🤝 Contributing
 
-This project uses a three-tier testing strategy:
-
-### Test Types
-
-**Unit Tests** (fast, no external dependencies)
-- Located in `tests/`
-- Pure logic tests with mocked dependencies
-- No markers required
-
-**Integration Tests** (medium speed, JSONL backend)
-- Located in `tests/integration/`
-- Tests component interactions using JSONL backend
-- Marked with `@pytest.mark.integration`
-- No Docker required
-
-**Smoke Tests** (end-to-end, requires Docker)
-- Located in `tests/smoke/`
-- Full workflow tests with Kafka + Handle server
-- Marked with `@pytest.mark.smoke`
-- Docker services started/stopped automatically
-- **Note:** Docker is only used for testing, not required for production
- - Shared test configuration: tests use [tests/config.toml](tests/config.toml)
-
-### Running Tests
-
-Run all fast tests (unit + integration):
-
-```bash
-make test
-```
-
-Run only unit tests:
-
-```bash
-make test-unit
-```
-
-Run only integration tests:
-
-```bash
-make test-integration
-```
-
-Run smoke tests (Docker services started automatically):
-
-```bash
-make smoke
-# or
-make test-smoke
-```
-
-Run all tests including smoke tests:
-
-```bash
-make test-all
-```
-
-### Docker Management (for testing)
-
-Start Docker services manually (Kafka + Handle server):
-
-```bash
-make start-docker
-```
-
-Stop Docker services:
-
-```bash
-make stop-docker
-```
-
-Rebuild Docker images:
-
-```bash
-make docker-build
-```
-
-Clean up Docker images and volumes:
-
-```bash
-make docker-clean
-```
-
----
-
-## 🧼 Code Style and Linting
-
-This project uses [pre-commit](https://pre-commit.com) to enforce code style and quality:
-
-- [`black`](https://black.readthedocs.io) for code formatting  
-- [`isort`](https://pycqa.github.io/isort/) for import sorting  
-- [`ruff`](https://docs.astral.sh/ruff/) for linting and fast checks
-
-### Setup
-
-```bash
-pip install pre-commit
-pre-commit install
-```
-
-### Run manually
-
-```bash
-pre-commit run --all-files
-```
-
-Or use:
-
-```bash
-make lint        # Run ruff, black, and isort checks
-make format      # Auto-format with black and isort
-make check-format  # Check formatting only
-```
+Interested in contributing? Check out our [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- Development setup
+- Testing guidelines (unit, integration, smoke tests)
+- Code style and linting
+- Version management
+- Development workflow
 
 ---
 
@@ -265,22 +158,7 @@ Resends items to the configured Kafka retry topic, incrementing retry count. Wit
 
 ---
 
-## 📦 Versioning
-
-Uses bump-my-version to update the project version and create a git tag.
-
-```bash
-# dry-run (no commit/tag)
-bump-my-version bump patch --dry-run --allow-dirty
-
-# bump and tag
-make bump-patch    # or: make bump-minor / make bump-major
-git push && git push --tags
-```
-
----
-
-## 📓 Examples
+##  Examples
 
 Start consumer with custom configuration and dump messages:
 
