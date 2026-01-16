@@ -1,6 +1,8 @@
+from pathlib import Path
+
 import pytest
 
-from piddiplatsch.consumer import feed_test_files
+from piddiplatsch.testing.kafka_client import send_message_to_kafka
 
 pytestmark = pytest.mark.smoke
 
@@ -39,7 +41,7 @@ def assert_record(handle_client, pid, sub_pids, all: bool = False):
         assert_file_record(handle_client, sub_pid)
 
 
-def wait_for_pid(handle_client, pid: str, timeout: float = 5.0):
+def wait_for_pid(handle_client, pid: str, timeout: float = 15.0):
     """Wait until a PID is available in the handle service or timeout."""
     import time
 
@@ -57,14 +59,12 @@ def wait_for_pid(handle_client, pid: str, timeout: float = 5.0):
 
 
 def test_send_valid_cmip6_mri_6hr_dc4(testfile, handle_client):
-    paths = [
-        testfile(
-            "data_challenge_04",
-            "CMIP6",
-            "CMIP6.HighResMIP.MRI.MRI-AGCM3-2-H.highresSST-present.r1i1p1f1.6hrPlevPt.psl.gn.v20190820.json",
-        )
-    ]
-    feed_test_files(paths, processor="cmip6")
+    p: Path = testfile(
+        "data_challenge_04",
+        "CMIP6",
+        "CMIP6.HighResMIP.MRI.MRI-AGCM3-2-H.highresSST-present.r1i1p1f1.6hrPlevPt.psl.gn.v20190820.json",
+    )
+    send_message_to_kafka(p)
 
     pid = "b06058a6-1077-35cb-9500-1ccbd341d309"
     pids = [
@@ -81,14 +81,12 @@ def test_send_valid_cmip6_mri_6hr_dc4(testfile, handle_client):
 
 @pytest.mark.skip(reason="checksum failure")
 def test_send_valid_cmip6_ipsl_mon_dc4(testfile, handle_client):
-    paths = [
-        testfile(
-            "data_challenge_04",
-            "CMIP6",
-            "CMIP6.ScenarioMIP.IPSL.IPSL-CM6A-LR.ssp245.r1i1p1f1.Amon.pr.gr.v20190119.json",
-        )
-    ]
-    feed_test_files(paths, processor="cmip6")
+    p: Path = testfile(
+        "data_challenge_04",
+        "CMIP6",
+        "CMIP6.ScenarioMIP.IPSL.IPSL-CM6A-LR.ssp245.r1i1p1f1.Amon.pr.gr.v20190119.json",
+    )
+    send_message_to_kafka(p)
 
     pid = "11da5bd1-157f-3158-b775-ba42ed4e193b"
     pids = ["d1e2181e-1066-3d33-b56a-f45bf7a40ab5"]
@@ -96,29 +94,25 @@ def test_send_valid_cmip6_ipsl_mon_dc4(testfile, handle_client):
 
 
 def test_send_invalid_cmip6_dkrz_yr_dc4(testfile):
-    paths = [
-        testfile(
-            "data_challenge_04",
-            "CMIP6_invalid",
-            "CMIP6.ScenarioMIP.DKRZ.MPI-ESM1-2-HR.ssp126.r1i1p1f1.Eyr.baresoilFrac.gn.v20190710.json",
-        )
-    ]
-    feed_test_files(paths, processor="cmip6")
+    p: Path = testfile(
+        "data_challenge_04",
+        "CMIP6_invalid",
+        "CMIP6.ScenarioMIP.DKRZ.MPI-ESM1-2-HR.ssp126.r1i1p1f1.Eyr.baresoilFrac.gn.v20190710.json",
+    )
+    send_message_to_kafka(p)
 
 
 def test_send_invalid_cmip6_ipsl_mon_dc4_missing_file_size(testfile):
-    paths = [
-        testfile(
-            "data_challenge_04",
-            "CMIP6_invalid",
-            "CMIP6.ScenarioMIP.IPSL.IPSL-CM6A-LR.ssp245.r1i1p1f1.Amon.pr.gr.v20190119_missing_file_size.json",
-        )
-    ]
-    feed_test_files(paths, processor="cmip6")
+    p: Path = testfile(
+        "data_challenge_04",
+        "CMIP6_invalid",
+        "CMIP6.ScenarioMIP.IPSL.IPSL-CM6A-LR.ssp245.r1i1p1f1.Amon.pr.gr.v20190119_missing_file_size.json",
+    )
+    send_message_to_kafka(p)
 
 
 def test_send_multiple_files(testfile, handle_client):
-    paths = [
+    files = [
         testfile(
             "data_challenge_04",
             "CMIP6",
@@ -130,4 +124,5 @@ def test_send_multiple_files(testfile, handle_client):
             "CMIP6.ScenarioMIP.IPSL.IPSL-CM6A-LR.ssp245.r1i1p1f1.Amon.pr.gr.v20190119.json",
         ),
     ]
-    feed_test_files(paths, processor="cmip6")
+    for p in files:
+        send_message_to_kafka(p)

@@ -271,17 +271,15 @@ Stop all services:
 make stop-docker
 ```
 
-Initialize the Kafka topic for testing only:
+Smoke tests exercise Kafka (Docker services started automatically). To run them:
 
 ```bash
-piddiplatsch init
+make smoke
 ```
 
-Send a record (JSON format) for testing only:
+This command also starts the production consumer in the background and stops it (and Docker services) after the tests finish.
 
-```bash
-piddiplatsch send tests/testdata/CMIP6/<your_file>.json
-```
+ 
 
 ---
 
