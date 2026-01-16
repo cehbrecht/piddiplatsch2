@@ -114,10 +114,10 @@ test-smoke: start-docker ## run smoke tests only (requires Docker: Kafka + Handl
 	@echo "Running smoke tests ..."
 	# Ensure Kafka topic exists before starting consumer
 	@echo "Ensuring Kafka topic exists (from config) ..."
-	@bash -c 'python -c "from piddiplatsch.testing.kafka_client import ensure_topic_exists_from_config; ensure_topic_exists_from_config()"'
+	@bash -c 'python -c "from piddiplatsch.config import config; config.load_user_config(\"tests/config.toml\"); from piddiplatsch.testing.kafka_client import ensure_topic_exists_from_config; ensure_topic_exists_from_config()"'
 	# Start production consumer in background
 	@echo "Starting piddiplatsch consumer (background) ..."
-	@bash -c 'piddiplatsch consume & echo $$! > .consumer.pid && echo "Consumer PID: $$(cat .consumer.pid)"'
+	@bash -c 'piddiplatsch --config tests/config.toml consume & echo $$! > .consumer.pid && echo "Consumer PID: $$(cat .consumer.pid)"'
 	# Run smoke tests; on failure, ensure consumer and docker are stopped
 	@bash -c 'pytest -v -s -m "smoke" tests/' || ($(MAKE) stop-consumer; $(MAKE) stop-docker; exit 1)
 	# Stop consumer and docker after tests
@@ -185,8 +185,8 @@ start-consumer:
 	@echo "Starting piddiplatsch consumer ..."
 	# Ensure Kafka topic exists before starting consumer
 	@echo "Ensuring Kafka topic exists (from config) ..."
-	@bash -c 'python -c "from piddiplatsch.testing.kafka_client import ensure_topic_exists_from_config; ensure_topic_exists_from_config()"'
-	@bash -c 'piddiplatsch consume & echo $$! > .consumer.pid && echo "Consumer PID: $$(cat .consumer.pid)"'
+	@bash -c 'python -c "from piddiplatsch.config import config; config.load_user_config(\"tests/config.toml\"); from piddiplatsch.testing.kafka_client import ensure_topic_exists_from_config; ensure_topic_exists_from_config()"'
+	@bash -c 'piddiplatsch --config tests/config.toml consume & echo $$! > .consumer.pid && echo "Consumer PID: $$(cat .consumer.pid)"'
 
 stop-consumer:
 	@echo "Stopping piddiplatsch consumer ..."
