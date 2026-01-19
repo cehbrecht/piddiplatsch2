@@ -68,7 +68,7 @@ def list_processors() -> list[str]:
 # Auto-register built-in processors
 def _register_builtin_processors():
     """Register all built-in processors."""
-    from piddiplatsch.plugins.cmip6_processor import CMIP6Processor
+    from piddiplatsch.processing.cmip6_processor import CMIP6Processor
 
     register_processor("cmip6", CMIP6Processor)
 

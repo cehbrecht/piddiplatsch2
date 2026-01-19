@@ -45,7 +45,7 @@ class CMIP6Processor(BaseProcessor):
 
     def _do_process(
         self, value: dict[str, Any], key: str, result: ProcessingResult
-    ) -> tuple[int, float, float, float, bool]:
+    ) -> ProcessingResult:
         """Check payload presence and delegate to payload processor."""
         payload = value.get("data", {}).get("payload")
         if not payload:
@@ -62,7 +62,7 @@ class CMIP6Processor(BaseProcessor):
         metadata: dict[str, Any],
         key: str,
         result: ProcessingResult,
-    ) -> tuple[int, float, float, float, bool]:
+    ) -> ProcessingResult:
         """Decide how to process the payload: PATCH or full item."""
         if payload.get("method") == "PATCH":
             try:

@@ -1,7 +1,7 @@
 """Test to verify processor registry extensibility."""
 
 from piddiplatsch.processing import BaseProcessor, ProcessingResult
-from piddiplatsch.processor_registry import (
+from piddiplatsch.processing.registry import (
     get_processor,
     list_processors,
     register_processor,

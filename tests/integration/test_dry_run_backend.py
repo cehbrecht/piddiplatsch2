@@ -2,7 +2,7 @@ import pytest
 
 from piddiplatsch.consumer import ConsumerPipeline, DirectConsumer
 from piddiplatsch.handles.jsonl_backend import JsonlHandleBackend
-from piddiplatsch.processor_registry import get_processor
+from piddiplatsch.processing.registry import get_processor
 
 pytestmark = pytest.mark.integration
 

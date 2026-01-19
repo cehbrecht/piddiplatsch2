@@ -14,7 +14,7 @@ from piddiplatsch.monitoring.stats import CounterKey, stats
 from piddiplatsch.persist.dump import DumpRecorder
 from piddiplatsch.persist.recovery import FailureRecovery
 from piddiplatsch.processing import FeedResult, ProcessingResult
-from piddiplatsch.processor_registry import get_processor
+from piddiplatsch.processing.registry import get_processor
 
 logger = logging.getLogger(__name__)
 
