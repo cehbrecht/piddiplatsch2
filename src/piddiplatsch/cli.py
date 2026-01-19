@@ -52,7 +52,7 @@ def consume(ctx, dump, dry_run):
     """Start the Kafka consumer."""
     topic = config.get("consumer", "topic")
     kafka_cfg = config.get("kafka")
-    processor = config.get("plugin", "processor")
+    processor = config.get("consumer", "processor")
     start_consumer(
         topic,
         kafka_cfg,
@@ -92,7 +92,7 @@ def retry(ctx, path: tuple[Path, ...], delete_after: bool, dry_run: bool):
     - Directories: retry outputs/failures/r0/
     - Glob patterns: retry outputs/failures/r0/*.jsonl
     """
-    processor = config.get("plugin", "processor")
+    processor = config.get("consumer", "processor")
     verbose = ctx.obj.get("verbose", False)
 
     # Define progress callback for verbose mode

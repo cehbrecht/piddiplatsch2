@@ -1,7 +1,5 @@
-[plugin]
-processor = "cmip6"
-
 [consumer]
+processor = "cmip6"
 topic = "CMIP6"
 retry_topic = "CMIP6"
 output_dir = "outputs"
