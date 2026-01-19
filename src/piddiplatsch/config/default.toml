@@ -1,7 +1,6 @@
 [consumer]
 processor = "cmip6"
 topic = "CMIP6"
-retry_topic = "CMIP6"
 output_dir = "outputs"
 max_errors = 10  # -1 = unlimited, any positive int = stop after that many
 
