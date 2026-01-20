@@ -5,7 +5,7 @@ from pathlib import Path
 
 from piddiplatsch.config import config
 from piddiplatsch.processing import RetryResult
-from piddiplatsch.persist.base import DailyJsonlWriter
+from piddiplatsch.persist.base import DailyJsonlWriter, read_jsonl, find_jsonl, JsonlRecorder
 
 
 class FailureRecovery:
@@ -25,42 +25,31 @@ class FailureRecovery:
             "retries": retries,
             "reason": reason,
         }
-        payload = DailyJsonlWriter.wrap_with_infos(data, infos)
-
         retry_folder = FailureRecovery.FAILURE_DIR / f"r{retries}"
-        writer = DailyJsonlWriter(retry_folder)
-        path = writer.write("failed_items", payload)
+        recorder = JsonlRecorder(retry_folder, "failed_items")
+        path = recorder.record(data, infos=infos)
         logging.warning(
             f"Recorded failed item {key} (retries={retries}) to {path}"
         )
 
     @staticmethod
     def load_failed_messages(jsonl_path: Path) -> list[tuple[str, dict]]:
-        """Load failed items from a JSONL file and return as (key, value) tuples for DirectConsumer."""
-        if not jsonl_path.exists():
-            logging.error(f"Retry file not found: {jsonl_path}")
+        """Load failed (or skipped) items from JSONL and return as (key, value) tuples."""
+        records = read_jsonl(jsonl_path)
+        if not records:
+            logging.error(f"Retry file not found or empty: {jsonl_path}")
             return []
 
-        messages = []
-        with jsonl_path.open("r", encoding="utf-8") as f:
-            for line in f:
-                try:
-                    record = json.loads(line)
-                    key = str(record.get("key") or record.get("id") or "unknown")
-
-                    # Increment retries counter
-                    if "__infos__" in record:
-                        record["__infos__"]["retries"] = (
-                            int(record["__infos__"].get("retries", 0)) + 1
-                        )
-                    else:
-                        record["retries"] = int(record.get("retries", 0)) + 1
-
-                    messages.append((key, record))
-                except Exception:
-                    logging.exception(
-                        f"Error loading failed item from {jsonl_path}: {line.strip()}"
-                    )
+        messages: list[tuple[str, dict]] = []
+        for record in records:
+            key = str(record.get("key") or record.get("id") or "unknown")
+            if "__infos__" in record:
+                record["__infos__"]["retries"] = (
+                    int(record["__infos__"].get("retries", 0)) + 1
+                )
+            else:
+                record["retries"] = int(record.get("retries", 0)) + 1
+            messages.append((key, record))
 
         logging.info(f"Loaded {len(messages)} messages from {jsonl_path}")
         return messages
@@ -77,26 +66,7 @@ class FailureRecovery:
 
         Returns sorted list of unique file paths.
         """
-        files = set()
-
-        for path in paths:
-            if path.is_file():
-                if path.suffix == ".jsonl":
-                    files.add(path)
-                else:
-                    logging.warning(f"Skipping non-JSONL file: {path}")
-            elif path.is_dir():
-                # Find all .jsonl files in directory (non-recursive)
-                jsonl_files = path.glob("*.jsonl")
-                files.update(jsonl_files)
-            else:
-                # Treat as glob pattern
-                parent = path.parent
-                pattern = path.name
-                matched = parent.glob(pattern)
-                files.update(f for f in matched if f.is_file() and f.suffix == ".jsonl")
-
-        return sorted(files)
+        return find_jsonl(paths)
 
     @staticmethod
     def retry(

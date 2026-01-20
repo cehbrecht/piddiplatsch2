@@ -1,6 +1,7 @@
 import json
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Iterable
 
 
 class DailyJsonlWriter:
@@ -31,3 +32,57 @@ class DailyJsonlWriter:
             json.dump(data, f)
             f.write("\n")
         return target_path
+
+
+class JsonlRecorder:
+    """High-level recorder for appending JSON objects to daily JSONL files.
+
+    Example:
+        recorder = JsonlRecorder(Path("outputs")/"failures", "failed_items")
+        recorder.record(data, infos={"reason": "..."})
+    """
+
+    def __init__(self, root_dir: Path, prefix: str):
+        self.root_dir = Path(root_dir)
+        self.prefix = prefix
+        self.writer = DailyJsonlWriter(self.root_dir)
+
+    def record(self, data: dict, infos: dict | None = None, subdir: Path | None = None) -> Path:
+        payload = DailyJsonlWriter.wrap_with_infos(data, infos) if infos else data
+        return self.writer.write(self.prefix, payload, subdir=subdir)
+
+
+def read_jsonl(file_path: Path) -> list[dict]:
+    """Read a JSONL file and return list of dicts. Returns empty list if missing."""
+    if not file_path.exists():
+        return []
+    records: list[dict] = []
+    with file_path.open("r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                records.append(json.loads(line))
+            except Exception:
+                # Skip malformed lines but keep going
+                continue
+    return records
+
+
+def find_jsonl(paths: Iterable[Path]) -> list[Path]:
+    """Resolve a sequence of files/dirs/globs to a sorted unique list of JSONL file paths."""
+    files: set[Path] = set()
+    for path in paths:
+        if path.is_file():
+            if path.suffix == ".jsonl":
+                files.add(path)
+        elif path.is_dir():
+            files.update(p for p in path.glob("*.jsonl") if p.is_file())
+        else:
+            parent = path.parent
+            pattern = path.name
+            files.update(
+                p for p in parent.glob(pattern) if p.is_file() and p.suffix == ".jsonl"
+            )
+    return sorted(files)

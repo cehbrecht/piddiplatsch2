@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 
 from piddiplatsch.config import config
-from piddiplatsch.persist.base import DailyJsonlWriter
+from piddiplatsch.persist.base import JsonlRecorder
 
 
 class DumpRecorder:
@@ -12,6 +12,6 @@ class DumpRecorder:
     @staticmethod
     def record_item(key: str, data: dict) -> None:
         # Write raw message as-is, one JSON per line
-        writer = DailyJsonlWriter(DumpRecorder.DUMP_DIR)
-        path = writer.write("dump_messages", data)
+        recorder = JsonlRecorder(DumpRecorder.DUMP_DIR, "dump_messages")
+        path = recorder.record(data)
         logging.debug(f"Dumped message {key} to {path}")

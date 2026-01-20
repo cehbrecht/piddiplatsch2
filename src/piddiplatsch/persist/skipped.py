@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from piddiplatsch.config import config
-from piddiplatsch.persist.base import DailyJsonlWriter
+from piddiplatsch.persist.base import JsonlRecorder
 
 
 class SkipRecorder:
@@ -20,10 +20,9 @@ class SkipRecorder:
             "retries": int(data.get("retries", 0)),
             "reason": reason or "Unknown",
         }
-        payload = DailyJsonlWriter.wrap_with_infos(data, infos)
         try:
-            writer = DailyJsonlWriter(SkipRecorder.SKIPPED_DIR)
-            path = writer.write("skipped_items", payload)
+            recorder = JsonlRecorder(SkipRecorder.SKIPPED_DIR, "skipped_items")
+            path = recorder.record(data, infos=infos)
             logging.warning(f"Recorded skipped item {key} to {path}")
         except Exception:
             logging.exception(f"Failed to record skipped item {key}")
