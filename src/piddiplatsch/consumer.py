@@ -161,9 +161,7 @@ class ConsumerPipeline:
             if result.skipped:
                 self.stats.skip(message=f"message={key}")
                 try:
-                    SkipRecorder.record_skipped_item(
-                        key, value, reason=result.skip_reason
-                    )
+                    SkipRecorder.record(key, value, reason=result.skip_reason)
                 except Exception:
                     logger.exception(f"Failed to persist skipped message {key}")
 
@@ -195,15 +193,13 @@ class ConsumerPipeline:
         try:
             logger.debug(f"Processing message: {key}")
             if self.dump_messages:
-                DumpRecorder.record_item(key, value)
+                DumpRecorder.record(key, value)
             return self.processor.process(key, value)
         except Exception as e:
             logger.exception(f"Error processing message {key}")
             retries = value.get("retries", 0)
             reason = str(e)
-            FailureRecovery.record_failed_item(
-                key, value, retries=retries, reason=reason
-            )
+            FailureRecovery.record(key, value, retries=retries, reason=reason)
             return ProcessingResult(key=key, success=False, error=reason)
 
     def stop(self, cause: StopCause = StopCause.MANUAL):

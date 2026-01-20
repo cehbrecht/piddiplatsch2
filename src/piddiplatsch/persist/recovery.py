@@ -4,34 +4,43 @@ from pathlib import Path
 
 from piddiplatsch.config import config
 from piddiplatsch.persist.base import (
-    JsonlRecorder,
+    RecorderBase,
     find_jsonl,
     read_jsonl,
 )
 from piddiplatsch.processing import RetryResult
 
 
-class FailureRecovery:
+class FailureRecovery(RecorderBase):
     FAILURE_DIR = (
         Path(config.get("consumer", {}).get("output_dir", "outputs")) / "failures"
     )
     FAILURE_DIR.mkdir(parents=True, exist_ok=True)
 
+    def __init__(self) -> None:
+        super().__init__(self.FAILURE_DIR, "failed_items")
+
+    def prepare(
+        self,
+        key: str,
+        data: dict,
+        reason: str | None,
+        retries: int | None,
+    ) -> tuple[dict, dict | None, Path | None]:
+        ts = datetime.now(UTC).isoformat(timespec="seconds")
+        r = 0 if retries is None else int(retries)
+        infos = {"failure_timestamp": ts, "retries": r, "reason": reason or "Unknown"}
+        subdir = self.root_dir / f"r{r}"
+        return data, infos, subdir
+
     @staticmethod
-    def record_failed_item(
-        key: str, data: dict, retries: int = 0, reason: str = "Unknown"
+    def record(
+        key: str, data: dict, *, reason: str | None = None, retries: int | None = None
     ) -> None:
-        """Append a failed item to daily JSONL under retries folder r{retries}."""
-        timestamp = datetime.now(UTC).isoformat(timespec="seconds")
-        infos = {
-            "failure_timestamp": timestamp,
-            "retries": retries,
-            "reason": reason,
-        }
-        retry_folder = FailureRecovery.FAILURE_DIR / f"r{retries}"
-        recorder = JsonlRecorder(retry_folder, "failed_items")
-        path = recorder.record(data, infos=infos)
-        logging.warning(f"Recorded failed item {key} (retries={retries}) to {path}")
+        path = FailureRecovery().write(key, data, reason=reason, retries=retries)
+        logging.warning(
+            f"Recorded failed item {key} (retries={0 if retries is None else retries}) to {path}"
+        )
 
     @staticmethod
     def load_failed_messages(jsonl_path: Path) -> list[tuple[str, dict]]:

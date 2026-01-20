@@ -9,10 +9,12 @@ All notable changes to this project are documented here.
 - Skipped message persistence to `outputs/skipped/` with reason metadata (`__infos__`).
 - STAC preflight health check (configurable via `consumer.preflight_stac`).
 - External failures counter in stats and SQLite reporter.
+ - Abstract `RecorderBase` for persistence recorders to unify common behavior.
 
 ### Changed
 - Missing payload/item and invalid JSON Patch now treated as errors (count toward `max_errors`).
 - Retry command supports processing skipped JSONL files alongside failures.
+ - Replaced legacy persistence methods (`record_item`, `record_skipped_item`, `record_failed_item`) with a unified `record(key, data, reason=None, retries=None)` API across `DumpRecorder`, `SkipRecorder`, and `FailureRecovery`.
 
 ## [2.0.0] - 2026-01-13
 - Initial project setup.

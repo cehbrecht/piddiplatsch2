@@ -22,7 +22,7 @@ def test_record_single_skipped_item(temp_skipped_dir):
     key = "testkey"
     data = {"foo": "bar"}
 
-    SkipRecorder.record_skipped_item(key, data, reason="network failure")
+    SkipRecorder.record(key, data, reason="network failure")
 
     files = list(temp_skipped_dir.glob("*.jsonl"))
     assert len(files) == 1
@@ -42,7 +42,7 @@ def test_skipped_filename_contains_today(temp_skipped_dir):
     key = "datekey"
     data = {"hello": "world"}
 
-    SkipRecorder.record_skipped_item(key, data, reason="timeout")
+    SkipRecorder.record(key, data, reason="timeout")
 
     files = list(temp_skipped_dir.glob("*.jsonl"))
     assert len(files) == 1
