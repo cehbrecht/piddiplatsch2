@@ -133,6 +133,19 @@ Interested in contributing? Check out our [CONTRIBUTING.md](CONTRIBUTING.md) for
 
 Failed items are saved to `outputs/failures/r<N>/failed_items_<date>.jsonl` for later retry.
 
+### Dumped Messages
+
+When running the consumer with `--dump`, all consumed messages are appended to
+`outputs/dump/dump_messages_<date>.jsonl` (one JSON object per line). This is useful for
+debugging, audits, or crafting reproducible tests. Dump files contain raw messages and
+do not include the failure metadata (`__infos__`) used by the retry workflow.
+
+Example run with dump enabled:
+
+```bash
+piddiplatsch --config custom.toml --verbose consume --dump
+```
+
 ### Skipped Messages (Transient External Failures)
 
 Transient external failures (e.g., STAC unreachable, timeouts, HTTP 5xx) are recorded under `outputs/skipped/skipped_items_<date>.jsonl` when running with `--force`. By default (production), the consumer stops on such failures after bounded retries.
