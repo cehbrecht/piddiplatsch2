@@ -5,6 +5,7 @@ from pathlib import Path
 
 from piddiplatsch.config import config
 from piddiplatsch.processing import RetryResult
+from piddiplatsch.persist.base import DailyJsonlWriter
 
 
 class FailureRecovery:
@@ -17,33 +18,20 @@ class FailureRecovery:
     def record_failed_item(
         key: str, data: dict, retries: int = 0, reason: str = "Unknown"
     ) -> None:
-        """Append a failed STAC item to a daily JSONL file with UTC timestamp, under retries-N folder."""
-        now = datetime.now(UTC)
-        timestamp = now.isoformat(timespec="seconds")
-        dated_filename = f"failed_items_{now.date()}.jsonl"
-
-        retry_folder = FailureRecovery.FAILURE_DIR / f"r{retries}"
-        retry_folder.mkdir(parents=True, exist_ok=True)
-
-        failure_file = retry_folder / dated_filename
-
+        """Append a failed item to daily JSONL under retries folder r{retries}."""
+        timestamp = datetime.now(UTC).isoformat(timespec="seconds")
         infos = {
             "failure_timestamp": timestamp,
             "retries": retries,
             "reason": reason,
         }
+        payload = DailyJsonlWriter.wrap_with_infos(data, infos)
 
-        data_with_metadata = {
-            **data,
-            "__infos__": infos,
-        }
-
-        with failure_file.open("a", encoding="utf-8") as f:
-            json.dump(data_with_metadata, f)
-            f.write("\n")
-
+        retry_folder = FailureRecovery.FAILURE_DIR / f"r{retries}"
+        writer = DailyJsonlWriter(retry_folder)
+        path = writer.write("failed_items", payload)
         logging.warning(
-            f"Recorded failed item {key} (retries={retries}) to {failure_file}"
+            f"Recorded failed item {key} (retries={retries}) to {path}"
         )
 
     @staticmethod
