@@ -15,3 +15,11 @@ class ValidationError(PiddiplatschError):
 
 class MaxErrorsExceededError(PiddiplatschError):
     """Raised when the consumer reaches its max error limit."""
+
+
+class TransientExternalError(PiddiplatschError):
+    """Raised when an external dependency (e.g., STAC) fails transiently after retries."""
+
+
+class StopOnTransientSkipError(PiddiplatschError):
+    """Raised by the pipeline to stop consumption due to transient external failures when policy dictates fail-fast."""

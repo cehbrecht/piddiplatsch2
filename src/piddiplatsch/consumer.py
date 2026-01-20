@@ -9,12 +9,14 @@ from confluent_kafka import Consumer as ConfluentConsumer
 from confluent_kafka import KafkaException
 
 from piddiplatsch.config import config
-from piddiplatsch.exceptions import MaxErrorsExceededError
+from piddiplatsch.exceptions import MaxErrorsExceededError, StopOnTransientSkipError
 from piddiplatsch.monitoring.stats import CounterKey, stats
 from piddiplatsch.persist.dump import DumpRecorder
 from piddiplatsch.persist.recovery import FailureRecovery
+from piddiplatsch.persist.skipped import SkipRecorder
 from piddiplatsch.processing import FeedResult, ProcessingResult
 from piddiplatsch.processing.registry import get_processor
+from piddiplatsch.processing.base import BaseProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +26,7 @@ class StopCause(StrEnum):
     SIGINT = "sigint"
     KEYBOARD_INTERRUPT = "keyboard_interrupt"
     MAX_ERRORS = "max_errors_exceeded"
+    TRANSIENT_EXTERNAL = "transient_external_failure"
 
 
 # ----------------------------
@@ -111,15 +114,25 @@ class ConsumerPipeline:
         verbose=False,
         max_errors=-1,
         dry_run: bool = False,
+        force: bool = False,
     ):
         """
         consumer: instance of BaseConsumer (KafkaConsumer or DirectConsumer)
         processor: processor name
         """
         self.consumer = consumer
-        self.processor = get_processor(processor, dry_run=dry_run)
+        # Allow either processor name (str) or a BaseProcessor instance
+        if isinstance(processor, BaseProcessor):
+            self.processor = processor
+        else:
+            self.processor = get_processor(processor, dry_run=dry_run)
         self.dump_messages = dump_messages
         self.max_errors = int(max_errors)
+        self.force = force
+        self.stop_on_transient_skip = bool(
+            config.get("consumer", {}).get("stop_on_transient_skip", True)
+        )
+        self._consecutive_transient_skips = 0
 
         self.stats = stats
         self.progress = None
@@ -147,6 +160,24 @@ class ConsumerPipeline:
 
             if result.skipped:
                 self.stats.skip(message=f"message={key}")
+                try:
+                    SkipRecorder.record_skipped_item(
+                        key, value, reason=result.skip_reason
+                    )
+                except Exception:
+                    logger.exception(
+                        f"Failed to persist skipped message {key}"
+                    )
+
+                if result.transient_skip:
+                    self._consecutive_transient_skips += 1
+                    self.stats.external_fail(message=f"message={key}")
+                    if self.stop_on_transient_skip and not self.force:
+                        raise StopOnTransientSkipError(
+                            f"Transient external failure encountered (key={key}); stopping as per policy"
+                        )
+                else:
+                    self._consecutive_transient_skips = 0
 
             if result.patched:
                 self.stats.patch(message=f"message={key}")
@@ -237,6 +268,7 @@ def start_consumer(
     db_path: str | None = None,
     direct_messages=None,
     dry_run: bool = False,
+    force: bool = False,
 ):
     if enable_db:
         stats.__init__(db_path=db_path)
@@ -251,13 +283,32 @@ def start_consumer(
         raise ValueError("Either Kafka config or direct_messages must be provided")
 
     max_errors = config.get("consumer", {}).get("max_errors", -1)
+    # Build processor instance to run preflight and pass into pipeline
+    proc_instance = (
+        processor
+        if isinstance(processor, BaseProcessor)
+        else get_processor(processor, dry_run=dry_run)
+    )
+    # Optional STAC preflight
+    try:
+        if not force:
+            stop_on_transient_skip = bool(
+                config.get("consumer", {}).get("stop_on_transient_skip", True)
+            )
+            proc_instance.preflight_check(stop_on_transient_skip=stop_on_transient_skip)
+    except Exception as e:
+        logger.error(str(e))
+        # Stop as transient external failure
+        sys.exit(1)
+
     pipeline = ConsumerPipeline(
         consumer,
-        processor,
+        proc_instance,
         dump_messages=dump_messages,
         verbose=verbose,
         max_errors=max_errors,
         dry_run=dry_run,
+        force=force,
     )
 
     def sigint_handler(sig, frame):
@@ -272,6 +323,10 @@ def start_consumer(
     except MaxErrorsExceededError as e:
         logger.error(str(e))
         pipeline.stop(cause=StopCause.MAX_ERRORS)
+        sys.exit(1)
+    except StopOnTransientSkipError as e:
+        logger.error(str(e))
+        pipeline.stop(cause=StopCause.TRANSIENT_EXTERNAL)
         sys.exit(1)
     except KeyboardInterrupt:
         logger.warning("Consumer interrupted.")

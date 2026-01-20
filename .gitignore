@@ -181,3 +181,6 @@ custom.toml
 custom_*.toml
 outputs/
 *.db
+
+# VS Code
+.vscode/

@@ -110,6 +110,7 @@ piddiplatsch consume
 - **Debug/log file**: `--debug --log my.log`
 - **Dump messages**: `--dump` (writes JSONL files under `outputs/dump/`)
 - **Dry-run**: `--dry-run` (writes handle records to JSONL without contacting Handle Service)
+- **Force-continue**: `--force` (continue on transient external failures like STAC outages; still persists skipped messages)
 
 ```bash
 piddiplatsch --config custom.toml --verbose --debug --log my.log consume --dump
@@ -132,6 +133,21 @@ Interested in contributing? Check out our [CONTRIBUTING.md](CONTRIBUTING.md) for
 
 Failed items are saved to `outputs/failures/r<N>/failed_items_<date>.jsonl` for later retry.
 
+### Skipped Messages (Transient External Failures)
+
+Transient external failures (e.g., STAC unreachable, timeouts, HTTP 5xx) are recorded under `outputs/skipped/skipped_items_<date>.jsonl` when running with `--force`. By default (production), the consumer stops on such failures after bounded retries.
+
+Policy:
+- Permanent-invalid (e.g., missing payload/item, invalid JSON Patch) → treated as errors and counted toward `max_errors`.
+- Transient-external (e.g., STAC down/timeouts/5xx) → stop the consumer unless `--force`.
+
+Config knobs (in your TOML):
+- `consumer.stop_on_transient_skip = true` (default)
+- `consumer.transient_retries = 3`
+- `consumer.transient_backoff_initial = 0.5`
+- `consumer.transient_backoff_max = 5.0`
+- `consumer.preflight_stac = true` (probe STAC health at startup)
+
 ### Retry Command
 
 Reprocess failed items directly through the pipeline (no Kafka write required):
@@ -144,6 +160,7 @@ Supports:
 - Individual files: `retry file1.jsonl file2.jsonl`
 - Directories: `retry outputs/failures/r0/`
 - Multiple paths: `retry outputs/failures/r0/ outputs/failures/r1/`
+- Skipped files: `retry outputs/skipped/` (reprocess skipped items captured during `--force` runs)
 
 **Examples:**
 
@@ -153,6 +170,8 @@ piddiplatsch retry outputs/failures/r0/failed_items_2026-01-16.jsonl
 
 # Retry all files in a directory
 piddiplatsch retry outputs/failures/r0/
+# Retry skipped messages
+piddiplatsch retry outputs/skipped/
 
 # Retry multiple files
 piddiplatsch retry file1.jsonl file2.jsonl file3.jsonl

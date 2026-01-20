@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+### Added
+- Transient external failure policy with bounded retries and exponential backoff for STAC fetch.
+- `--force` option to continue consumption despite transient external failures (records skipped items).
+- Skipped message persistence to `outputs/skipped/` with reason metadata (`__infos__`).
+- STAC preflight health check (configurable via `consumer.preflight_stac`).
+- External failures counter in stats and SQLite reporter.
+
+### Changed
+- Missing payload/item and invalid JSON Patch now treated as errors (count toward `max_errors`).
+- Retry command supports processing skipped JSONL files alongside failures.
+
 ## [2.0.0] - 2026-01-13
 - Initial project setup.
 - Add bump-my-version configuration and Makefile targets for patch/minor/major bumps.

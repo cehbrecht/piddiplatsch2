@@ -47,8 +47,13 @@ def cli(ctx, config_file, debug, verbose, log):
     is_flag=True,
     help="Do not publish to handle server; write handles to JSONL only.",
 )
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Continue on transient external failures (e.g., STAC down).",
+)
 @click.pass_context
-def consume(ctx, dump, dry_run):
+def consume(ctx, dump, dry_run, force):
     """Start the Kafka consumer."""
     topic = config.get("consumer", "topic")
     kafka_cfg = config.get("kafka")
@@ -60,6 +65,7 @@ def consume(ctx, dump, dry_run):
         dump_messages=dump,
         verbose=ctx.obj["verbose"],
         dry_run=dry_run,
+        force=force,
     )
 
 

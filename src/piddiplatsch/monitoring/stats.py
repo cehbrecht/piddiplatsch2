@@ -38,6 +38,7 @@ class CounterKey(StrEnum):
     SKIPPED = "skipped_messages"
     PATCHED = "patched_messages"
     HANDLE_TIME = "total_handle_processing_time"  # float seconds
+    EXTERNAL_FAILS = "external_failures"
 
 
 # -----------------------
@@ -73,6 +74,7 @@ class SQLiteReporter(StatsReporter):
                 warnings INTEGER,
                 skipped_messages INTEGER,
                 patched_messages INTEGER,
+                external_failures INTEGER,
                 total_handle_processing_time REAL,
                 uptime REAL,
                 message_rate REAL,
@@ -96,9 +98,9 @@ class SQLiteReporter(StatsReporter):
             """
             INSERT INTO message_stats (ts, messages, errors, retries, handles,
                                        retracted_messages, replicas, warnings,
-                                       skipped_messages, patched_messages, total_handle_processing_time,
+                                       skipped_messages, patched_messages, external_failures, total_handle_processing_time,
                                        uptime, message_rate, handle_rate, messages_per_sec)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 ts,
@@ -111,6 +113,7 @@ class SQLiteReporter(StatsReporter):
                 summary[CounterKey.WARNINGS.value],
                 summary[CounterKey.SKIPPED.value],
                 summary[CounterKey.PATCHED.value],
+                summary[CounterKey.EXTERNAL_FAILS.value],
                 summary[CounterKey.HANDLE_TIME.value],
                 summary["uptime"],
                 summary["message_rate"],
@@ -260,6 +263,11 @@ class Stats:
         self.increment(CounterKey.PATCHED, n)
         if message:
             logger.info(f"PATCHED: {message}")
+
+    def external_fail(self, message: str | None = None, n=1):
+        self.increment(CounterKey.EXTERNAL_FAILS, n)
+        if message:
+            logger.warning(f"EXTERNAL-FAIL: {message}")
 
     # --- Logging / persistence ---
     def _maybe_log(self):

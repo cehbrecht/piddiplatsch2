@@ -9,6 +9,8 @@ class ProcessingResult:
     success: bool = False
     error: str | None = None
     skipped: bool = False
+    skip_reason: str | None = None
+    transient_skip: bool = False
     patched: bool = False
     elapsed: float = 0.0
 
