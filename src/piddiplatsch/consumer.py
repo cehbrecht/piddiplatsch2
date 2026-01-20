@@ -15,8 +15,8 @@ from piddiplatsch.persist.dump import DumpRecorder
 from piddiplatsch.persist.recovery import FailureRecovery
 from piddiplatsch.persist.skipped import SkipRecorder
 from piddiplatsch.processing import FeedResult, ProcessingResult
-from piddiplatsch.processing.registry import get_processor
 from piddiplatsch.processing.base import BaseProcessor
+from piddiplatsch.processing.registry import get_processor
 
 logger = logging.getLogger(__name__)
 
@@ -165,9 +165,7 @@ class ConsumerPipeline:
                         key, value, reason=result.skip_reason
                     )
                 except Exception:
-                    logger.exception(
-                        f"Failed to persist skipped message {key}"
-                    )
+                    logger.exception(f"Failed to persist skipped message {key}")
 
                 if result.transient_skip:
                     self._consecutive_transient_skips += 1

@@ -2,13 +2,12 @@ import time
 from typing import Any
 
 import jsonpatch
-from pydantic import ValidationError
 import requests
-import time
+from pydantic import ValidationError
 
 from piddiplatsch.config import config
-from piddiplatsch.processing import BaseProcessor, ProcessingResult
 from piddiplatsch.exceptions import TransientExternalError
+from piddiplatsch.processing import BaseProcessor, ProcessingResult
 from piddiplatsch.records import CMIP6DatasetRecord
 from piddiplatsch.records.cmip6_file_record import extract_asset_records
 from piddiplatsch.utils.stac import get_stac_client
@@ -141,7 +140,9 @@ class CMIP6Processor(BaseProcessor):
         item_id = payload["item_id"]
         patch_data = payload["patch"]
         retries = int(config.get("consumer", {}).get("transient_retries", 3))
-        base_delay = float(config.get("consumer", {}).get("transient_backoff_initial", 0.5))
+        base_delay = float(
+            config.get("consumer", {}).get("transient_backoff_initial", 0.5)
+        )
         max_delay = float(config.get("consumer", {}).get("transient_backoff_max", 5.0))
 
         last_err: Exception | None = None
@@ -150,7 +151,9 @@ class CMIP6Processor(BaseProcessor):
             try:
                 item = self.stac_client.get_item(collection_id, item_id)
                 if item is None:
-                    raise requests.HTTPError(f"404 Not Found for {collection_id}/{item_id}")
+                    raise requests.HTTPError(
+                        f"404 Not Found for {collection_id}/{item_id}"
+                    )
                 patch_obj = jsonpatch.JsonPatch(patch_data["operations"])
                 patched_item = patch_obj.apply(item)
                 self.logger.info(
@@ -160,19 +163,27 @@ class CMIP6Processor(BaseProcessor):
                 return patched_item
             except requests.Timeout as e:
                 last_err = e
-                self.logger.warning(f"Timeout fetching STAC item (attempt {attempt}): {e}")
+                self.logger.warning(
+                    f"Timeout fetching STAC item (attempt {attempt}): {e}"
+                )
             except requests.ConnectionError as e:
                 last_err = e
-                self.logger.warning(f"Connection error fetching STAC item (attempt {attempt}): {e}")
+                self.logger.warning(
+                    f"Connection error fetching STAC item (attempt {attempt}): {e}"
+                )
             except requests.HTTPError as e:
                 last_err = e
-                self.logger.warning(f"HTTP error fetching STAC item (attempt {attempt}): {e}")
+                self.logger.warning(
+                    f"HTTP error fetching STAC item (attempt {attempt}): {e}"
+                )
             except jsonpatch.JsonPatchException:
                 # invalid patch is permanent error
                 raise
             except Exception as e:
                 last_err = e
-                self.logger.warning(f"Unexpected error fetching STAC item (attempt {attempt}): {e}")
+                self.logger.warning(
+                    f"Unexpected error fetching STAC item (attempt {attempt}): {e}"
+                )
 
             # backoff before next attempt (only for transient/classified errors)
             if attempt <= retries:

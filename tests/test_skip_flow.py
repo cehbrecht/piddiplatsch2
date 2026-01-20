@@ -1,12 +1,9 @@
 import json
-from pathlib import Path
-
-import pytest
 
 from piddiplatsch.consumer import ConsumerPipeline, DirectConsumer
-from piddiplatsch.processing.cmip6_processor import CMIP6Processor
-from piddiplatsch.persist.skipped import SkipRecorder
 from piddiplatsch.exceptions import TransientExternalError
+from piddiplatsch.persist.skipped import SkipRecorder
+from piddiplatsch.processing.cmip6_processor import CMIP6Processor
 
 
 class FailingPatchProcessor(CMIP6Processor):

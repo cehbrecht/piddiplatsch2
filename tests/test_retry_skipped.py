@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 
 from piddiplatsch.persist.recovery import FailureRecovery
 

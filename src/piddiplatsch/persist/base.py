@@ -1,7 +1,7 @@
 import json
+from collections.abc import Iterable
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Iterable
 
 
 class DailyJsonlWriter:
@@ -47,7 +47,9 @@ class JsonlRecorder:
         self.prefix = prefix
         self.writer = DailyJsonlWriter(self.root_dir)
 
-    def record(self, data: dict, infos: dict | None = None, subdir: Path | None = None) -> Path:
+    def record(
+        self, data: dict, infos: dict | None = None, subdir: Path | None = None
+    ) -> Path:
         payload = DailyJsonlWriter.wrap_with_infos(data, infos) if infos else data
         return self.writer.write(self.prefix, payload, subdir=subdir)
 

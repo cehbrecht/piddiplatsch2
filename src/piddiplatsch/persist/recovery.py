@@ -1,11 +1,14 @@
-import json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
 
 from piddiplatsch.config import config
+from piddiplatsch.persist.base import (
+    JsonlRecorder,
+    find_jsonl,
+    read_jsonl,
+)
 from piddiplatsch.processing import RetryResult
-from piddiplatsch.persist.base import DailyJsonlWriter, read_jsonl, find_jsonl, JsonlRecorder
 
 
 class FailureRecovery:
@@ -28,9 +31,7 @@ class FailureRecovery:
         retry_folder = FailureRecovery.FAILURE_DIR / f"r{retries}"
         recorder = JsonlRecorder(retry_folder, "failed_items")
         path = recorder.record(data, infos=infos)
-        logging.warning(
-            f"Recorded failed item {key} (retries={retries}) to {path}"
-        )
+        logging.warning(f"Recorded failed item {key} (retries={retries}) to {path}")
 
     @staticmethod
     def load_failed_messages(jsonl_path: Path) -> list[tuple[str, dict]]:
