@@ -7,7 +7,7 @@ from piddiplatsch.persist.base import RecorderBase
 from piddiplatsch.persist.helpers import PrepareResult
 
 
-class FailureRecovery(RecorderBase):
+class FailureRecorder(RecorderBase):
     LOG_KIND = "failure"
     LOG_LEVEL = logging.WARNING
     FAILURE_DIR = (

@@ -140,11 +140,11 @@ Recorders share a unified instance API via `RecorderBase`:
 ```python
 from piddiplatsch.persist.dump import DumpRecorder
 from piddiplatsch.persist.skipped import SkipRecorder
-from piddiplatsch.persist.recovery import FailureRecovery
+from piddiplatsch.persist.recovery import FailureRecorder
 
 DumpRecorder().record(key, data)
 SkipRecorder().record(key, data, reason="timeout", retries=1)
-FailureRecovery().record(key, data, reason="error", retries=2)
+FailureRecorder().record(key, data, reason="error", retries=2)
 ```
 
 Helpers for JSONL I/O and daily rotation live in `piddiplatsch.persist.helpers` (`DailyJsonlWriter`, `read_jsonl`, `find_jsonl`).
