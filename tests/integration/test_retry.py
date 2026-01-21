@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from piddiplatsch.config import config
-from piddiplatsch.persist.retry_service import (
+from piddiplatsch.persist.retry import (
     find_retry_files,
     load_failed_messages,
     retry,

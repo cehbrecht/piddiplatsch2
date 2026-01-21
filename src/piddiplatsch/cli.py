@@ -4,7 +4,7 @@ import click
 
 from piddiplatsch.config import config
 from piddiplatsch.consumer import start_consumer
-from piddiplatsch.persist import retry_service
+from piddiplatsch.persist import retry as retry_service
 
 # Expose failure directory for retry operations (patchable in tests)
 FAILURE_DIR = Path(config.get("consumer", {}).get("output_dir", "outputs")) / "failures"

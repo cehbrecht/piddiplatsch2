@@ -1,6 +1,6 @@
 import logging
-from collections.abc import Callable
 from pathlib import Path
+from collections.abc import Callable
 
 from piddiplatsch.persist.helpers import find_jsonl, read_jsonl
 from piddiplatsch.processing import RetryResult
@@ -17,9 +17,7 @@ def load_failed_messages(jsonl_path: Path) -> list[tuple[str, dict]]:
     for record in records:
         key = str(record.get("key") or record.get("id") or "unknown")
         if "__infos__" in record:
-            record["__infos__"]["retries"] = (
-                int(record["__infos__"].get("retries", 0)) + 1
-            )
+            record["__infos__"]["retries"] = int(record["__infos__"].get("retries", 0)) + 1
         else:
             record["retries"] = int(record.get("retries", 0)) + 1
         messages.append((key, record))
