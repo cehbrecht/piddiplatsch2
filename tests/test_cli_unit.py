@@ -112,7 +112,7 @@ class TestRetryCommand:
         assert result.exit_code == 2
         assert "does not exist" in result.output
 
-    @patch("piddiplatsch.cli.FailureRecovery.retry_batch")
+    @patch("piddiplatsch.cli.retry_service.retry_batch")
     def test_retry_calls_retry_batch(self, mock_retry_batch, runner, tmp_path):
         """Test that retry command calls FailureRecovery.retry_batch."""
         # Create a dummy file
@@ -129,7 +129,7 @@ class TestRetryCommand:
         assert mock_retry_batch.called
         assert "No retry files found" in result.output
 
-    @patch("piddiplatsch.cli.FailureRecovery.retry_batch")
+    @patch("piddiplatsch.cli.retry_service.retry_batch")
     def test_retry_with_success(self, mock_retry_batch, runner, tmp_path):
         """Test retry command with successful result."""
         test_file = tmp_path / "test.jsonl"
@@ -146,7 +146,7 @@ class TestRetryCommand:
         assert "5/5 succeeded" in result.output
         assert "All items processed successfully" in result.output
 
-    @patch("piddiplatsch.cli.FailureRecovery.retry_batch")
+    @patch("piddiplatsch.cli.retry_service.retry_batch")
     def test_retry_with_failures(self, mock_retry_batch, runner, tmp_path):
         """Test retry command with some failures."""
         test_file = tmp_path / "test.jsonl"
@@ -164,7 +164,7 @@ class TestRetryCommand:
         assert "3 items failed again" in result.output
         assert "70.0% success rate" in result.output
 
-    @patch("piddiplatsch.cli.FailureRecovery.retry_batch")
+    @patch("piddiplatsch.cli.retry_service.retry_batch")
     def test_retry_with_new_failure_files(self, mock_retry_batch, runner, tmp_path):
         """Test retry command shows new failure files."""
         test_file = tmp_path / "test.jsonl"
@@ -183,16 +183,14 @@ class TestRetryCommand:
         )
 
         # Mock FAILURE_DIR to point to our tmp directory
-        with patch(
-            "piddiplatsch.cli.FailureRecovery.FAILURE_DIR", tmp_path / "failures"
-        ):
+        with patch("piddiplatsch.cli.FAILURE_DIR", tmp_path / "failures"):
             result = runner.invoke(cli, ["retry", str(test_file)])
             assert result.exit_code == 0
             assert "3/5 succeeded" in result.output
             assert "New failures saved to:" in result.output
             assert "r1/failed_items_2026-01-16.jsonl" in result.output
 
-    @patch("piddiplatsch.cli.FailureRecovery.retry_batch")
+    @patch("piddiplatsch.cli.retry_service.retry_batch")
     def test_retry_passes_delete_after(self, mock_retry_batch, runner, tmp_path):
         """Test retry command passes --delete-after flag."""
         test_file = tmp_path / "test.jsonl"
@@ -207,7 +205,7 @@ class TestRetryCommand:
         call_kwargs = mock_retry_batch.call_args.kwargs
         assert call_kwargs.get("delete_after") is True
 
-    @patch("piddiplatsch.cli.FailureRecovery.retry_batch")
+    @patch("piddiplatsch.cli.retry_service.retry_batch")
     def test_retry_passes_dry_run(self, mock_retry_batch, runner, tmp_path):
         """Test retry command passes --dry-run flag."""
         test_file = tmp_path / "test.jsonl"
@@ -222,7 +220,7 @@ class TestRetryCommand:
         call_kwargs = mock_retry_batch.call_args.kwargs
         assert call_kwargs.get("dry_run") is True
 
-    @patch("piddiplatsch.cli.FailureRecovery.retry_batch")
+    @patch("piddiplatsch.cli.retry_service.retry_batch")
     def test_retry_multiple_paths(self, mock_retry_batch, runner, tmp_path):
         """Test retry command with multiple file paths."""
         file1 = tmp_path / "test1.jsonl"

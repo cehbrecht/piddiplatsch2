@@ -4,7 +4,11 @@ import click
 
 from piddiplatsch.config import config
 from piddiplatsch.consumer import start_consumer
-from piddiplatsch.persist.recovery import FailureRecovery
+from piddiplatsch.persist import retry_service
+
+# Expose failure directory for retry operations (patchable in tests)
+FAILURE_DIR = Path(config.get("consumer", {}).get("output_dir", "outputs")) / "failures"
+FAILURE_DIR.mkdir(parents=True, exist_ok=True)
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -113,9 +117,10 @@ def retry(ctx, path: tuple[Path, ...], delete_after: bool, dry_run: bool):
             else:
                 click.echo("(empty)")
 
-    result = FailureRecovery.retry_batch(
+    result = retry_service.retry_batch(
         path,
         processor=processor,
+        failure_dir=FAILURE_DIR,
         delete_after=delete_after,
         dry_run=dry_run,
         verbose=verbose,
@@ -135,7 +140,7 @@ def retry(ctx, path: tuple[Path, ...], delete_after: bool, dry_run: bool):
         if result.failure_files:
             click.echo("  New failures saved to:")
             for failure_file in sorted(result.failure_files):
-                rel_path = failure_file.relative_to(FailureRecovery.FAILURE_DIR)
+                rel_path = failure_file.relative_to(FAILURE_DIR)
                 click.echo(f"    - {rel_path}")
     else:
         click.echo("  ✓ All items processed successfully!")
