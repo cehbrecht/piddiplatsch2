@@ -4,7 +4,7 @@ import click
 
 from piddiplatsch.config import config
 from piddiplatsch.consumer import start_consumer
-from piddiplatsch.persist import retry as retry_service
+from piddiplatsch.persist import retry as retry_mod
 
 # Expose failure directory for retry operations (patchable in tests)
 FAILURE_DIR = Path(config.get("consumer", {}).get("output_dir", "outputs")) / "failures"
@@ -117,7 +117,7 @@ def retry(ctx, path: tuple[Path, ...], delete_after: bool, dry_run: bool):
             else:
                 click.echo("(empty)")
 
-    result = retry_service.retry_batch(
+    result = retry_mod.retry_batch(
         path,
         processor=processor,
         failure_dir=FAILURE_DIR,
