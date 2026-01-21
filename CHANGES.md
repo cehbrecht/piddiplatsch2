@@ -15,6 +15,7 @@ All notable changes to this project are documented here.
 - Missing payload/item and invalid JSON Patch now treated as errors (count toward `max_errors`).
 - Retry command supports processing skipped JSONL files alongside failures.
  - Replaced legacy persistence methods (`record_item`, `record_skipped_item`, `record_failed_item`) with a unified `record(key, data, reason=None, retries=None)` API across `DumpRecorder`, `SkipRecorder`, and `FailureRecovery`.
+ - Simplified persistence: unified instance `record()` on `RecorderBase` with standardized logging; extracted JSONL helpers to `piddiplatsch.persist.helpers`.
 
 ## [2.0.0] - 2026-01-13
 - Initial project setup.

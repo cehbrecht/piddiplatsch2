@@ -133,6 +133,22 @@ Interested in contributing? Check out our [CONTRIBUTING.md](CONTRIBUTING.md) for
 
 Failed items are saved to `outputs/failures/r<N>/failed_items_<date>.jsonl` for later retry.
 
+### Persistence API (Short)
+
+Recorders share a unified instance API via `RecorderBase`:
+
+```python
+from piddiplatsch.persist.dump import DumpRecorder
+from piddiplatsch.persist.skipped import SkipRecorder
+from piddiplatsch.persist.recovery import FailureRecovery
+
+DumpRecorder().record(key, data)
+SkipRecorder().record(key, data, reason="timeout", retries=1)
+FailureRecovery().record(key, data, reason="error", retries=2)
+```
+
+Helpers for JSONL I/O and daily rotation live in `piddiplatsch.persist.helpers` (`DailyJsonlWriter`, `read_jsonl`, `find_jsonl`).
+
 ### Dumped Messages
 
 When running the consumer with `--dump`, all consumed messages are appended to

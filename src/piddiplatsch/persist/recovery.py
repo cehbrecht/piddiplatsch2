@@ -3,11 +3,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from piddiplatsch.config import config
-from piddiplatsch.persist.base import (
-    RecorderBase,
-    find_jsonl,
-    read_jsonl,
-)
+from piddiplatsch.persist.base import RecorderBase
+from piddiplatsch.persist.helpers import find_jsonl, read_jsonl
 from piddiplatsch.processing import RetryResult
 
 
