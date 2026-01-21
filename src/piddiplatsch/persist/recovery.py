@@ -4,7 +4,7 @@ from pathlib import Path
 
 from piddiplatsch.config import config
 from piddiplatsch.persist.base import RecorderBase
-from piddiplatsch.persist.helpers import find_jsonl, read_jsonl
+from piddiplatsch.persist.helpers import PrepareResult, find_jsonl, read_jsonl
 from piddiplatsch.processing import RetryResult
 
 
@@ -25,12 +25,12 @@ class FailureRecovery(RecorderBase):
         data: dict,
         reason: str | None,
         retries: int | None,
-    ) -> tuple[dict, dict | None, Path | None]:
+    ) -> PrepareResult:
         ts = datetime.now(UTC).isoformat(timespec="seconds")
         r = 0 if retries is None else int(retries)
         infos = {"failure_timestamp": ts, "retries": r, "reason": reason or "Unknown"}
         subdir = self.root_dir / f"r{r}"
-        return data, infos, subdir
+        return PrepareResult(payload=data, infos=infos, subdir=subdir)
 
     @staticmethod
     def load_failed_messages(jsonl_path: Path) -> list[tuple[str, dict]]:

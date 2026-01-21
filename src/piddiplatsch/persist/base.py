@@ -2,7 +2,10 @@ import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from piddiplatsch.persist.helpers import DailyJsonlWriter
+from piddiplatsch.persist.helpers import (
+    DailyJsonlWriter,
+    PrepareResult,
+)
 
 
 class RecorderBase(ABC):
@@ -29,7 +32,7 @@ class RecorderBase(ABC):
         data: dict,
         reason: str | None,
         retries: int | None,
-    ) -> tuple[dict, dict | None, Path | None]:
+    ) -> PrepareResult:
         """Return a tuple of (payload, infos, subdir).
 
         - `payload`: dict to be written (before infos wrapping)
@@ -46,7 +49,8 @@ class RecorderBase(ABC):
         reason: str | None = None,
         retries: int | None = None,
     ) -> Path:
-        payload, infos, subdir = self.prepare(key, data, reason, retries)
+        result = self.prepare(key, data, reason, retries)
+        payload, infos, subdir = result.payload, result.infos, result.subdir
         if infos:
             payload = DailyJsonlWriter.wrap_with_infos(payload, infos)
         return self.writer.write(self.prefix, payload, subdir=subdir)

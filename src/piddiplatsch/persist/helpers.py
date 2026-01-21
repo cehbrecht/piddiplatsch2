@@ -1,5 +1,6 @@
 import json
 from collections.abc import Iterable
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -32,6 +33,13 @@ class DailyJsonlWriter:
             json.dump(data, f)
             f.write("\n")
         return target_path
+
+
+@dataclass
+class PrepareResult:
+    payload: dict
+    infos: dict | None = None
+    subdir: Path | None = None
 
 
 def read_jsonl(file_path: Path) -> list[dict]:

@@ -3,6 +3,7 @@ from pathlib import Path
 
 from piddiplatsch.config import config
 from piddiplatsch.persist.base import RecorderBase
+from piddiplatsch.persist.helpers import PrepareResult
 
 
 class DumpRecorder(RecorderBase):
@@ -20,6 +21,6 @@ class DumpRecorder(RecorderBase):
         data: dict,
         reason: str | None,
         retries: int | None,
-    ) -> tuple[dict, dict | None, Path | None]:
+    ) -> PrepareResult:
         # No infos, just write raw payload
-        return data, None, None
+        return PrepareResult(payload=data)

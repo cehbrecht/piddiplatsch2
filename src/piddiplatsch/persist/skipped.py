@@ -4,6 +4,7 @@ from pathlib import Path
 
 from piddiplatsch.config import config
 from piddiplatsch.persist.base import RecorderBase
+from piddiplatsch.persist.helpers import PrepareResult
 
 
 class SkipRecorder(RecorderBase):
@@ -22,7 +23,7 @@ class SkipRecorder(RecorderBase):
         data: dict,
         reason: str | None,
         retries: int | None,
-    ) -> tuple[dict, dict | None, Path | None]:
+    ) -> PrepareResult:
         timestamp = datetime.now(UTC).isoformat(timespec="seconds")
         payload = dict(data)
         # Determine retries value: explicit overrides payload value
@@ -45,4 +46,4 @@ class SkipRecorder(RecorderBase):
             "retries": int(payload_retries or 0),
             "reason": reason or "Unknown",
         }
-        return payload, infos, None
+        return PrepareResult(payload=payload, infos=infos, subdir=None)
