@@ -9,7 +9,11 @@ from pathlib import Path
 import pytest
 
 from piddiplatsch.config import config
-from piddiplatsch.persist.recovery import FailureRecovery
+from piddiplatsch.persist.retry import (
+    find_retry_files,
+    load_failed_messages,
+    retry,
+)
 
 pytestmark = pytest.mark.integration
 
@@ -75,8 +79,12 @@ def test_retry_loads_and_processes_failed_messages(tmp_path: Path):
     assert len(lines) == 3
 
     # Retry the failed messages
-    result = FailureRecovery.retry(
-        failure_file, processor="cmip6", delete_after=False, dry_run=True
+    result = retry(
+        failure_file,
+        processor="cmip6",
+        failure_dir=tmp_path / "failures",
+        delete_after=False,
+        dry_run=True,
     )
 
     # Should have retried 3 messages
@@ -110,7 +118,7 @@ def test_retry_increments_retry_counter(tmp_path: Path):
     _create_failure_jsonl(failure_file, num_items=1)
 
     # Load messages to check retry counter
-    messages = FailureRecovery.load_failed_messages(failure_file)
+    messages = load_failed_messages(failure_file)
     assert len(messages) == 1
 
     _key, data = messages[0]
@@ -130,8 +138,12 @@ def test_retry_deletes_file_when_delete_after_true(tmp_path: Path):
     assert failure_file.exists()
 
     # Retry with delete_after=True
-    result = FailureRecovery.retry(
-        failure_file, processor="cmip6", delete_after=True, dry_run=True
+    result = retry(
+        failure_file,
+        processor="cmip6",
+        failure_dir=tmp_path / "failures",
+        delete_after=True,
+        dry_run=True,
     )
 
     assert result.total == 2
@@ -147,7 +159,9 @@ def test_retry_handles_nonexistent_file(tmp_path: Path):
     nonexistent_file = tmp_path / "does_not_exist.jsonl"
 
     # Should return empty result and not raise an exception
-    result = FailureRecovery.retry(nonexistent_file, processor="cmip6")
+    result = retry(
+        nonexistent_file, processor="cmip6", failure_dir=tmp_path / "failures"
+    )
     assert result.total == 0
     assert result.succeeded == 0
     assert result.failed == 0
@@ -160,7 +174,7 @@ def test_retry_handles_empty_file(tmp_path: Path):
     empty_file = tmp_path / "empty.jsonl"
     empty_file.touch()
 
-    result = FailureRecovery.retry(empty_file, processor="cmip6")
+    result = retry(empty_file, processor="cmip6", failure_dir=tmp_path / "failures")
     assert result.total == 0
     assert result.succeeded == 0
     assert result.failed == 0
@@ -171,7 +185,7 @@ def test_find_retry_files_single_file(tmp_path: Path):
     file1 = tmp_path / "test1.jsonl"
     file1.touch()
 
-    files = FailureRecovery.find_retry_files((file1,))
+    files = find_retry_files((file1,))
     assert files == [file1]
 
 
@@ -181,7 +195,7 @@ def test_find_retry_files_directory(tmp_path: Path):
     (tmp_path / "file2.jsonl").touch()
     (tmp_path / "file3.txt").touch()  # Non-JSONL file
 
-    files = FailureRecovery.find_retry_files((tmp_path,))
+    files = find_retry_files((tmp_path,))
     assert len(files) == 2
     assert all(f.suffix == ".jsonl" for f in files)
 
@@ -193,7 +207,7 @@ def test_find_retry_files_multiple_paths(tmp_path: Path):
     file1.touch()
     file2.touch()
 
-    files = FailureRecovery.find_retry_files((file1, file2))
+    files = find_retry_files((file1, file2))
     assert len(files) == 2
     assert file1 in files
     assert file2 in files
@@ -205,7 +219,7 @@ def test_find_retry_files_removes_duplicates(tmp_path: Path):
     file1.touch()
 
     # Pass same file twice
-    files = FailureRecovery.find_retry_files((file1, file1))
+    files = find_retry_files((file1, file1))
     assert len(files) == 1
     assert files[0] == file1
 
@@ -215,5 +229,5 @@ def test_find_retry_files_skips_non_jsonl(tmp_path: Path):
     txt_file = tmp_path / "test.txt"
     txt_file.touch()
 
-    files = FailureRecovery.find_retry_files((txt_file,))
+    files = find_retry_files((txt_file,))
     assert len(files) == 0

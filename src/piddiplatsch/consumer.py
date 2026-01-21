@@ -12,7 +12,7 @@ from piddiplatsch.config import config
 from piddiplatsch.exceptions import MaxErrorsExceededError, StopOnTransientSkipError
 from piddiplatsch.monitoring.stats import CounterKey, stats
 from piddiplatsch.persist.dump import DumpRecorder
-from piddiplatsch.persist.recovery import FailureRecovery
+from piddiplatsch.persist.recovery import FailureRecorder
 from piddiplatsch.persist.skipped import SkipRecorder
 from piddiplatsch.processing import FeedResult, ProcessingResult
 from piddiplatsch.processing.base import BaseProcessor
@@ -199,7 +199,7 @@ class ConsumerPipeline:
             logger.exception(f"Error processing message {key}")
             retries = value.get("retries", 0)
             reason = str(e)
-            FailureRecovery().record(key, value, retries=retries, reason=reason)
+            FailureRecorder().record(key, value, retries=retries, reason=reason)
             return ProcessingResult(key=key, success=False, error=reason)
 
     def stop(self, cause: StopCause = StopCause.MANUAL):

@@ -140,11 +140,11 @@ Recorders share a unified instance API via `RecorderBase`:
 ```python
 from piddiplatsch.persist.dump import DumpRecorder
 from piddiplatsch.persist.skipped import SkipRecorder
-from piddiplatsch.persist.recovery import FailureRecovery
+from piddiplatsch.persist.recovery import FailureRecorder
 
 DumpRecorder().record(key, data)
 SkipRecorder().record(key, data, reason="timeout", retries=1)
-FailureRecovery().record(key, data, reason="error", retries=2)
+FailureRecorder().record(key, data, reason="error", retries=2)
 ```
 
 Helpers for JSONL I/O and daily rotation live in `piddiplatsch.persist.helpers` (`DailyJsonlWriter`, `read_jsonl`, `find_jsonl`).
@@ -166,6 +166,11 @@ piddiplatsch --config custom.toml --verbose consume --dump
 
 Transient external failures (e.g., STAC unreachable, timeouts, HTTP 5xx) are recorded under `outputs/skipped/skipped_items_<date>.jsonl` when running with `--force`. By default (production), the consumer stops on such failures after bounded retries.
 
+```bash
+# Continue despite transient failures (records skipped)
+piddiplatsch consume --force
+```
+
 Policy:
 - Permanent-invalid (e.g., missing payload/item, invalid JSON Patch) → treated as errors and counted toward `max_errors`.
 - Transient-external (e.g., STAC down/timeouts/5xx) → stop the consumer unless `--force`.
@@ -179,95 +184,43 @@ Config knobs (in your TOML):
 
 ### Retry Command
 
-Reprocess failed items directly through the pipeline (no Kafka write required):
+Retry previously persisted items (failures or skipped) through the pipeline:
 
 ```bash
-piddiplatsch retry <path...> [--delete-after] [--dry-run]
+piddiplatsch retry <path...> [--delete-after] [--dry-run] [-v]
 ```
 
-Supports:
-- Individual files: `retry file1.jsonl file2.jsonl`
-- Directories: `retry outputs/failures/r0/`
-- Multiple paths: `retry outputs/failures/r0/ outputs/failures/r1/`
-- Skipped files: `retry outputs/skipped/` (reprocess skipped items captured during `--force` runs)
+- Accepts files, directories, or glob patterns
+- Increments retry counters and reprocesses items
+- Saves new failures under `outputs/failures/r<N>/`
+ - Also supports retriable skipped files under `outputs/skipped/` (from `--force` runs)
 
-**Examples:**
+Examples:
 
 ```bash
-# Retry a single file
+# Single file
 piddiplatsch retry outputs/failures/r0/failed_items_2026-01-16.jsonl
 
-# Retry all files in a directory
+# Directory (all JSONL files)
 piddiplatsch retry outputs/failures/r0/
-# Retry skipped messages
-piddiplatsch retry outputs/skipped/
 
-# Retry multiple files
-piddiplatsch retry file1.jsonl file2.jsonl file3.jsonl
-
-# Retry in dry-run mode (test without contacting Handle Service)
+# Dry-run (no Handle Service)
 piddiplatsch retry outputs/failures/r0/ --dry-run
-
-# Retry with progress indicators (verbose mode)
-piddiplatsch --verbose retry outputs/failures/r0/
-
-# Retry and delete files on success
-piddiplatsch retry outputs/failures/r0/ --delete-after
 ```
 
-**Progress Indicators:**
+For API usage, see [src/piddiplatsch/persist/retry.py](src/piddiplatsch/persist/retry.py).
 
-Use `--verbose` flag to see per-file progress during retry:
+### Failure Recording
 
-```bash
-piddiplatsch --verbose retry outputs/failures/r0/
+Persist failures during consumption for later retry:
 
-# Output:
-# [1/3] failed_items_2026-01-15.jsonl: 45/50 succeeded, 5 failed
-# [2/3] failed_items_2026-01-16.jsonl: 100/100 succeeded
-# [3/3] failed_items_2026-01-17.jsonl: 23/25 succeeded, 2 failed
-#
-# Total: 168/175 succeeded
-#   ⚠️  7 items failed again (96.0% success rate)
-#   New failures saved to:
-#     - r1/failed_items_2026-01-16.jsonl
+```python
+from piddiplatsch.persist.recovery import FailureRecorder
+
+FailureRecorder().record(key, data, reason="error", retries=1)
 ```
 
-**Detailed Feedback:**
-
-The retry command provides comprehensive feedback:
-- Per-file success/failure counts
-- Overall statistics and success rate
-- Location of new failure files (if any items fail again)
-
-Example output:
-```
-Found 3 file(s) to retry.
-  failed_items_2026-01-15.jsonl: 45/50 succeeded, 5 failed
-  failed_items_2026-01-16.jsonl: 100/100 succeeded
-  failed_items_2026-01-17.jsonl: 23/25 succeeded, 2 failed
-
-Total: 168/175 succeeded
-  ⚠️  7 items failed again (96.0% success rate)
-  New failures saved to:
-    - r1/failed_items_2026-01-16.jsonl
-```
-
-Items are reprocessed with incremented retry counters. New failures go to `r1/`, `r2/`, etc.
-
-**Manual Testing:**
-
-A sample failure JSONL file is available for testing:
-
-```bash
-# Test retry with sample data (dry-run mode)
-piddiplatsch retry tests/testdata/sample_failures.jsonl --dry-run
-```
-
-The sample file [`tests/testdata/sample_failures.jsonl`](tests/testdata/sample_failures.jsonl) contains 3 failed CMIP6 STAC items with realistic metadata. Use this to:
-- Test the retry command without setting up Kafka
-- Verify your processor handles different failure scenarios
-- Practice working with failure recovery workflows
+See [src/piddiplatsch/persist/recovery.py](src/piddiplatsch/persist/recovery.py) for details.
 
 ---
 
@@ -278,6 +231,8 @@ Start consumer with custom configuration and dump messages:
 ```bash
 piddiplatsch --config custom.toml --verbose consume --dump
 ```
+
+Tip: Use `--force` to continue despite transient external failures (records skipped items under `outputs/skipped/`).
 
 ---
 
