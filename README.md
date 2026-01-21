@@ -166,6 +166,11 @@ piddiplatsch --config custom.toml --verbose consume --dump
 
 Transient external failures (e.g., STAC unreachable, timeouts, HTTP 5xx) are recorded under `outputs/skipped/skipped_items_<date>.jsonl` when running with `--force`. By default (production), the consumer stops on such failures after bounded retries.
 
+```bash
+# Continue despite transient failures (records skipped)
+piddiplatsch consume --force
+```
+
 Policy:
 - Permanent-invalid (e.g., missing payload/item, invalid JSON Patch) → treated as errors and counted toward `max_errors`.
 - Transient-external (e.g., STAC down/timeouts/5xx) → stop the consumer unless `--force`.
@@ -226,6 +231,8 @@ Start consumer with custom configuration and dump messages:
 ```bash
 piddiplatsch --config custom.toml --verbose consume --dump
 ```
+
+Tip: Use `--force` to continue despite transient external failures (records skipped items under `outputs/skipped/`).
 
 ---
 
