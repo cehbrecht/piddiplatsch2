@@ -6,6 +6,8 @@ from piddiplatsch.persist.helpers import DailyJsonlWriter
 
 
 class RecorderBase(ABC):
+    LOG_KIND = "record"
+    LOG_LEVEL = logging.INFO
     """Abstract base for high-level category recorders.
 
     Subclasses provide how to prepare the payload/infos/subdir while this class
@@ -34,6 +36,7 @@ class RecorderBase(ABC):
         - `infos`: optional metadata dict to be wrapped under `__infos__`
         - `subdir`: optional absolute directory where the daily file should be written
         """
+        pass
 
     def write(
         self,
@@ -56,24 +59,29 @@ class RecorderBase(ABC):
         reason: str | None = None,
         retries: int | None = None,
     ) -> Path:
-        """Unified recording API with generalized logging.
-
-        Delegates to `write()` and logs a concise message including the
-        recorder type (class name or `LOG_KIND`), target path, and optional
-        `reason`/`retries` details.
-        """
+        """Unified recording API: write then log via a private helper."""
         path = self.write(key, data, reason=reason, retries=retries)
+        self._log_record(key, path, reason=reason, retries=retries)
+        return path
 
-        # Determine kind and level for logging
+    def _log_record(
+        self,
+        key: str,
+        path: Path,
+        *,
+        reason: str | None = None,
+        retries: int | None = None,
+    ) -> None:
+        """Log a concise record message using `LOG_KIND`/`LOG_LEVEL`.
+
+        Includes optional `reason` and `retries` context when provided.
+        """
         kind = getattr(self, "LOG_KIND", self.__class__.__name__)
         level = getattr(self, "LOG_LEVEL", logging.INFO)
-
         parts: list[str] = []
         if retries is not None:
             parts.append(f"retries={retries}")
         if reason is not None:
             parts.append(f"reason={reason}")
         suffix = f" ({', '.join(parts)})" if parts else ""
-
         logging.log(level, f"{kind}: recorded {key} to {path}{suffix}")
-        return path
