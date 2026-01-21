@@ -1,78 +1,55 @@
-import json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
 
 from piddiplatsch.config import config
+from piddiplatsch.persist.base import RecorderBase
+from piddiplatsch.persist.helpers import PrepareResult, find_jsonl, read_jsonl
 from piddiplatsch.processing import RetryResult
 
 
-class FailureRecovery:
+class FailureRecovery(RecorderBase):
+    LOG_KIND = "failure"
+    LOG_LEVEL = logging.WARNING
     FAILURE_DIR = (
         Path(config.get("consumer", {}).get("output_dir", "outputs")) / "failures"
     )
     FAILURE_DIR.mkdir(parents=True, exist_ok=True)
 
-    @staticmethod
-    def record_failed_item(
-        key: str, data: dict, retries: int = 0, reason: str = "Unknown"
-    ) -> None:
-        """Append a failed STAC item to a daily JSONL file with UTC timestamp, under retries-N folder."""
-        now = datetime.now(UTC)
-        timestamp = now.isoformat(timespec="seconds")
-        dated_filename = f"failed_items_{now.date()}.jsonl"
+    def __init__(self) -> None:
+        super().__init__(self.FAILURE_DIR, "failed_items")
 
-        retry_folder = FailureRecovery.FAILURE_DIR / f"r{retries}"
-        retry_folder.mkdir(parents=True, exist_ok=True)
-
-        failure_file = retry_folder / dated_filename
-
-        infos = {
-            "failure_timestamp": timestamp,
-            "retries": retries,
-            "reason": reason,
-        }
-
-        data_with_metadata = {
-            **data,
-            "__infos__": infos,
-        }
-
-        with failure_file.open("a", encoding="utf-8") as f:
-            json.dump(data_with_metadata, f)
-            f.write("\n")
-
-        logging.warning(
-            f"Recorded failed item {key} (retries={retries}) to {failure_file}"
-        )
+    def prepare(
+        self,
+        key: str,
+        data: dict,
+        reason: str | None,
+        retries: int | None,
+    ) -> PrepareResult:
+        ts = datetime.now(UTC).isoformat(timespec="seconds")
+        r = 0 if retries is None else int(retries)
+        infos = {"failure_timestamp": ts, "retries": r, "reason": reason or "Unknown"}
+        subdir = self.root_dir / f"r{r}"
+        return PrepareResult(payload=data, infos=infos, subdir=subdir)
 
     @staticmethod
     def load_failed_messages(jsonl_path: Path) -> list[tuple[str, dict]]:
-        """Load failed items from a JSONL file and return as (key, value) tuples for DirectConsumer."""
-        if not jsonl_path.exists():
-            logging.error(f"Retry file not found: {jsonl_path}")
+        """Load failed (or skipped) items from JSONL and return as (key, value) tuples."""
+        records = read_jsonl(jsonl_path)
+        if not records:
+            logging.error(f"Retry file not found or empty: {jsonl_path}")
             return []
 
-        messages = []
-        with jsonl_path.open("r", encoding="utf-8") as f:
-            for line in f:
-                try:
-                    record = json.loads(line)
-                    key = str(record.get("key") or record.get("id") or "unknown")
-
-                    # Increment retries counter
-                    if "__infos__" in record:
-                        record["__infos__"]["retries"] = (
-                            int(record["__infos__"].get("retries", 0)) + 1
-                        )
-                    else:
-                        record["retries"] = int(record.get("retries", 0)) + 1
-
-                    messages.append((key, record))
-                except Exception:
-                    logging.exception(
-                        f"Error loading failed item from {jsonl_path}: {line.strip()}"
-                    )
+        messages: list[tuple[str, dict]] = []
+        for record in records:
+            key = str(record.get("key") or record.get("id") or "unknown")
+            if "__infos__" in record:
+                record["__infos__"]["retries"] = (
+                    int(record["__infos__"].get("retries", 0)) + 1
+                )
+            else:
+                record["retries"] = int(record.get("retries", 0)) + 1
+            messages.append((key, record))
 
         logging.info(f"Loaded {len(messages)} messages from {jsonl_path}")
         return messages
@@ -89,26 +66,7 @@ class FailureRecovery:
 
         Returns sorted list of unique file paths.
         """
-        files = set()
-
-        for path in paths:
-            if path.is_file():
-                if path.suffix == ".jsonl":
-                    files.add(path)
-                else:
-                    logging.warning(f"Skipping non-JSONL file: {path}")
-            elif path.is_dir():
-                # Find all .jsonl files in directory (non-recursive)
-                jsonl_files = path.glob("*.jsonl")
-                files.update(jsonl_files)
-            else:
-                # Treat as glob pattern
-                parent = path.parent
-                pattern = path.name
-                matched = parent.glob(pattern)
-                files.update(f for f in matched if f.is_file() and f.suffix == ".jsonl")
-
-        return sorted(files)
+        return find_jsonl(paths)
 
     @staticmethod
     def retry(

@@ -2,9 +2,11 @@ import time
 from typing import Any
 
 import jsonpatch
+import requests
 from pydantic import ValidationError
 
 from piddiplatsch.config import config
+from piddiplatsch.exceptions import TransientExternalError
 from piddiplatsch.processing import BaseProcessor, ProcessingResult
 from piddiplatsch.records import CMIP6DatasetRecord
 from piddiplatsch.records.cmip6_file_record import extract_asset_records
@@ -22,6 +24,29 @@ class CMIP6Processor(BaseProcessor):
             "excluded_asset_keys", self.EXCLUDED_ASSET_KEYS
         )
         self.stac_client = get_stac_client()
+
+    def preflight_check(self, stop_on_transient_skip: bool = True):
+        """Optionally check STAC availability before consuming.
+
+        If remote STAC is configured and unreachable, raise TransientExternalError
+        when policy dictates fail-fast.
+        """
+        stac_cfg = config.get("stac", {})
+        base_url = stac_cfg.get("base_url")
+        preflight = bool(config.get("consumer", {}).get("preflight_stac", True))
+        timeout = float(stac_cfg.get("timeout", 10.0))
+        if not preflight or not base_url:
+            return
+        try:
+            # lightweight probe
+            url = base_url.rstrip("/") + "/collections?limit=1"
+            resp = requests.get(url, timeout=min(timeout, 3.0))
+            resp.raise_for_status()
+        except Exception as e:
+            if stop_on_transient_skip:
+                raise TransientExternalError(f"STAC preflight failed: {e}")
+            # else, just log and continue in force/dev mode
+            self.logger.warning(f"STAC preflight failed but continuing: {e}")
 
     def process(self, key: str, value: dict[str, Any]) -> ProcessingResult:
         self.logger.debug(f"CMIP6 plugin processing key={key}")
@@ -49,9 +74,7 @@ class CMIP6Processor(BaseProcessor):
         """Check payload presence and delegate to payload processor."""
         payload = value.get("data", {}).get("payload")
         if not payload:
-            self._log_skipped(key, "MISSING payload")
-            result.skipped = True
-            return result
+            raise ValueError("MISSING payload")
 
         metadata = value.get("metadata", {})
         return self._process_payload(payload, metadata, key, result)
@@ -69,16 +92,22 @@ class CMIP6Processor(BaseProcessor):
                 item = self._apply_patch_to_stac_item(payload)
                 self.logger.info(f"Patched item with key={key}.")
                 result.patched = True
+            except TransientExternalError as e:
+                self.logger.error(f"External failure during patch for key={key}: {e}")
+                result.skipped = True
+                result.skip_reason = f"TRANSIENT external: {e}"
+                result.transient_skip = True
+                return result
+            except jsonpatch.JsonPatchException as e:
+                self.logger.error(f"Invalid JSON Patch for key={key}: {e}")
+                raise
             except Exception as e:
                 self.logger.error(f"Failed to apply patch for key={key}: {e}")
-                result.skipped = True
-                return result
+                raise
         elif "item" in payload:
             item = payload["item"]
         else:
-            self._log_skipped(key, "MISSING item")
-            result.skipped = True
-            return result
+            raise ValueError("MISSING item")
 
         # Create record
         additional_attrs = {"publication_time": metadata.get("time")}
@@ -102,21 +131,68 @@ class CMIP6Processor(BaseProcessor):
         return result
 
     def _apply_patch_to_stac_item(self, payload: dict[str, Any]) -> dict[str, Any]:
-        """Fetch the STAC item and apply a JSON patch."""
+        """Fetch the STAC item and apply a JSON patch with retries and backoff.
+
+        Raises TransientExternalError if STAC is unreachable or returns 5xx after retries.
+        Raises JsonPatchException for invalid patch specs.
+        """
         collection_id = payload["collection_id"]
         item_id = payload["item_id"]
         patch_data = payload["patch"]
+        retries = int(config.get("consumer", {}).get("transient_retries", 3))
+        base_delay = float(
+            config.get("consumer", {}).get("transient_backoff_initial", 0.5)
+        )
+        max_delay = float(config.get("consumer", {}).get("transient_backoff_max", 5.0))
 
-        item = self.stac_client.get_item(collection_id, item_id)
-        if item is None:
-            raise ValueError(f"STAC item {collection_id}/{item_id} not found")
+        last_err: Exception | None = None
+        delay = base_delay
+        for attempt in range(1, retries + 2):
+            try:
+                item = self.stac_client.get_item(collection_id, item_id)
+                if item is None:
+                    raise requests.HTTPError(
+                        f"404 Not Found for {collection_id}/{item_id}"
+                    )
+                patch_obj = jsonpatch.JsonPatch(patch_data["operations"])
+                patched_item = patch_obj.apply(item)
+                self.logger.info(
+                    f"Applied patch to STAC item {collection_id}/{item_id}"
+                )
+                self.logger.debug(f"patched item: {patched_item}")
+                return patched_item
+            except requests.Timeout as e:
+                last_err = e
+                self.logger.warning(
+                    f"Timeout fetching STAC item (attempt {attempt}): {e}"
+                )
+            except requests.ConnectionError as e:
+                last_err = e
+                self.logger.warning(
+                    f"Connection error fetching STAC item (attempt {attempt}): {e}"
+                )
+            except requests.HTTPError as e:
+                last_err = e
+                self.logger.warning(
+                    f"HTTP error fetching STAC item (attempt {attempt}): {e}"
+                )
+            except jsonpatch.JsonPatchException:
+                # invalid patch is permanent error
+                raise
+            except Exception as e:
+                last_err = e
+                self.logger.warning(
+                    f"Unexpected error fetching STAC item (attempt {attempt}): {e}"
+                )
 
-        patch_obj = jsonpatch.JsonPatch(patch_data["operations"])
-        patched_item = patch_obj.apply(item)
+            # backoff before next attempt (only for transient/classified errors)
+            if attempt <= retries:
+                time.sleep(delay)
+                delay = min(delay * 2, max_delay)
 
-        self.logger.info(f"Applied patch to STAC item {collection_id}/{item_id}")
-        self.logger.debug(f"patched item: {patched_item}")
-        return patched_item
+        raise TransientExternalError(
+            f"Failed to fetch/apply patch for {collection_id}/{item_id} after {retries + 1} attempts: {last_err}"
+        )
 
     def _add_records_from_item(
         self, record: CMIP6DatasetRecord, item: dict[str, Any]

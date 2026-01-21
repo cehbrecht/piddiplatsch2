@@ -3,6 +3,20 @@ processor = "cmip6"
 topic = "CMIP6"
 output_dir = "outputs"
 max_errors = 10  # -1 = unlimited, any positive int = stop after that many
+ # --- Transient External Failure Handling (STAC/network) ---
+ # stop_on_transient_skip: if true, stop consumption on transient external failures
+ #   (e.g., STAC unreachable/timeouts/HTTP 5xx) after bounded retries.
+ #   Override at runtime with the CLI flag --force to continue.
+ stop_on_transient_skip = true
+ # transient_retries: number of attempts for transient fetch failures (PATCH fetch).
+ transient_retries = 3
+ # transient_backoff_initial: initial backoff delay in seconds for retries.
+ transient_backoff_initial = 0.5
+ # transient_backoff_max: maximum backoff delay in seconds.
+ transient_backoff_max = 5.0
+ # preflight_stac: probe STAC health at startup; if unhealthy and not forced,
+ #   the consumer exits early (fail-fast).
+ preflight_stac = true
 
 [kafka]
 "bootstrap.servers" = "localhost:39092"
