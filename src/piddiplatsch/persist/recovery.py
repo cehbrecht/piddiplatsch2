@@ -12,6 +12,8 @@ from piddiplatsch.processing import RetryResult
 
 
 class FailureRecovery(RecorderBase):
+    LOG_KIND = "failure"
+    LOG_LEVEL = logging.WARNING
     FAILURE_DIR = (
         Path(config.get("consumer", {}).get("output_dir", "outputs")) / "failures"
     )
@@ -32,15 +34,6 @@ class FailureRecovery(RecorderBase):
         infos = {"failure_timestamp": ts, "retries": r, "reason": reason or "Unknown"}
         subdir = self.root_dir / f"r{r}"
         return data, infos, subdir
-
-    @staticmethod
-    def record(
-        key: str, data: dict, *, reason: str | None = None, retries: int | None = None
-    ) -> None:
-        path = FailureRecovery().write(key, data, reason=reason, retries=retries)
-        logging.warning(
-            f"Recorded failed item {key} (retries={0 if retries is None else retries}) to {path}"
-        )
 
     @staticmethod
     def load_failed_messages(jsonl_path: Path) -> list[tuple[str, dict]]:

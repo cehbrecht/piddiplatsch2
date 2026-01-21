@@ -24,7 +24,7 @@ def test_record_single_item(temp_dump_dir):
     key = "testkey"
     data = {"foo": "bar"}
 
-    DumpRecorder.record(key, data)
+    DumpRecorder().record(key, data)
 
     files = list(temp_dump_dir.glob("*.jsonl"))
     assert len(files) == 1
@@ -45,7 +45,7 @@ def test_record_multiple_items_append(temp_dump_dir):
     ]
 
     for key, data in records:
-        DumpRecorder.record(key, data)
+        DumpRecorder().record(key, data)
 
     files = list(temp_dump_dir.glob("*.jsonl"))
     assert len(files) == 1
@@ -64,7 +64,7 @@ def test_dump_filename_contains_today(temp_dump_dir):
     key = "datekey"
     data = {"hello": "world"}
 
-    DumpRecorder.record(key, data)
+    DumpRecorder().record(key, data)
 
     files = list(temp_dump_dir.glob("*.jsonl"))
     assert len(files) == 1

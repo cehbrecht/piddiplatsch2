@@ -1,4 +1,5 @@
 import json
+import logging
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from datetime import UTC, datetime
@@ -97,6 +98,36 @@ class RecorderBase(ABC):
         if infos:
             payload = DailyJsonlWriter.wrap_with_infos(payload, infos)
         return self.writer.write(self.prefix, payload, subdir=subdir)
+
+    def record(
+        self,
+        key: str,
+        data: dict,
+        *,
+        reason: str | None = None,
+        retries: int | None = None,
+    ) -> Path:
+        """Unified recording API with generalized logging.
+
+        Delegates to `write()` and logs a concise message including the
+        recorder type (class name or `LOG_KIND`), target path, and optional
+        `reason`/`retries` details.
+        """
+        path = self.write(key, data, reason=reason, retries=retries)
+
+        # Determine kind and level for logging
+        kind = getattr(self, "LOG_KIND", self.__class__.__name__)
+        level = getattr(self, "LOG_LEVEL", logging.INFO)
+
+        parts: list[str] = []
+        if retries is not None:
+            parts.append(f"retries={retries}")
+        if reason is not None:
+            parts.append(f"reason={reason}")
+        suffix = f" ({', '.join(parts)})" if parts else ""
+
+        logging.log(level, f"{kind}: recorded {key} to {path}{suffix}")
+        return path
 
 
 def read_jsonl(file_path: Path) -> list[dict]:

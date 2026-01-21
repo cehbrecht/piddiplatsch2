@@ -7,6 +7,8 @@ from piddiplatsch.persist.base import RecorderBase
 
 
 class SkipRecorder(RecorderBase):
+    LOG_KIND = "skipped"
+    LOG_LEVEL = logging.WARNING
     SKIPPED_DIR = (
         Path(config.get("consumer", {}).get("output_dir", "outputs")) / "skipped"
     )
@@ -44,13 +46,3 @@ class SkipRecorder(RecorderBase):
             "reason": reason or "Unknown",
         }
         return payload, infos, None
-
-    @staticmethod
-    def record(
-        key: str, data: dict, *, reason: str | None = None, retries: int | None = None
-    ) -> None:
-        try:
-            path = SkipRecorder().write(key, data, reason=reason, retries=retries)
-            logging.warning(f"Recorded skipped item {key} to {path}")
-        except Exception:
-            logging.exception(f"Failed to record skipped item {key}")
