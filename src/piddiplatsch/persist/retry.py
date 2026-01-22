@@ -3,7 +3,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from piddiplatsch.persist.helpers import find_jsonl, read_jsonl
-from piddiplatsch.processing import RetryResult
+from piddiplatsch.result import RetryResult
 
 
 def load_failed_messages(jsonl_path: Path) -> list[tuple[str, dict]]:

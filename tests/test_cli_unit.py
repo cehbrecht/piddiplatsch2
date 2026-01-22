@@ -120,7 +120,7 @@ class TestRetryCommand:
         test_file.write_text("{}\n")
 
         # Mock the return value
-        from piddiplatsch.processing import RetryResult
+        from piddiplatsch.result import RetryResult
 
         mock_run_batch.return_value = RetryResult(total=0)
 
@@ -135,7 +135,7 @@ class TestRetryCommand:
         test_file = tmp_path / "test.jsonl"
         test_file.write_text("{}\n")
 
-        from piddiplatsch.processing import RetryResult
+        from piddiplatsch.result import RetryResult
 
         mock_run_batch.return_value = RetryResult(
             total=5, succeeded=5, failed=0, failure_files=set()
@@ -152,7 +152,7 @@ class TestRetryCommand:
         test_file = tmp_path / "test.jsonl"
         test_file.write_text("{}\n")
 
-        from piddiplatsch.processing import RetryResult
+        from piddiplatsch.result import RetryResult
 
         mock_run_batch.return_value = RetryResult(
             total=10, succeeded=7, failed=3, failure_files=set()
@@ -176,7 +176,7 @@ class TestRetryCommand:
         new_failure = failures_dir / "failed_items_2026-01-16.jsonl"
         new_failure.write_text("{}\n")
 
-        from piddiplatsch.processing import RetryResult
+        from piddiplatsch.result import RetryResult
 
         mock_run_batch.return_value = RetryResult(
             total=5, succeeded=3, failed=2, failure_files={new_failure}
@@ -196,7 +196,7 @@ class TestRetryCommand:
         test_file = tmp_path / "test.jsonl"
         test_file.write_text("{}\n")
 
-        from piddiplatsch.processing import RetryResult
+        from piddiplatsch.result import RetryResult
 
         # Configure instance to return a dummy result
         instance = mock_runner_cls.return_value
@@ -214,7 +214,7 @@ class TestRetryCommand:
         test_file = tmp_path / "test.jsonl"
         test_file.write_text("{}\n")
 
-        from piddiplatsch.processing import RetryResult
+        from piddiplatsch.result import RetryResult
 
         instance = mock_runner_cls.return_value
         instance.run_batch.return_value = RetryResult(total=0)
@@ -232,7 +232,7 @@ class TestRetryCommand:
         file1.write_text("{}\n")
         file2.write_text("{}\n")
 
-        from piddiplatsch.processing import RetryResult
+        from piddiplatsch.result import RetryResult
 
         instance = mock_runner_cls.return_value
         instance.run_batch.return_value = RetryResult(total=0)

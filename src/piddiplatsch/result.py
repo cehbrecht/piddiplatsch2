@@ -40,3 +40,10 @@ class RetryResult:
     def success_rate(self) -> float:
         """Calculate success rate as a percentage."""
         return (self.succeeded / self.total * 100) if self.total > 0 else 0.0
+
+
+@dataclass
+class PrepareResult:
+    payload: dict
+    infos: dict | None = None
+    subdir: Path | None = None

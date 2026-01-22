@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 
 from piddiplatsch.persist.retry import RetryRunner
-from piddiplatsch.processing import RetryResult
+from piddiplatsch.result import RetryResult
 
 
 def test_run_batch_progress_callback(monkeypatch, tmp_path: Path, caplog):

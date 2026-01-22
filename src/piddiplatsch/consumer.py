@@ -14,7 +14,7 @@ from piddiplatsch.monitoring.stats import CounterKey, stats
 from piddiplatsch.persist.dump import DumpRecorder
 from piddiplatsch.persist.recovery import FailureRecorder
 from piddiplatsch.persist.skipped import SkipRecorder
-from piddiplatsch.processing import FeedResult, ProcessingResult
+from piddiplatsch.result import FeedResult, ProcessingResult
 from piddiplatsch.processing.base import BaseProcessor
 from piddiplatsch.processing.registry import get_processor
 
