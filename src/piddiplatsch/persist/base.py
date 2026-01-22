@@ -39,20 +39,6 @@ class RecorderBase(ABC):
         """
         pass
 
-    def write(
-        self,
-        key: str,
-        data: dict,
-        *,
-        reason: str | None = None,
-        retries: int | None = None,
-    ) -> Path:
-        result = self.prepare(key, data, reason, retries)
-        payload, infos, subdir = result.payload, result.infos, result.subdir
-        if infos:
-            payload = DailyJsonlWriter.wrap_with_infos(payload, infos)
-        return self.writer.write(self.prefix, payload, subdir=subdir)
-
     def record(
         self,
         key: str,
@@ -61,8 +47,17 @@ class RecorderBase(ABC):
         reason: str | None = None,
         retries: int | None = None,
     ) -> Path:
-        """Unified recording API: write then log via a private helper."""
-        path = self.write(key, data, reason=reason, retries=retries)
+        """Unified recording API: prepare, write, and log.
+
+        Performs preparation via `prepare()`, wraps infos when present, writes to
+        the daily JSONL target (optionally under a subdirectory), then logs the
+        concise record message.
+        """
+        result = self.prepare(key, data, reason, retries)
+        payload, infos, subdir = result.payload, result.infos, result.subdir
+        if infos:
+            payload = DailyJsonlWriter.wrap_with_infos(payload, infos)
+        path = self.writer.write(self.prefix, payload, subdir=subdir)
         self._log_record(key, path, reason=reason, retries=retries)
         return path
 
