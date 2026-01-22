@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import json
 import logging
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from piddiplatsch.config import config
 from piddiplatsch.handles.base import HandleBackend
+from piddiplatsch.helpers import DailyJsonlWriter, utc_now
 
 
 class JsonlHandleBackend(HandleBackend):
@@ -19,32 +18,22 @@ class JsonlHandleBackend(HandleBackend):
     """
 
     def __init__(self):
-        # Read output_dir from [consumer] section, fallback to outputs/handles_dump
+        # Read output_dir from [consumer] section, fallback to outputs
         base_dir = config.get("consumer", {}).get("output_dir", "outputs")
         dump_dir = Path(base_dir) / "handles"
-
-        self.dump_dir = Path(dump_dir)
-        self.dump_dir.mkdir(parents=True, exist_ok=True)
+        # Use shared JSONL writer for daily rotation and append semantics
+        self.writer = DailyJsonlWriter(Path(dump_dir))
 
     def _store(self, handle: str, handle_data: dict[str, Any]) -> None:
-        # Determine file name by UTC date
-        now = datetime.now(UTC)
-        dated_filename = f"handles_{now.date()}.jsonl"
-        dump_file = self.dump_dir / dated_filename
-
-        # Include timestamp for traceability
+        # Include timestamp for traceability; let writer choose the dated filename
         record = {
             "handle": handle,
             "URL": handle_data.pop("URL", None),
             "data": handle_data,
-            "timestamp": now.isoformat(),
+            "timestamp": utc_now().isoformat(),
         }
-
-        with dump_file.open("a", encoding="utf-8") as f:
-            json.dump(record, f, ensure_ascii=False)
-            f.write("\n")
-
-        logging.debug(f"Wrote handle {handle} to {dump_file}")
+        path = self.writer.write("handles", record)
+        logging.debug(f"Wrote handle {handle} to {path}")
 
     def _retrieve(self, handle: str) -> dict[str, Any] | None:
         """Retrieval is intentionally not supported for JSONL backend.

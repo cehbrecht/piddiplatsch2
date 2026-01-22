@@ -1,8 +1,8 @@
 import logging
-from datetime import UTC, datetime
 from pathlib import Path
 
 from piddiplatsch.config import config
+from piddiplatsch.helpers import utc_now
 from piddiplatsch.persist.base import RecorderBase
 from piddiplatsch.result import PrepareResult
 
@@ -24,7 +24,7 @@ class SkipRecorder(RecorderBase):
         reason: str | None,
         retries: int | None,
     ) -> PrepareResult:
-        timestamp = datetime.now(UTC).isoformat(timespec="seconds")
+        timestamp = utc_now().isoformat(timespec="seconds")
         payload = dict(data)
         # Determine retries value: explicit overrides payload value
         payload_retries = retries

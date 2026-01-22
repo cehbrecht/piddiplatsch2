@@ -4,6 +4,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 
+def utc_now() -> datetime:
+    """Return current UTC time as a timezone-aware datetime."""
+    return datetime.now(UTC)
+
+
 class DailyJsonlWriter:
     """Utility for writing JSONL records to daily-rotated files.
 
@@ -23,7 +28,7 @@ class DailyJsonlWriter:
         return wrapped
 
     def write(self, prefix: str, data: dict, subdir: Path | None = None) -> Path:
-        now = datetime.now(UTC)
+        now = utc_now()
         dated_filename = f"{prefix}_{now.date()}.jsonl"
         target_dir = Path(subdir) if subdir else self.root_dir
         target_dir.mkdir(parents=True, exist_ok=True)
