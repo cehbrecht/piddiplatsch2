@@ -4,7 +4,7 @@ import click
 
 from piddiplatsch.config import config
 from piddiplatsch.consumer import start_consumer
-from piddiplatsch.persist import retry as retry_mod
+from piddiplatsch.persist.retry import RetryRunner
 
 # Expose failure directory for retry operations (patchable in tests)
 FAILURE_DIR = Path(config.get("consumer", {}).get("output_dir", "outputs")) / "failures"
@@ -101,6 +101,10 @@ def retry(ctx, path: tuple[Path, ...], delete_after: bool, dry_run: bool):
     - Individual files: retry file1.jsonl file2.jsonl
     - Directories: retry outputs/failures/r0/
     - Glob patterns: retry outputs/failures/r0/*.jsonl
+
+    Internals: This command uses `RetryRunner` to aggregate results across
+    inputs, invoke the processing pipeline, and optionally remove source files
+    when `--delete-after` is set and all items succeed.
     """
     processor = config.get("consumer", "processor")
     verbose = ctx.obj.get("verbose", False)
@@ -117,12 +121,14 @@ def retry(ctx, path: tuple[Path, ...], delete_after: bool, dry_run: bool):
             else:
                 click.echo("(empty)")
 
-    result = retry_mod.retry_batch(
-        path,
-        processor=processor,
+    runner = RetryRunner(
+        processor,
         failure_dir=FAILURE_DIR,
         delete_after=delete_after,
         dry_run=dry_run,
+    )
+    result = runner.run_batch(
+        path,
         verbose=verbose,
         progress_callback=show_progress if verbose else None,
     )

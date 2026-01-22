@@ -10,9 +10,9 @@ import pytest
 
 from piddiplatsch.config import config
 from piddiplatsch.persist.retry import (
+    RetryRunner,
     find_retry_files,
     load_failed_messages,
-    retry,
 )
 
 pytestmark = pytest.mark.integration
@@ -79,13 +79,13 @@ def test_retry_loads_and_processes_failed_messages(tmp_path: Path):
     assert len(lines) == 3
 
     # Retry the failed messages
-    result = retry(
-        failure_file,
-        processor="cmip6",
+    runner = RetryRunner(
+        "cmip6",
         failure_dir=tmp_path / "failures",
         delete_after=False,
         dry_run=True,
     )
+    result = runner.run_file(failure_file)
 
     # Should have retried 3 messages
     assert result.total == 3
@@ -138,13 +138,13 @@ def test_retry_deletes_file_when_delete_after_true(tmp_path: Path):
     assert failure_file.exists()
 
     # Retry with delete_after=True
-    result = retry(
-        failure_file,
-        processor="cmip6",
+    runner = RetryRunner(
+        "cmip6",
         failure_dir=tmp_path / "failures",
         delete_after=True,
         dry_run=True,
     )
+    result = runner.run_file(failure_file)
 
     assert result.total == 2
     assert result.succeeded == 2
@@ -159,9 +159,11 @@ def test_retry_handles_nonexistent_file(tmp_path: Path):
     nonexistent_file = tmp_path / "does_not_exist.jsonl"
 
     # Should return empty result and not raise an exception
-    result = retry(
-        nonexistent_file, processor="cmip6", failure_dir=tmp_path / "failures"
+    runner = RetryRunner(
+        "cmip6",
+        failure_dir=tmp_path / "failures",
     )
+    result = runner.run_file(nonexistent_file)
     assert result.total == 0
     assert result.succeeded == 0
     assert result.failed == 0
@@ -174,7 +176,11 @@ def test_retry_handles_empty_file(tmp_path: Path):
     empty_file = tmp_path / "empty.jsonl"
     empty_file.touch()
 
-    result = retry(empty_file, processor="cmip6", failure_dir=tmp_path / "failures")
+    runner = RetryRunner(
+        "cmip6",
+        failure_dir=tmp_path / "failures",
+    )
+    result = runner.run_file(empty_file)
     assert result.total == 0
     assert result.succeeded == 0
     assert result.failed == 0

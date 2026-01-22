@@ -112,8 +112,8 @@ class TestRetryCommand:
         assert result.exit_code == 2
         assert "does not exist" in result.output
 
-    @patch("piddiplatsch.cli.retry_mod.retry_batch")
-    def test_retry_calls_retry_batch(self, mock_retry_batch, runner, tmp_path):
+    @patch("piddiplatsch.cli.RetryRunner.run_batch")
+    def test_retry_calls_retry_batch(self, mock_run_batch, runner, tmp_path):
         """Test that retry command calls retry.retry_batch."""
         # Create a dummy file
         test_file = tmp_path / "test.jsonl"
@@ -122,22 +122,22 @@ class TestRetryCommand:
         # Mock the return value
         from piddiplatsch.processing import RetryResult
 
-        mock_retry_batch.return_value = RetryResult(total=0)
+        mock_run_batch.return_value = RetryResult(total=0)
 
         result = runner.invoke(cli, ["retry", str(test_file)])
         assert result.exit_code == 0
-        assert mock_retry_batch.called
+        assert mock_run_batch.called
         assert "No retry files found" in result.output
 
-    @patch("piddiplatsch.cli.retry_mod.retry_batch")
-    def test_retry_with_success(self, mock_retry_batch, runner, tmp_path):
+    @patch("piddiplatsch.cli.RetryRunner.run_batch")
+    def test_retry_with_success(self, mock_run_batch, runner, tmp_path):
         """Test retry command with successful result."""
         test_file = tmp_path / "test.jsonl"
         test_file.write_text("{}\n")
 
         from piddiplatsch.processing import RetryResult
 
-        mock_retry_batch.return_value = RetryResult(
+        mock_run_batch.return_value = RetryResult(
             total=5, succeeded=5, failed=0, failure_files=set()
         )
 
@@ -146,15 +146,15 @@ class TestRetryCommand:
         assert "5/5 succeeded" in result.output
         assert "All items processed successfully" in result.output
 
-    @patch("piddiplatsch.cli.retry_mod.retry_batch")
-    def test_retry_with_failures(self, mock_retry_batch, runner, tmp_path):
+    @patch("piddiplatsch.cli.RetryRunner.run_batch")
+    def test_retry_with_failures(self, mock_run_batch, runner, tmp_path):
         """Test retry command with some failures."""
         test_file = tmp_path / "test.jsonl"
         test_file.write_text("{}\n")
 
         from piddiplatsch.processing import RetryResult
 
-        mock_retry_batch.return_value = RetryResult(
+        mock_run_batch.return_value = RetryResult(
             total=10, succeeded=7, failed=3, failure_files=set()
         )
 
@@ -164,8 +164,8 @@ class TestRetryCommand:
         assert "3 items failed again" in result.output
         assert "70.0% success rate" in result.output
 
-    @patch("piddiplatsch.cli.retry_mod.retry_batch")
-    def test_retry_with_new_failure_files(self, mock_retry_batch, runner, tmp_path):
+    @patch("piddiplatsch.cli.RetryRunner.run_batch")
+    def test_retry_with_new_failure_files(self, mock_run_batch, runner, tmp_path):
         """Test retry command shows new failure files."""
         test_file = tmp_path / "test.jsonl"
         test_file.write_text("{}\n")
@@ -178,7 +178,7 @@ class TestRetryCommand:
 
         from piddiplatsch.processing import RetryResult
 
-        mock_retry_batch.return_value = RetryResult(
+        mock_run_batch.return_value = RetryResult(
             total=5, succeeded=3, failed=2, failure_files={new_failure}
         )
 
@@ -190,38 +190,42 @@ class TestRetryCommand:
             assert "New failures saved to:" in result.output
             assert "r1/failed_items_2026-01-16.jsonl" in result.output
 
-    @patch("piddiplatsch.cli.retry_mod.retry_batch")
-    def test_retry_passes_delete_after(self, mock_retry_batch, runner, tmp_path):
+    @patch("piddiplatsch.cli.RetryRunner")
+    def test_retry_passes_delete_after(self, mock_runner_cls, runner, tmp_path):
         """Test retry command passes --delete-after flag."""
         test_file = tmp_path / "test.jsonl"
         test_file.write_text("{}\n")
 
         from piddiplatsch.processing import RetryResult
 
-        mock_retry_batch.return_value = RetryResult(total=0)
+        # Configure instance to return a dummy result
+        instance = mock_runner_cls.return_value
+        instance.run_batch.return_value = RetryResult(total=0)
 
         result = runner.invoke(cli, ["retry", str(test_file), "--delete-after"])
         assert result.exit_code == 0
-        call_kwargs = mock_retry_batch.call_args.kwargs
-        assert call_kwargs.get("delete_after") is True
+        # Ensure the class was instantiated with delete_after=True
+        init_kwargs = mock_runner_cls.call_args.kwargs
+        assert init_kwargs.get("delete_after") is True
 
-    @patch("piddiplatsch.cli.retry_mod.retry_batch")
-    def test_retry_passes_dry_run(self, mock_retry_batch, runner, tmp_path):
+    @patch("piddiplatsch.cli.RetryRunner")
+    def test_retry_passes_dry_run(self, mock_runner_cls, runner, tmp_path):
         """Test retry command passes --dry-run flag."""
         test_file = tmp_path / "test.jsonl"
         test_file.write_text("{}\n")
 
         from piddiplatsch.processing import RetryResult
 
-        mock_retry_batch.return_value = RetryResult(total=0)
+        instance = mock_runner_cls.return_value
+        instance.run_batch.return_value = RetryResult(total=0)
 
         result = runner.invoke(cli, ["retry", str(test_file), "--dry-run"])
         assert result.exit_code == 0
-        call_kwargs = mock_retry_batch.call_args.kwargs
-        assert call_kwargs.get("dry_run") is True
+        init_kwargs = mock_runner_cls.call_args.kwargs
+        assert init_kwargs.get("dry_run") is True
 
-    @patch("piddiplatsch.cli.retry_mod.retry_batch")
-    def test_retry_multiple_paths(self, mock_retry_batch, runner, tmp_path):
+    @patch("piddiplatsch.cli.RetryRunner")
+    def test_retry_multiple_paths(self, mock_runner_cls, runner, tmp_path):
         """Test retry command with multiple file paths."""
         file1 = tmp_path / "test1.jsonl"
         file2 = tmp_path / "test2.jsonl"
@@ -230,13 +234,14 @@ class TestRetryCommand:
 
         from piddiplatsch.processing import RetryResult
 
-        mock_retry_batch.return_value = RetryResult(total=0)
+        instance = mock_runner_cls.return_value
+        instance.run_batch.return_value = RetryResult(total=0)
 
         result = runner.invoke(cli, ["retry", str(file1), str(file2)])
         assert result.exit_code == 0
-        assert mock_retry_batch.called
-        # Check that paths were passed as tuple
-        call_args = mock_retry_batch.call_args.args
+        assert instance.run_batch.called
+        # Check that paths were passed as tuple to run_batch
+        call_args = instance.run_batch.call_args.args
         assert len(call_args[0]) == 2
 
 

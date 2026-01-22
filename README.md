@@ -208,7 +208,33 @@ piddiplatsch retry outputs/failures/r0/
 piddiplatsch retry outputs/failures/r0/ --dry-run
 ```
 
-For API usage, see [src/piddiplatsch/persist/retry.py](src/piddiplatsch/persist/retry.py).
+Programmatic usage via `RetryRunner`:
+
+```python
+from pathlib import Path
+from piddiplatsch.persist.retry import RetryRunner
+
+# Configure once, reuse across files
+runner = RetryRunner(
+  "cmip6",                      # processor/plugin name
+  failure_dir=Path("outputs/failures"),
+  delete_after=False,            # delete source file if all succeed
+  dry_run=True,                  # do not contact Handle Service
+)
+
+# Single file
+result = runner.run_file(Path("outputs/failures/r0/failed_items_2026-01-16.jsonl"))
+print(result.succeeded, result.failed)
+
+# Batch
+overall = runner.run_batch((
+  Path("outputs/failures/r0"),
+  Path("outputs/failures/r1/failed_items_2026-01-17.jsonl"),
+))
+print(overall.total, overall.success_rate)
+```
+
+For more details, see [src/piddiplatsch/persist/retry.py](src/piddiplatsch/persist/retry.py).
 
 ### Failure Recording
 
