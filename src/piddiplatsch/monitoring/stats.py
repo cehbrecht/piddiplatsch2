@@ -62,8 +62,7 @@ class SQLiteReporter(StatsReporter):
         self._conn = sqlite3.connect(db_path, check_same_thread=False)
         self._cursor = self._conn.cursor()
         # Store timestamps as TEXT (ISO 8601 UTC strings)
-        self._cursor.execute(
-            """
+        self._cursor.execute("""
             CREATE TABLE IF NOT EXISTS message_stats (
                 ts TEXT PRIMARY KEY,
                 messages INTEGER,
@@ -82,8 +81,7 @@ class SQLiteReporter(StatsReporter):
                 handle_rate REAL,
                 messages_per_sec REAL
             )
-            """
-        )
+            """)
         self._cursor.execute(
             "CREATE INDEX IF NOT EXISTS idx_message_stats_ts ON message_stats(ts)"
         )
