@@ -147,7 +147,7 @@ SkipRecorder().record(key, data, reason="timeout", retries=1)
 FailureRecorder().record(key, data, reason="error", retries=2)
 ```
 
-Helpers for JSONL I/O and daily rotation live in `piddiplatsch.persist.helpers` (`DailyJsonlWriter`, `read_jsonl`, `find_jsonl`).
+Helpers for JSONL I/O and daily rotation live in `piddiplatsch.helpers` (`DailyJsonlWriter`, `read_jsonl`, `find_jsonl`).
 
 ### Dumped Messages
 

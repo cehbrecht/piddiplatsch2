@@ -2,7 +2,7 @@ import logging
 from collections.abc import Callable
 from pathlib import Path
 
-from piddiplatsch.persist.helpers import find_jsonl, read_jsonl
+from piddiplatsch.helpers import find_jsonl, read_jsonl
 from piddiplatsch.result import RetryResult
 
 

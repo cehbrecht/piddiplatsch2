@@ -2,7 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from piddiplatsch.persist.helpers import DailyJsonlWriter
+from piddiplatsch.helpers import DailyJsonlWriter
 from piddiplatsch.result import PrepareResult
 
 
