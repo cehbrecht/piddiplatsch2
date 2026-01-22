@@ -1,8 +1,12 @@
 import json
 from collections.abc import Iterable
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+
+
+def utc_now() -> datetime:
+    """Return current UTC time as a timezone-aware datetime."""
+    return datetime.now(UTC)
 
 
 class DailyJsonlWriter:
@@ -24,7 +28,7 @@ class DailyJsonlWriter:
         return wrapped
 
     def write(self, prefix: str, data: dict, subdir: Path | None = None) -> Path:
-        now = datetime.now(UTC)
+        now = utc_now()
         dated_filename = f"{prefix}_{now.date()}.jsonl"
         target_dir = Path(subdir) if subdir else self.root_dir
         target_dir.mkdir(parents=True, exist_ok=True)
@@ -33,13 +37,6 @@ class DailyJsonlWriter:
             json.dump(data, f)
             f.write("\n")
         return target_path
-
-
-@dataclass
-class PrepareResult:
-    payload: dict
-    infos: dict | None = None
-    subdir: Path | None = None
 
 
 def read_jsonl(file_path: Path) -> list[dict]:

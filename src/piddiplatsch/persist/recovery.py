@@ -1,10 +1,10 @@
 import logging
-from datetime import UTC, datetime
 from pathlib import Path
 
 from piddiplatsch.config import config
+from piddiplatsch.helpers import utc_now
 from piddiplatsch.persist.base import RecorderBase
-from piddiplatsch.persist.helpers import PrepareResult
+from piddiplatsch.result import PrepareResult
 
 
 class FailureRecorder(RecorderBase):
@@ -25,7 +25,7 @@ class FailureRecorder(RecorderBase):
         reason: str | None,
         retries: int | None,
     ) -> PrepareResult:
-        ts = datetime.now(UTC).isoformat(timespec="seconds")
+        ts = utc_now().isoformat(timespec="seconds")
         r = 0 if retries is None else int(retries)
         infos = {"failure_timestamp": ts, "retries": r, "reason": reason or "Unknown"}
         subdir = self.root_dir / f"r{r}"

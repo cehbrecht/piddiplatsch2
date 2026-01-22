@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
-from datetime import UTC, datetime
 from functools import cached_property
 from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
 from piddiplatsch.config import config
+from piddiplatsch.helpers import utc_now
 from piddiplatsch.utils.models import drop_empty
 
 
@@ -63,7 +63,7 @@ class BaseCMIP6Record(BaseRecord):
     def default_publication_time(self) -> str:
         published_on = self.additional_attributes.get("publication_time")
         if not published_on:
-            published_on = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
+            published_on = utc_now().strftime("%Y-%m-%d %H:%M:%S")
         return published_on
 
     @cached_property

@@ -3,7 +3,7 @@ import time
 from typing import Any
 
 from piddiplatsch.handles.api import HandleAPI, HandleAPIProtocol
-from piddiplatsch.processing.result import ProcessingResult
+from piddiplatsch.result import ProcessingResult
 
 
 class BaseProcessor:

@@ -1,0 +1,70 @@
+import logging
+from pathlib import Path
+
+from piddiplatsch.persist.retry import RetryRunner
+from piddiplatsch.result import RetryResult
+
+
+def test_run_batch_progress_callback(monkeypatch, tmp_path: Path, caplog):
+    # Prepare dummy files to be returned by find_retry_files
+    file1 = tmp_path / "a.jsonl"
+    file2 = tmp_path / "b.jsonl"
+    file1.write_text("{}\n")
+    file2.write_text("{}\n")
+
+    # Patch find_retry_files to return our deterministic list
+    from piddiplatsch.persist import retry as retry_mod
+
+    monkeypatch.setattr(retry_mod, "find_retry_files", lambda paths: [file1, file2])
+
+    # Instantiate runner with a temp failures dir
+    failures_dir = tmp_path / "failures"
+    failures_dir.mkdir(parents=True, exist_ok=True)
+
+    runner = RetryRunner(
+        "cmip6",
+        failure_dir=failures_dir,
+        delete_after=False,
+        dry_run=True,
+    )
+
+    # Prepare different results for each file
+    r1 = RetryResult(total=1, succeeded=1, failed=0, failure_files=set())
+    new_failure = failures_dir / "r1" / "failed_items_2026-01-16.jsonl"
+    new_failure.parent.mkdir(parents=True, exist_ok=True)
+    new_failure.write_text("{}\n")
+    r2 = RetryResult(total=2, succeeded=1, failed=1, failure_files={new_failure})
+
+    results = [r1, r2]
+
+    def fake_run_file(path: Path) -> RetryResult:
+        return results.pop(0)
+
+    # Patch the instance method to return our fake results
+    monkeypatch.setattr(runner, "run_file", fake_run_file)
+
+    # Capture progress callbacks
+    progress_calls = []
+
+    def progress(file: Path, idx: int, total: int, res: RetryResult) -> None:
+        progress_calls.append((file, idx, total, res))
+
+    # Enable logging capture for verbose messages
+    caplog.set_level(logging.INFO)
+
+    overall = runner.run_batch((tmp_path,), verbose=True, progress_callback=progress)
+
+    # Verify progress callback was invoked for both files
+    assert len(progress_calls) == 2
+    assert progress_calls[0][0] == file1
+    assert progress_calls[0][1] == 1
+    assert progress_calls[0][2] == 2
+    assert progress_calls[1][0] == file2
+    assert progress_calls[1][1] == 2
+    assert progress_calls[1][2] == 2
+
+    # Verify aggregation
+    assert overall.total == 3
+    assert overall.succeeded == 2
+    assert overall.failed == 1
+    assert new_failure in overall.failure_files

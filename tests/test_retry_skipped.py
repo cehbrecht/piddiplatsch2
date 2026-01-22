@@ -1,6 +1,6 @@
 import json
 
-from piddiplatsch.persist.retry import retry
+from piddiplatsch.persist.retry import RetryRunner
 
 
 def test_retry_on_skipped_jsonl(tmp_path):
@@ -23,13 +23,13 @@ def test_retry_on_skipped_jsonl(tmp_path):
     }
     f.write_text(json.dumps(record) + "\n", encoding="utf-8")
 
-    result = retry(
-        f,
-        processor="cmip6",
+    runner = RetryRunner(
+        "cmip6",
         failure_dir=tmp_path / "failures",
         delete_after=False,
         dry_run=True,
     )
+    result = runner.run_file(f)
 
     # It should attempt to process the single message
     assert result.total == 1

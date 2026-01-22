@@ -5,6 +5,7 @@ import humanize
 from millify import millify
 from tqdm import tqdm
 
+from piddiplatsch.helpers import utc_now
 from piddiplatsch.monitoring.stats import stats
 
 
@@ -57,13 +58,13 @@ class Progress(BaseProgress):
         dt = self._to_utc_dt(ts)
         if dt is None:
             return "--"
-        return humanize.naturaltime(datetime.now(UTC) - dt)
+        return humanize.naturaltime(utc_now() - dt)
 
     def _format_elapsed(self, start_ts):
         start_dt = self._to_utc_dt(start_ts)
         if start_dt is None:
             return "--:--:--"
-        elapsed = int((datetime.now(UTC) - start_dt).total_seconds())
+        elapsed = int((utc_now() - start_dt).total_seconds())
         h, rem = divmod(elapsed, 3600)
         m, s = divmod(rem, 60)
         return f"{h:02}:{m:02}:{s:02}"

@@ -3,7 +3,7 @@ from pathlib import Path
 
 from piddiplatsch.config import config
 from piddiplatsch.persist.base import RecorderBase
-from piddiplatsch.persist.helpers import PrepareResult
+from piddiplatsch.result import PrepareResult
 
 
 class DumpRecorder(RecorderBase):

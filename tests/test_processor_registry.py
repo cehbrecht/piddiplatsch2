@@ -1,11 +1,12 @@
 """Test to verify processor registry extensibility."""
 
-from piddiplatsch.processing import BaseProcessor, ProcessingResult
+from piddiplatsch.processing import BaseProcessor
 from piddiplatsch.processing.registry import (
     get_processor,
     list_processors,
     register_processor,
 )
+from piddiplatsch.result import ProcessingResult
 
 
 def test_cmip6_processor_available():
