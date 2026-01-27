@@ -2,7 +2,7 @@ import pytest
 
 from piddiplatsch.consumer import ConsumerPipeline, DirectConsumer
 from piddiplatsch.exceptions import StopOnTransientSkipError, TransientExternalError
-from piddiplatsch.processing.cmip6_processor import CMIP6Processor
+from piddiplatsch.plugins.cmip6.processor import CMIP6Processor
 
 
 class AlwaysTransientProcessor(CMIP6Processor):

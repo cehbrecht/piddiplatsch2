@@ -1,3 +1,5 @@
-from piddiplatsch.plugins.cmip6.processor import CMIP6Processor
-
-__all__ = ["CMIP6Processor"]
+# ruff: noqa
+raise ImportError(
+    "CMIP6Processor has moved to 'piddiplatsch.plugins.cmip6.processor'. "
+    "This legacy module is removed; please update imports."
+)
