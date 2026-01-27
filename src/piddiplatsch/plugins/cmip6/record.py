@@ -88,6 +88,7 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
     def host(self) -> str:
         for key in PREFERRED_KEYS:
             host = self.get_asset_property(key, "alternate:name")
+        
             if host:
                 return host
         return "unknown"
@@ -177,7 +178,9 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
             )
 
         if self.retracted:
-            stats.retracted(f"Dataset id={self.dataset_id} is retracted!")
+            stats.retracted(
+                f"Dataset id={self.dataset_id} is retracted!"
+            )
 
         if self.replica_nodes:
             stats.replica(
