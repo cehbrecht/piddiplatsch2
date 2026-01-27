@@ -9,7 +9,7 @@ from piddiplatsch.config import config
 from piddiplatsch.exceptions import TransientExternalError
 from piddiplatsch.processing import BaseProcessor
 from piddiplatsch.records import CMIP6DatasetRecord
-from piddiplatsch.records.cmip6_file_record import extract_asset_records
+from piddiplatsch.records.cmip6_record import extract_asset_records
 from piddiplatsch.result import ProcessingResult
 from piddiplatsch.utils.stac import get_stac_client
 
