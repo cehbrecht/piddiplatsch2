@@ -4,13 +4,13 @@ from pathlib import PurePosixPath
 from typing import Any
 
 from piddiplatsch.config import config
+from piddiplatsch.core.models import HostingNode
+from piddiplatsch.core.records import BaseRecord
 from piddiplatsch.exceptions import LookupError
 from piddiplatsch.helpers import utc_now
 from piddiplatsch.lookup.api import get_lookup
-from piddiplatsch.models.base import HostingNode
 from piddiplatsch.monitoring import stats
 from piddiplatsch.plugins.cmip6.model import CMIP6DatasetModel, CMIP6FileModel
-from piddiplatsch.records.base import BaseRecord
 from piddiplatsch.utils.models import (
     asset_pid,
     build_handle,

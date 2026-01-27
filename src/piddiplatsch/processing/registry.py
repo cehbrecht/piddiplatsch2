@@ -8,7 +8,7 @@ Usage:
     processor = get_processor("cmip6", dry_run=True)
 
     # Register a new processor
-    from piddiplatsch.processing import BaseProcessor
+    from piddiplatsch.core.processing import BaseProcessor
 
     class CORDEXProcessor(BaseProcessor):
         def process(self, key: str, value: dict) -> ProcessingResult:
@@ -21,7 +21,7 @@ Usage:
     processor = get_processor("cordex")
 """
 
-from piddiplatsch.processing import BaseProcessor
+from piddiplatsch.core.processing import BaseProcessor
 
 # Registry of available processors
 _PROCESSORS: dict[str, type[BaseProcessor]] = {}

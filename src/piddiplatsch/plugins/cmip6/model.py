@@ -13,7 +13,7 @@ from pydantic import (
     model_validator,
 )
 
-from piddiplatsch.models.base import (
+from piddiplatsch.core.models import (
     ALLOWED_CHECKSUM_METHODs,
     HostingNode,
     get_max_parts,
