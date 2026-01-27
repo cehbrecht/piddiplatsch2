@@ -7,8 +7,8 @@ from piddiplatsch.config import config
 from piddiplatsch.exceptions import LookupError
 from piddiplatsch.lookup.api import get_lookup
 from piddiplatsch.models.base import HostingNode
-from piddiplatsch.plugins.cmip6.model import CMIP6DatasetModel, CMIP6FileModel
 from piddiplatsch.monitoring import stats
+from piddiplatsch.plugins.cmip6.model import CMIP6DatasetModel, CMIP6FileModel
 from piddiplatsch.records.base import BaseCMIP6Record
 from piddiplatsch.utils.models import (
     asset_pid,
@@ -88,7 +88,7 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
     def host(self) -> str:
         for key in PREFERRED_KEYS:
             host = self.get_asset_property(key, "alternate:name")
-        
+
             if host:
                 return host
         return "unknown"
@@ -178,9 +178,7 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
             )
 
         if self.retracted:
-            stats.retracted(
-                f"Dataset id={self.dataset_id} is retracted!"
-            )
+            stats.retracted(f"Dataset id={self.dataset_id} is retracted!")
 
         if self.replica_nodes:
             stats.replica(

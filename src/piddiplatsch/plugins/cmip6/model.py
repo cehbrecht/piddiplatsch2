@@ -34,7 +34,7 @@ class CMIP6DatasetModel(BaseCMIP6Model):
     RETRACTED_ON: datetime | None = None
 
     @model_validator(mode="after")
-    def validate_required(self) -> "CMIP6DatasetModel":
+    def validate_required(self) -> CMIP6DatasetModel:
         if not self.HOSTING_NODE:
             raise ValueError("HOSTING_NODE is required.")
 
@@ -69,7 +69,7 @@ class CMIP6FileModel(BaseCMIP6Model):
         return str(v)
 
     @model_validator(mode="after")
-    def validate_checksum(self) -> "CMIP6FileModel":
+    def validate_checksum(self) -> CMIP6FileModel:
         if not self.CHECKSUM:
             raise ValueError("CHECKSUM is required.")
         if not self.CHECKSUM_METHOD:
