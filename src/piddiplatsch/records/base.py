@@ -4,8 +4,6 @@ from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
-from piddiplatsch.config import config
-from piddiplatsch.helpers import utc_now
 from piddiplatsch.utils.models import drop_empty
 
 
@@ -42,61 +40,7 @@ class BaseRecord(ABC):
         return self.__repr__()
 
 
-class BaseCMIP6Record(BaseRecord):
-    def __init__(
-        self,
-        item: dict[str, Any],
-        additional_attributes: dict[str, Any] | None = None,
-    ):
-        super().__init__(item)
-        self.additional_attributes = additional_attributes or {}
-
-    @cached_property
-    def prefix(self) -> str:
-        return config.get("handle", {}).get("prefix", "")
-
-    @cached_property
-    def landing_page_url(self) -> str:
-        return config.get("cmip6", {}).get("landing_page_url", "").rstrip("/")
-
-    @cached_property
-    def default_publication_time(self) -> str:
-        published_on = self.additional_attributes.get("publication_time")
-        if not published_on:
-            published_on = utc_now().strftime("%Y-%m-%d %H:%M:%S")
-        return published_on
-
-    @cached_property
-    def item_id(self) -> str:
-        if "id" not in self.item:
-            raise KeyError("Missing 'id' in item")
-        return self.item["id"]
-
-    @cached_property
-    def assets(self) -> dict[str, Any]:
-        return self.item.get("assets", {})
-
-    def get_asset(self, key: str) -> dict[str, Any]:
-        """Return the asset dictionary for a given key."""
-        return self.assets.get(key, {})
-
-    def get_asset_property(self, key: str, prop: str, default: Any = None) -> Any:
-        """Return a property value from an asset, or a default if missing."""
-        return self.get_asset(key).get(prop, default)
-
-    @cached_property
-    def properties(self) -> dict[str, Any]:
-        return self.item.get("properties", {})
-
-    def get_property(self, key: str, default: Any = None) -> Any:
-        """Return the property for a given key, or a default if missing."""
-        return self.properties.get(key, default)
-
-    @abstractmethod
-    def pid(self) -> str:
-        """Return the persistent identifier (PID) for this CMIP6 file or dataset record."""
-        ...
-
-    @cached_property
-    def url(self) -> str:
-        return f"{self.landing_page_url}/{self.prefix}/{self.pid}"
+"""
+CMIP6-specific base record moved to piddiplatsch.plugins.cmip6.base.
+This module retains generic BaseRecord used by all record types.
+"""

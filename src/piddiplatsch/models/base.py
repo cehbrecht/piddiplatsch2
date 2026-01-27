@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import logging
-import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, HttpUrl, PrivateAttr, field_serializer
+from pydantic import BaseModel
 
 from piddiplatsch.config import config
 
@@ -37,30 +36,7 @@ class HostingNode(BaseModel):
     published_on: datetime | None = None
 
 
-class BaseCMIP6Model(BaseModel):
-    _PID: str | None = PrivateAttr(default=None)
-
-    ESGF: str = "ESGF2 TEST"
-    URL: HttpUrl
-
-    # --- Ensure URLs serialize as strings ---
-    @field_serializer("URL")
-    def _serialize_url(self, v: HttpUrl) -> str:
-        return str(v)
-
-    def set_pid(self, value: str | uuid.UUID) -> None:
-        """Set and validate the PID (must be a valid UUID or UUID string)."""
-        if isinstance(value, uuid.UUID):
-            self._PID = str(value)
-        elif isinstance(value, str):
-            try:
-                self._PID = str(uuid.UUID(value))
-            except ValueError:
-                raise ValueError(f"Invalid PID string: {value} is not a valid UUID.")
-        else:
-            raise TypeError(
-                f"PID must be a UUID or UUID string, got {type(value).__name__}"
-            )
-
-    def get_pid(self) -> str | None:
-        return self._PID
+"""
+CMIP6-specific base model moved to piddiplatsch.plugins.cmip6.base.
+This module retains shared utilities used across models.
+"""

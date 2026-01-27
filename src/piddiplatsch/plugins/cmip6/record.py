@@ -8,8 +8,8 @@ from piddiplatsch.exceptions import LookupError
 from piddiplatsch.lookup.api import get_lookup
 from piddiplatsch.models.base import HostingNode
 from piddiplatsch.monitoring import stats
+from piddiplatsch.plugins.cmip6.base import BaseCMIP6Record
 from piddiplatsch.plugins.cmip6.model import CMIP6DatasetModel, CMIP6FileModel
-from piddiplatsch.records.base import BaseCMIP6Record
 from piddiplatsch.utils.models import (
     asset_pid,
     build_handle,

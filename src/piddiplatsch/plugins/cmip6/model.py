@@ -13,12 +13,12 @@ from pydantic import (
 
 from piddiplatsch.models.base import (
     ALLOWED_CHECKSUM_METHODs,
-    BaseCMIP6Model,
     HostingNode,
     get_max_parts,
     strict_mode,
 )
 from piddiplatsch.monitoring import stats
+from piddiplatsch.plugins.cmip6.base import BaseCMIP6Model
 
 
 class CMIP6DatasetModel(BaseCMIP6Model):
