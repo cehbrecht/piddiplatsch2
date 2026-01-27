@@ -5,14 +5,16 @@ from typing import Any
 
 from piddiplatsch.config import config
 from piddiplatsch.exceptions import LookupError
+from piddiplatsch.helpers import utc_now
 from piddiplatsch.lookup.api import get_lookup
 from piddiplatsch.models.base import HostingNode
 from piddiplatsch.monitoring import stats
-from piddiplatsch.plugins.cmip6.base import BaseCMIP6Record
 from piddiplatsch.plugins.cmip6.model import CMIP6DatasetModel, CMIP6FileModel
+from piddiplatsch.records.base import BaseRecord
 from piddiplatsch.utils.models import (
     asset_pid,
     build_handle,
+    drop_empty,
     item_pid,
     parse_datetime,
     parse_multihash_checksum,
@@ -21,6 +23,70 @@ from piddiplatsch.utils.models import (
 from piddiplatsch.utils.stac import Properties, split_cmip6_id
 
 PREFERRED_KEYS = ("reference_file", "data0000", "data0001")
+
+
+class BaseCMIP6Record(BaseRecord):
+    def __init__(
+        self,
+        item: dict[str, Any],
+        additional_attributes: dict[str, Any] | None = None,
+    ):
+        super().__init__(item)
+        self.additional_attributes = additional_attributes or {}
+
+    @cached_property
+    def prefix(self) -> str:
+        return config.get("handle", {}).get("prefix", "")
+
+    @cached_property
+    def landing_page_url(self) -> str:
+        return config.get("cmip6", {}).get("landing_page_url", "").rstrip("/")
+
+    @cached_property
+    def default_publication_time(self) -> str:
+        published_on = self.additional_attributes.get("publication_time")
+        if not published_on:
+            published_on = utc_now().strftime("%Y-%m-%d %H:%M:%S")
+        return published_on
+
+    @cached_property
+    def item_id(self) -> str:
+        if "id" not in self.item:
+            raise KeyError("Missing 'id' in item")
+        return self.item["id"]
+
+    @cached_property
+    def assets(self) -> dict[str, Any]:
+        return self.item.get("assets", {})
+
+    def get_asset(self, key: str) -> dict[str, Any]:
+        return self.assets.get(key, {})
+
+    def get_asset_property(self, key: str, prop: str, default: Any = None) -> Any:
+        return self.get_asset(key).get(prop, default)
+
+    @cached_property
+    def properties(self) -> dict[str, Any]:
+        return self.item.get("properties", {})
+
+    def get_property(self, key: str, default: Any = None) -> Any:
+        return self.properties.get(key, default)
+
+    @cached_property
+    def url(self) -> str:
+        return f"{self.landing_page_url}/{self.prefix}/{self.pid}"
+
+    def validate(self):
+        try:
+            _ = self.model
+        except Exception as e:
+            raise ValueError(f"Pydantic validation failed: {e}") from e
+
+    def as_record(self) -> dict:
+        return drop_empty(self.model.model_dump())
+
+    def as_json(self) -> str:
+        return self.model.model_dump_json()
 
 
 class CMIP6DatasetRecord(BaseCMIP6Record):

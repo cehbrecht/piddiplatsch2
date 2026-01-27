@@ -37,6 +37,5 @@ class HostingNode(BaseModel):
 
 
 """
-CMIP6-specific base model moved to piddiplatsch.plugins.cmip6.base.
 This module retains shared utilities used across models.
 """

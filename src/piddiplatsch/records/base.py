@@ -41,6 +41,5 @@ class BaseRecord(ABC):
 
 
 """
-CMIP6-specific base record moved to piddiplatsch.plugins.cmip6.base.
 This module retains generic BaseRecord used by all record types.
 """

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import uuid
 from datetime import datetime
 
 from pydantic import (
+    BaseModel,
     Field,
     HttpUrl,
     PositiveInt,
@@ -18,7 +20,33 @@ from piddiplatsch.models.base import (
     strict_mode,
 )
 from piddiplatsch.monitoring import stats
-from piddiplatsch.plugins.cmip6.base import BaseCMIP6Model
+
+
+class BaseCMIP6Model(BaseModel):
+    _PID: str | None = PrivateAttr(default=None)
+
+    ESGF: str = "ESGF2 TEST"
+    URL: HttpUrl
+
+    @field_serializer("URL")
+    def _serialize_url(self, v: HttpUrl) -> str:
+        return str(v)
+
+    def set_pid(self, value: str | uuid.UUID) -> None:
+        if isinstance(value, uuid.UUID):
+            self._PID = str(value)
+        elif isinstance(value, str):
+            try:
+                self._PID = str(uuid.UUID(value))
+            except ValueError:
+                raise ValueError(f"Invalid PID string: {value} is not a valid UUID.")
+        else:
+            raise TypeError(
+                f"PID must be a UUID or UUID string, got {type(value).__name__}"
+            )
+
+    def get_pid(self) -> str | None:
+        return self._PID
 
 
 class CMIP6DatasetModel(BaseCMIP6Model):
