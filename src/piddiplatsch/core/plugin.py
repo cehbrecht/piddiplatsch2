@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional, Protocol
+from typing import Protocol
 
 from .processing import BaseProcessor
 
@@ -22,4 +22,4 @@ class PluginSpec:
 
     name: str
     make_processor: ProcessorFactory
-    description: Optional[str] = None
+    description: str | None = None

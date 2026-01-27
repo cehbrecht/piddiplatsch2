@@ -4,16 +4,20 @@ from .models import (
     get_max_parts,
     strict_mode,
 )
-from .processing import BaseProcessor
 from .plugin import PluginSpec
+from .processing import BaseProcessor
 from .records import BaseRecord
+from .registry import get_processor, list_processors, register_processor
 
 __all__ = [
     "ALLOWED_CHECKSUM_METHODs",
     "BaseProcessor",
     "BaseRecord",
-    "PluginSpec",
     "HostingNode",
+    "PluginSpec",
     "get_max_parts",
+    "get_processor",
+    "list_processors",
+    "register_processor",
     "strict_mode",
 ]

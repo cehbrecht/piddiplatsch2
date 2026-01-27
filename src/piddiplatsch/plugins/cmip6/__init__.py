@@ -1,10 +1,3 @@
-from __future__ import annotations
+from .plugin import plugin
 
-from piddiplatsch.core import PluginSpec
-from .processor import CMIP6Processor
-
-plugin = PluginSpec(
-	name="cmip6",
-	make_processor=lambda **kwargs: CMIP6Processor(**kwargs),
-	description="CMIP6 data processing plugin",
-)
+__all__ = ["plugin"]
