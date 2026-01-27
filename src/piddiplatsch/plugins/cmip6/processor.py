@@ -8,8 +8,7 @@ from pydantic import ValidationError
 from piddiplatsch.config import config
 from piddiplatsch.core.processing import BaseProcessor
 from piddiplatsch.exceptions import TransientExternalError
-from piddiplatsch.plugins.cmip6.record import extract_asset_records
-from piddiplatsch.records import CMIP6DatasetRecord
+from piddiplatsch.plugins.cmip6.record import CMIP6DatasetRecord, extract_asset_records
 from piddiplatsch.result import ProcessingResult
 from piddiplatsch.utils.stac import get_stac_client
 

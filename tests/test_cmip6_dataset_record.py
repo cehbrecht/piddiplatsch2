@@ -3,8 +3,8 @@ from datetime import UTC, datetime
 import pytest
 
 from piddiplatsch.config import config
-from piddiplatsch.models import HostingNode
-from piddiplatsch.records import CMIP6DatasetRecord
+from piddiplatsch.core.models import HostingNode
+from piddiplatsch.plugins.cmip6.record import CMIP6DatasetRecord
 
 # -----------------------------
 # Fixtures

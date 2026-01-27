@@ -1,5 +1,4 @@
-from piddiplatsch.plugins.cmip6.record import extract_asset_records
-from piddiplatsch.records import CMIP6FileRecord
+from piddiplatsch.plugins.cmip6.record import CMIP6FileRecord, extract_asset_records
 from piddiplatsch.utils.models import parse_pid
 
 # Minimal mock STAC item

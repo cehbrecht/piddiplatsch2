@@ -5,7 +5,8 @@ import pytest
 from pydantic import ValidationError
 
 from piddiplatsch.config import config
-from piddiplatsch.models import CMIP6DatasetModel, HostingNode
+from piddiplatsch.core.models import HostingNode
+from piddiplatsch.plugins.cmip6.model import CMIP6DatasetModel
 
 # --- Helper constants ---
 HOST_NODE = HostingNode(
