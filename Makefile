@@ -116,8 +116,8 @@ test-smoke: start-docker ## run smoke tests only (requires Docker: Kafka + Handl
 	@echo "Ensuring Kafka topic exists (from config) ..."
 	@bash -c 'python -c "from piddiplatsch.config import config; config.load_user_config(\"tests/config.toml\"); from piddiplatsch.testing.kafka_client import ensure_topic_exists_from_config; ensure_topic_exists_from_config()"'
 	# Start production consumer in background
-	@echo "Starting piddiplatsch consumer (background) ..."
-	@bash -c 'piddiplatsch --config tests/config.toml consume & echo $$! > .consumer.pid && echo "Consumer PID: $$(cat .consumer.pid)"'
+	@echo "Starting piddi consumer (background) ..."
+	@bash -c 'piddi --config tests/config.toml consume & echo $$! > .consumer.pid && echo "Consumer PID: $$(cat .consumer.pid)"'
 	# Run smoke tests; on failure, ensure consumer and docker are stopped
 	@bash -c 'pytest -v -s -m "smoke" tests/' || ($(MAKE) stop-consumer; $(MAKE) stop-docker; exit 1)
 	# Stop consumer and docker after tests
@@ -182,14 +182,14 @@ stop-docker: ## stop Docker test services
 
 # Local consumer management
 start-consumer:
-	@echo "Starting piddiplatsch consumer ..."
+	@echo "Starting piddi consumer ..."
 	# Ensure Kafka topic exists before starting consumer
 	@echo "Ensuring Kafka topic exists (from config) ..."
 	@bash -c 'python -c "from piddiplatsch.config import config; config.load_user_config(\"tests/config.toml\"); from piddiplatsch.testing.kafka_client import ensure_topic_exists_from_config; ensure_topic_exists_from_config()"'
-	@bash -c 'piddiplatsch --config tests/config.toml consume & echo $$! > .consumer.pid && echo "Consumer PID: $$(cat .consumer.pid)"'
+	@bash -c 'piddi --config tests/config.toml consume & echo $$! > .consumer.pid && echo "Consumer PID: $$(cat .consumer.pid)"'
 
 stop-consumer:
-	@echo "Stopping piddiplatsch consumer ..."
+	@echo "Stopping piddi consumer ..."
 	@bash -c 'if [ -f .consumer.pid ]; then kill $$(cat .consumer.pid) >/dev/null 2>&1 || true; rm -f .consumer.pid; else echo "No consumer PID file"; fi'
 
 docker-build: ## build Docker images for test services

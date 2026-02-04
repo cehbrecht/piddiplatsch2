@@ -1,4 +1,4 @@
-name: piddiplatsch2
+name: piddi
 channels:
   - conda-forge
 dependencies:
@@ -9,5 +9,6 @@ dependencies:
   - jsonschema
   - pydantic>=2.11
   - multiformats
+  - rich
   # dev
   - pytest

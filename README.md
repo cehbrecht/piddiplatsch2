@@ -14,22 +14,22 @@
 
 ## ⚡ Quick Start
 
-Install, run, and test in minutes:
+Install, run, and test in minutes (CLI: `piddi`):
 
 ```bash
 # 1) Setup environment
 git clone git@github.com:cehbrecht/piddiplatsch2.git
 cd piddiplatsch2
-conda env create && conda activate piddiplatsch2
+conda env create && conda activate piddi
 make develop
 
 # 2) Run tests
 make test            # unit + integration
 
 # 3) Run the consumer (requires Kafka + Handle)
-piddiplatsch --help  # two commands: consume and retry
-piddiplatsch consume --help
-piddiplatsch --verbose consume 
+piddi --help  # commands: consume and retry
+piddi consume --help
+piddi --verbose consume 
 ```
 
 Optional: customize config by copying [src/piddiplatsch/config/default.toml](src/piddiplatsch/config/default.toml) to `custom.toml` and run with `--config custom.toml`.
@@ -37,9 +37,9 @@ Optional: customize config by copying [src/piddiplatsch/config/default.toml](src
 Dry-run (no Handle Service calls):
 
 ```bash
-piddiplatsch --config custom.toml --verbose consume --dry-run
+piddi --config custom.toml --verbose consume --dry-run
 # optionally also dump messages
-piddiplatsch --config custom.toml --verbose consume --dry-run --dump
+piddi --config custom.toml --verbose consume --dry-run --dump
 ```
 
 ---
@@ -82,7 +82,7 @@ vim custom.toml
 Use the `config` option to use your custom configuration:
 
 ```bash
-piddiplatsch --config custom.toml
+piddi --config custom.toml
 ```
 
 ---
@@ -95,7 +95,7 @@ piddiplatsch --config custom.toml
 ### Start the consumer
 
 ```bash
-piddiplatsch consume
+piddi consume
 ```
 
 ### Options
@@ -107,7 +107,7 @@ piddiplatsch consume
 - **Force-continue**: `--force` (continue on transient external failures like STAC outages; still persists skipped messages)
 
 ```bash
-piddiplatsch --config custom.toml --verbose --debug --log my.log consume --dump
+piddi --config custom.toml --verbose --debug --log my.log consume --dump
 ```
 
 ---
@@ -132,10 +132,18 @@ Interested in contributing? Check out our [CONTRIBUTING.md](CONTRIBUTING.md) for
 Retry previously persisted items:
 
 ```bash
-piddiplatsch retry <path...> [--delete-after] [--dry-run] [-v]
+piddi retry <path...> [--delete-after] [--dry-run] [-v]
 ```
 
 See implementation details in [src/piddiplatsch/persist/retry.py](src/piddiplatsch/persist/retry.py) and recorders under `src/piddiplatsch/persist/`.
+
+---
+
+## 🧾 Name (Origin)
+
+Piddiplatsch is a playful nod to the TV puppet [Pittiplatsch](https://en.wikipedia.org/wiki/Pittiplatsch). The puppet’s shortname "pitti" inspired our CLI shortname "piddi". Any relation to PID services is purely phonetic: it merely starts with "PID(di)".
+
+piddiplatsch is like Pittiplatsch the gremlin-enthusiast data wrangler — curious, persistent, and unafraid to dive into messy streams and come out with reliable results.
 
 ---
 

@@ -17,6 +17,7 @@ dependencies = [
     "confluent-kafka >=2.9.0",
     "pyhandle >=1.4.1",
     "colorlog",
+  "rich >=13.0.0",
     "toml",
     "requests",
     "pydantic >=2.11",
@@ -47,7 +48,7 @@ dev = [
 ]
 
 [project.scripts]
-piddiplatsch = "piddiplatsch.cli:cli"
+piddi = "piddiplatsch.cli:cli"
 
 [tool.flit.module]
 name = "piddiplatsch"
