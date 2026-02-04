@@ -272,67 +272,23 @@ Tip: Use `--force` to continue despite transient external failures (records skip
 
 ---
 
-## 🧩 Writing a Plugin
+## 🧩 Plugins (Concise)
 
-Piddiplatsch supports a simple, declarative plugin API. A plugin provides a `PluginSpec` with a factory to create its processor. The registry auto-discovers plugins under `piddiplatsch.plugins.*`.
+- One plugin active at a time, selected via `consumer.processor` (e.g., `"cmip6"`).
+- Static registry: CMIP6 is registered by default; future plugins (e.g., `cordex`) are added explicitly.
+- Config lives under `[plugins.<name>]`, for example:
 
-Minimal layout:
-
-```
-src/piddiplatsch/plugins/
-  mydomain/
-    __init__.py
-    processor.py
-    plugin.py
-```
-
-`plugin.py`:
-
-```python
-from piddiplatsch.core import PluginSpec
-from .processor import MyDomainProcessor
-
-plugin = PluginSpec(
-    name="mydomain",
-    make_processor=lambda **kwargs: MyDomainProcessor(**kwargs),
-    description="My domain processing plugin",
-)
+```toml
+[plugins.cmip6]
+landing_page_url = "https://handle-esgf.dkrz.de/lp"
+max_parts = -1
+excluded_asset_keys = ["reference_file", "globus", "thumbnail", "quicklook"]
 ```
 
-`processor.py` (example):
+To add a plugin:
+- Implement a processor (subclass of `BaseProcessor`) under `src/piddiplatsch/plugins/<name>/processor.py`.
+- Register it in the static registry (see `piddiplatsch.core.registry.register_processor("<name>", YourProcessor)`).
+- Provide `[plugins.<name>]` config as needed.
 
-```python
-from typing import Any
-from piddiplatsch.core import BaseProcessor
-from piddiplatsch.result import ProcessingResult
-
-
-class MyDomainProcessor(BaseProcessor):
-    def process(self, key: str, value: dict[str, Any]) -> ProcessingResult:
-        # TODO: implement your domain logic
-        # - Parse input payload
-        # - Build records (with PIDs)
-        # - Use self._safe_add_record(record) to write via Handle backend
-        result = ProcessingResult(key=key, success=True)
-        return result
-```
-
-Discovery & usage:
-
-```python
-from piddiplatsch.core import get_processor
-
-processor = get_processor("mydomain", dry_run=True)
-processor.process("k1", {"data": {"payload": {"item": {"id": "x"}}}})
-```
-
-CLI usage (after adding your plugin package under `piddiplatsch.plugins`):
-
-```bash
-piddiplatsch --config custom.toml consume --processor mydomain --dry-run
-```
-
-Testing tips:
-- Unit tests should import your processor directly from `piddiplatsch.plugins.mydomain.processor`.
-- Use `--dry-run` or `JsonlHandleBackend`-based checks to avoid contacting external services.
+Note: Design is intentionally simple and may evolve; no dynamic framework is required.
 
