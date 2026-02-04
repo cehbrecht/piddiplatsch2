@@ -1,3 +1,11 @@
+---
+
+## 🔌 Plugins (Brief)
+
+- One plugin active at a time, selected via `consumer.processor` (e.g., "cmip6").
+- Config for each plugin lives under `[plugins.<name>]` in the TOML.
+- See the concise Plugins section in the README for current guidance.
+
 # Contributing to Piddiplatsch
 
 Thank you for your interest in contributing to Piddiplatsch! This guide will help you get started with development, testing, and making contributions.

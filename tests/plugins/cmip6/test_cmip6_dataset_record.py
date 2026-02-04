@@ -1,11 +1,12 @@
 from datetime import UTC, datetime
 
 import pytest
-pytestmark = [pytest.mark.plugin, pytest.mark.cmip6]
 
 from piddiplatsch.config import config
 from piddiplatsch.core.models import HostingNode
 from piddiplatsch.plugins.cmip6.record import CMIP6DatasetRecord
+
+pytestmark = [pytest.mark.plugin, pytest.mark.cmip6]
 
 # -----------------------------
 # Fixtures

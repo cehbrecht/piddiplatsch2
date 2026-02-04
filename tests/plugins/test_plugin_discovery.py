@@ -1,8 +1,9 @@
 import pytest
-pytestmark = [pytest.mark.plugin]
 
-from piddiplatsch.core.registry import list_processors, get_processor
 from piddiplatsch.core.processing import BaseProcessor
+from piddiplatsch.core.registry import get_processor, list_processors
+
+pytestmark = [pytest.mark.plugin]
 
 
 def test_cmip6_plugin_discovered():

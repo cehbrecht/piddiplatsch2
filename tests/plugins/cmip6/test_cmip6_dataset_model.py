@@ -2,12 +2,13 @@ import datetime
 import uuid
 
 import pytest
-pytestmark = [pytest.mark.plugin, pytest.mark.cmip6]
 from pydantic import ValidationError
 
 from piddiplatsch.config import config
 from piddiplatsch.core.models import HostingNode
 from piddiplatsch.plugins.cmip6.model import CMIP6DatasetModel
+
+pytestmark = [pytest.mark.plugin, pytest.mark.cmip6]
 
 # --- Helper constants ---
 HOST_NODE = HostingNode(
