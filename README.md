@@ -139,6 +139,14 @@ See implementation details in [src/piddiplatsch/persist/retry.py](src/piddiplats
 
 ---
 
+## 🧾 Name (Origin)
+
+Piddiplatsch is a playful nod to the TV puppet [Pittiplatsch](https://en.wikipedia.org/wiki/Pittiplatsch). The puppet’s shortname "pitti" inspired our CLI shortname "piddi". Any relation to PID services is purely phonetic: it merely starts with "PID(di)".
+
+piddiplatsch is like Pittiplatsch the gremlin-enthusiast data wrangler — curious, persistent, and unafraid to dive into messy streams and come out with reliable results.
+
+---
+
 ## 🧩 Plugins (Concise)
 
 - One plugin active at a time, selected via `consumer.processor` (e.g., `"cmip6"`).
