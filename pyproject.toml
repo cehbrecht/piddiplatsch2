@@ -48,6 +48,7 @@ dev = [
 
 [project.scripts]
 piddiplatsch = "piddiplatsch.cli:cli"
+piddi = "piddiplatsch.cli:cli"
 
 [tool.flit.module]
 name = "piddiplatsch"
