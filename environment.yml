@@ -9,5 +9,6 @@ dependencies:
   - jsonschema
   - pydantic>=2.11
   - multiformats
+  - rich
   # dev
   - pytest
