@@ -1,14 +1,10 @@
-"""Processor registry with declarative plugin discovery.
+"""Processor registry for explicitly registered plugins.
 
-Supports two extension mechanisms:
+Supports:
 - Manual registration via `register_processor(name, cls)`
-- Declarative plugins exposing `plugin: PluginSpec` under `piddiplatsch.plugins.*`
+- Static default registrations (e.g., CMIP6)
 """
 
-from importlib import import_module
-from pkgutil import iter_modules
-
-from .plugin import PluginSpec
 from .processing import BaseProcessor
 
 # Registry of available processors
@@ -37,33 +33,11 @@ def list_processors() -> list[str]:
     return list(_PROCESSORS.keys())
 
 
-def _discover_plugins() -> None:
-    """Discover and register plugins declaring `plugin: PluginSpec`."""
-    try:
-        import piddiplatsch.plugins as plugins_pkg
-    except ImportError:
-        return
+# Static default registrations on module import
+try:
+    from piddiplatsch.plugins.cmip6.processor import CMIP6Processor
 
-    prefix = plugins_pkg.__name__ + "."
-    for mod in iter_modules(plugins_pkg.__path__, prefix):
-        name = mod.name
-        try:
-            module = import_module(name)
-        except Exception:
-            continue
-
-        spec = getattr(module, "plugin", None)
-        if isinstance(spec, PluginSpec):
-            factory = spec.make_processor
-
-            class _FactoryProxy(BaseProcessor):
-                def __init__(self, __factory=factory, **kwargs):
-                    obj = __factory(**kwargs)
-                    self.__dict__ = obj.__dict__
-                    self.__class__ = obj.__class__
-
-            register_processor(spec.name, _FactoryProxy)
-
-
-# Discover and register plugins on module import
-_discover_plugins()
+    register_processor("cmip6", CMIP6Processor)
+except Exception:
+    # In environments where plugins are not available, registry remains empty
+    pass
