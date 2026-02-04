@@ -47,10 +47,21 @@ index = "handle_21t14995"
 [schema]
 strict_mode = true
 
-[cmip6]
+[plugins.cmip6]
+# Base URL for landing pages used to construct dataset and file URLs
 landing_page_url = "https://handle-esgf.dkrz.de/lp"
+
+# Limit the number of HAS_PARTS entries; -1 for unlimited
 max_parts = -1
+
+# Asset keys to exclude from HAS_PARTS generation
 excluded_asset_keys = ["reference_file", "globus", "thumbnail", "quicklook"]
+
+# Preferred asset keys to resolve host and published_on (optional)
+# preferred_asset_keys = ["reference_file", "data0000", "data0001"]
+
+# Enable previous-version lookup (optional; default true)
+# enable_previous_version_lookup = true
 
 [lookup]
 backend = "stac" # or "es"

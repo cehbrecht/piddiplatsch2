@@ -40,7 +40,7 @@ class BaseCMIP6Record(BaseRecord):
 
     @cached_property
     def landing_page_url(self) -> str:
-        return config.get("cmip6", {}).get("landing_page_url", "").rstrip("/")
+        return config.get_plugin("cmip6", "landing_page_url", "").rstrip("/")
 
     @cached_property
     def default_publication_time(self) -> str:
@@ -100,7 +100,7 @@ class CMIP6DatasetRecord(BaseCMIP6Record):
     ):
         super().__init__(item, additional_attributes)
         self.exclude_keys = set(exclude_keys or [])
-        self.max_parts = config.get("cmip6", {}).get("max_parts", -1)
+        self.max_parts = config.get_plugin("cmip6", "max_parts", -1)
         self.lookup = get_lookup()
 
     @cached_property

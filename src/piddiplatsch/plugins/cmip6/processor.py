@@ -20,8 +20,8 @@ class CMIP6Processor(BaseProcessor):
 
     def __init__(self, excluded_asset_keys=None, **kwargs):
         super().__init__(**kwargs)
-        self.excluded_asset_keys = excluded_asset_keys or config.get("cmip6", {}).get(
-            "excluded_asset_keys", self.EXCLUDED_ASSET_KEYS
+        self.excluded_asset_keys = excluded_asset_keys or config.get_plugin(
+            "cmip6", "excluded_asset_keys", self.EXCLUDED_ASSET_KEYS
         )
         self.stac_client = get_stac_client()
 
