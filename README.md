@@ -14,7 +14,7 @@
 
 ## ⚡ Quick Start
 
-Install, run, and test in minutes (CLI: `piddiplatsch` or `piddi`):
+Install, run, and test in minutes (CLI: `piddi`):
 
 ```bash
 # 1) Setup environment
@@ -27,7 +27,7 @@ make develop
 make test            # unit + integration
 
 # 3) Run the consumer (requires Kafka + Handle)
-piddi --help  # two commands: consume and retry
+piddi --help  # commands: consume and retry
 piddi consume --help
 piddi --verbose consume 
 ```
