@@ -1,4 +1,4 @@
-name: piddiplatsch2
+name: piddi
 channels:
   - conda-forge
 dependencies:

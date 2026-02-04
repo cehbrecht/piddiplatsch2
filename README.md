@@ -20,7 +20,7 @@ Install, run, and test in minutes (CLI: `piddi`):
 # 1) Setup environment
 git clone git@github.com:cehbrecht/piddiplatsch2.git
 cd piddiplatsch2
-conda env create && conda activate piddiplatsch2
+conda env create && conda activate piddi
 make develop
 
 # 2) Run tests
