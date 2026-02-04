@@ -54,6 +54,21 @@ class Config:
             value = cfg
         return value
 
+    def get_plugin(self, name: str, key: str | None = None, fallback=None):
+        """Return plugin-scoped config with backwards compatibility.
+
+        Merges `[plugins.<name>]` with legacy top-level `[<name>]`,
+        giving precedence to the legacy top-level for test overrides.
+        """
+        plugins = self.config_data.get("plugins", {})
+        merged: dict = dict(plugins.get(name, {}) or {})
+        legacy = self.config_data.get(name, {}) or {}
+        # Let legacy (tests/user overrides) take precedence over defaults
+        merged.update(legacy)
+        if key:
+            return merged.get(key, fallback)
+        return merged
+
     def configure_logging(self, debug: bool = False, log: str | None = None):
         log_level = logging.DEBUG if debug else logging.INFO
 

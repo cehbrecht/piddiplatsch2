@@ -3,7 +3,11 @@
 All notable changes to this project are documented here.
 
 ## [Unreleased]
-- No changes yet.
+### Changed
+- Plugins: Namespace CMIP6 configuration under `[plugins.cmip6]` and switch to a static plugin registry (single active plugin selected via `consumer.processor`).
+### Documentation
+- Streamlined README: concise Testing section, compact Recovery/Retry, removed duplicates.
+- Added explicit smoke test note: run `make test-smoke` for local end-to-end.
 
 ## [2.1.0] - 2026-01-22
 ### Added

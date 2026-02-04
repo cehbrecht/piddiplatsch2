@@ -54,27 +54,21 @@ piddiplatsch --config custom.toml --verbose consume --dry-run --dump
 
 ---
 
-## ⚙️ Installation
+## 🧪 Testing
 
-**Prerequisites**:
-- [Miniconda (via conda-forge)](https://conda-forge.org/download/)
-
-**Setup**:
+Quick checks and end-to-end:
 
 ```bash
-git clone git@github.com:cehbrecht/piddiplatsch2.git
-cd piddiplatsch2
+# Fast tests (unit + integration)
+make test
 
-conda env create
-conda activate piddiplatsch2
+# Unit only / Integration only
+make test-unit
+make test-integration
 
-# Install dependencies
-pip install -e ".[dev]"
-# OR
-make develop
+# Smoke (starts Docker: Kafka + mock Handle)
+make test-smoke
 ```
-
----
 
 ## 🛠️ Configuration
 
@@ -129,144 +123,39 @@ Interested in contributing? Check out our [CONTRIBUTING.md](CONTRIBUTING.md) for
 
 ---
 
-## 🔄 Failure Recovery
+## 🔄 Recovery & Retry (Concise)
 
-Failed items are saved to `outputs/failures/r<N>/failed_items_<date>.jsonl` for later retry.
+- Failures: `outputs/failures/r<N>/failed_items_<date>.jsonl`
+- Skipped (transient): `outputs/skipped/skipped_items_<date>.jsonl` (use `--force` to continue)
+- Dumps: `outputs/dump/dump_messages_<date>.jsonl` (use `--dump`)
 
-### Persistence API (Short)
-
-Recorders share a unified instance API via `RecorderBase`:
-
-```python
-from piddiplatsch.persist.dump import DumpRecorder
-from piddiplatsch.persist.skipped import SkipRecorder
-from piddiplatsch.persist.recovery import FailureRecorder
-
-DumpRecorder().record(key, data)
-SkipRecorder().record(key, data, reason="timeout", retries=1)
-FailureRecorder().record(key, data, reason="error", retries=2)
-```
-
-Helpers for JSONL I/O and daily rotation live in `piddiplatsch.helpers` (`DailyJsonlWriter`, `read_jsonl`, `find_jsonl`).
-
-### Dumped Messages
-
-When running the consumer with `--dump`, all consumed messages are appended to
-`outputs/dump/dump_messages_<date>.jsonl` (one JSON object per line). This is useful for
-debugging, audits, or crafting reproducible tests. Dump files contain raw messages and
-do not include the failure metadata (`__infos__`) used by the retry workflow.
-
-Example run with dump enabled:
-
-```bash
-piddiplatsch --config custom.toml --verbose consume --dump
-```
-
-### Skipped Messages (Transient External Failures)
-
-Transient external failures (e.g., STAC unreachable, timeouts, HTTP 5xx) are recorded under `outputs/skipped/skipped_items_<date>.jsonl` when running with `--force`. By default (production), the consumer stops on such failures after bounded retries.
-
-```bash
-# Continue despite transient failures (records skipped)
-piddiplatsch consume --force
-```
-
-Policy:
-- Permanent-invalid (e.g., missing payload/item, invalid JSON Patch) → treated as errors and counted toward `max_errors`.
-- Transient-external (e.g., STAC down/timeouts/5xx) → stop the consumer unless `--force`.
-
-Config knobs (in your TOML):
-- `consumer.stop_on_transient_skip = true` (default)
-- `consumer.transient_retries = 3`
-- `consumer.transient_backoff_initial = 0.5`
-- `consumer.transient_backoff_max = 5.0`
-- `consumer.preflight_stac = true` (probe STAC health at startup)
-
-### Retry Command
-
-Retry previously persisted items (failures or skipped) through the pipeline:
+Retry previously persisted items:
 
 ```bash
 piddiplatsch retry <path...> [--delete-after] [--dry-run] [-v]
 ```
 
-- Accepts files, directories, or glob patterns
-- Increments retry counters and reprocesses items
-- Saves new failures under `outputs/failures/r<N>/`
- - Also supports retriable skipped files under `outputs/skipped/` (from `--force` runs)
-
-Examples:
-
-```bash
-# Single file
-piddiplatsch retry outputs/failures/r0/failed_items_2026-01-16.jsonl
-
-# Directory (all JSONL files)
-piddiplatsch retry outputs/failures/r0/
-
-# Dry-run (no Handle Service)
-piddiplatsch retry outputs/failures/r0/ --dry-run
-```
-
-Programmatic usage via `RetryRunner`:
-
-```python
-from pathlib import Path
-from piddiplatsch.persist.retry import RetryRunner
-
-# Configure once, reuse across files
-runner = RetryRunner(
-  "cmip6",                      # processor/plugin name
-  failure_dir=Path("outputs/failures"),
-  delete_after=False,            # delete source file if all succeed
-  dry_run=True,                  # do not contact Handle Service
-)
-
-# Single file
-result = runner.run_file(Path("outputs/failures/r0/failed_items_2026-01-16.jsonl"))
-print(result.succeeded, result.failed)
-
-# Batch
-overall = runner.run_batch((
-  Path("outputs/failures/r0"),
-  Path("outputs/failures/r1/failed_items_2026-01-17.jsonl"),
-))
-print(overall.total, overall.success_rate)
-```
-
-For more details, see [src/piddiplatsch/persist/retry.py](src/piddiplatsch/persist/retry.py).
-
-### Failure Recording
-
-Persist failures during consumption for later retry:
-
-```python
-from piddiplatsch.persist.recovery import FailureRecorder
-
-FailureRecorder().record(key, data, reason="error", retries=1)
-```
-
-See [src/piddiplatsch/persist/recovery.py](src/piddiplatsch/persist/recovery.py) for details.
+See implementation details in [src/piddiplatsch/persist/retry.py](src/piddiplatsch/persist/retry.py) and recorders under `src/piddiplatsch/persist/`.
 
 ---
 
-##  Examples
+## 🧩 Plugins (Concise)
 
-Start consumer with custom configuration and dump messages:
+- One plugin active at a time, selected via `consumer.processor` (e.g., `"cmip6"`).
+- Static registry: CMIP6 is registered by default; future plugins (e.g., `cordex`) are added explicitly.
+- Config lives under `[plugins.<name>]`, for example:
 
-```bash
-piddiplatsch --config custom.toml --verbose consume --dump
+```toml
+[plugins.cmip6]
+landing_page_url = "https://handle-esgf.dkrz.de/lp"
+max_parts = -1
+excluded_asset_keys = ["reference_file", "globus", "thumbnail", "quicklook"]
 ```
 
-Tip: Use `--force` to continue despite transient external failures (records skipped items under `outputs/skipped/`).
+To add a plugin:
+- Implement a processor (subclass of `BaseProcessor`) under `src/piddiplatsch/plugins/<name>/processor.py`.
+- Register it in the static registry (see `piddiplatsch.core.registry.register_processor("<name>", YourProcessor)`).
+- Provide `[plugins.<name>]` config as needed.
 
----
-
-## ✅ TODO
-
-- [ ] **Batch Handle registration**  
-  Support committing one dataset and its associated files in a single batch request.
-
-- [ ] **Plugin improvements**  
-  Enhance plugin system to better support multiple processing use-cases.
+Note: Design is intentionally simple and may evolve; no dynamic framework is required.
 

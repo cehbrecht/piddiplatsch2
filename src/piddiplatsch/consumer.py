@@ -9,13 +9,13 @@ from confluent_kafka import Consumer as ConfluentConsumer
 from confluent_kafka import KafkaException
 
 from piddiplatsch.config import config
+from piddiplatsch.core.processing import BaseProcessor
+from piddiplatsch.core.registry import get_processor
 from piddiplatsch.exceptions import MaxErrorsExceededError, StopOnTransientSkipError
 from piddiplatsch.monitoring.stats import CounterKey, stats
 from piddiplatsch.persist.dump import DumpRecorder
 from piddiplatsch.persist.recovery import FailureRecorder
 from piddiplatsch.persist.skipped import SkipRecorder
-from piddiplatsch.processing.base import BaseProcessor
-from piddiplatsch.processing.registry import get_processor
 from piddiplatsch.result import FeedResult, ProcessingResult
 
 logger = logging.getLogger(__name__)

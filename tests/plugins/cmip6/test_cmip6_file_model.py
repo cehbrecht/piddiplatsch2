@@ -1,7 +1,9 @@
 import pytest
 
 from piddiplatsch.config import config
-from piddiplatsch.models import CMIP6FileModel
+from piddiplatsch.plugins.cmip6.model import CMIP6FileModel
+
+pytestmark = [pytest.mark.plugin, pytest.mark.cmip6]
 
 # --- Helper constants ---
 VALID_FILE_DATA = {

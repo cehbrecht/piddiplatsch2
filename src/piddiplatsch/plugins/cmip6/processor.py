@@ -6,10 +6,9 @@ import requests
 from pydantic import ValidationError
 
 from piddiplatsch.config import config
+from piddiplatsch.core.processing import BaseProcessor
 from piddiplatsch.exceptions import TransientExternalError
-from piddiplatsch.processing import BaseProcessor
-from piddiplatsch.records import CMIP6DatasetRecord
-from piddiplatsch.records.cmip6_file_record import extract_asset_records
+from piddiplatsch.plugins.cmip6.record import CMIP6DatasetRecord, extract_asset_records
 from piddiplatsch.result import ProcessingResult
 from piddiplatsch.utils.stac import get_stac_client
 
@@ -21,8 +20,8 @@ class CMIP6Processor(BaseProcessor):
 
     def __init__(self, excluded_asset_keys=None, **kwargs):
         super().__init__(**kwargs)
-        self.excluded_asset_keys = excluded_asset_keys or config.get("cmip6", {}).get(
-            "excluded_asset_keys", self.EXCLUDED_ASSET_KEYS
+        self.excluded_asset_keys = excluded_asset_keys or config.get_plugin(
+            "cmip6", "excluded_asset_keys", self.EXCLUDED_ASSET_KEYS
         )
         self.stac_client = get_stac_client()
 

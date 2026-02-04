@@ -1,14 +1,12 @@
 import logging
 import time
-from typing import Any
+from typing import Any, Protocol
 
 from piddiplatsch.handles.api import HandleAPI, HandleAPIProtocol
 from piddiplatsch.result import ProcessingResult
 
 
 class BaseProcessor:
-    """Base class for STAC record processors with timing and handle support."""
-
     def __init__(
         self,
         handle_backend: HandleAPIProtocol | None = None,
@@ -43,6 +41,15 @@ class BaseProcessor:
         return result, elapsed
 
     def process(self, key: str, value: dict[str, Any]) -> ProcessingResult:
-        """Child classes should implement _process_item and return
-        (num_handles, schema_time, record_time, handle_time)."""
         raise NotImplementedError
+
+
+class ProcessingPlugin(Protocol):
+    """Protocol for processing plugins.
+
+    Optional preflight check and required message processing.
+    """
+
+    def preflight_check(self, stop_on_transient_skip: bool = True) -> None: ...
+
+    def process(self, key: str, value: dict[str, Any]) -> ProcessingResult: ...

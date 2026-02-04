@@ -85,8 +85,58 @@ class SQLiteReporter(StatsReporter):
         self._cursor.execute(
             "CREATE INDEX IF NOT EXISTS idx_message_stats_ts ON message_stats(ts)"
         )
+        # Ensure existing databases have all expected columns
+        self._ensure_schema()
         self._conn.commit()
         self._closed = False
+
+    def _ensure_schema(self):
+        """Add any missing columns to the message_stats table for compatibility.
+
+        Older databases may lack columns added in newer versions (e.g.,
+        'patched_messages'). We query the existing schema and add missing
+        columns with appropriate types. This is safe in SQLite and keeps
+        inserts working without manual migrations.
+        """
+        try:
+            self._cursor.execute("PRAGMA table_info(message_stats)")
+            rows = self._cursor.fetchall()
+            existing_cols = {row[1] for row in rows}  # row[1] is column name
+
+            # Expected columns and their SQLite types
+            expected = {
+                "messages": "INTEGER",
+                "errors": "INTEGER",
+                "retries": "INTEGER",
+                "handles": "INTEGER",
+                "retracted_messages": "INTEGER",
+                "replicas": "INTEGER",
+                "warnings": "INTEGER",
+                "skipped_messages": "INTEGER",
+                "patched_messages": "INTEGER",
+                "external_failures": "INTEGER",
+                "total_handle_processing_time": "REAL",
+                "uptime": "REAL",
+                "message_rate": "REAL",
+                "handle_rate": "REAL",
+                "messages_per_sec": "REAL",
+            }
+
+            for col, col_type in expected.items():
+                if col not in existing_cols:
+                    # Use DEFAULT 0 to avoid NULLs for numeric columns
+                    try:
+                        self._cursor.execute(
+                            f"ALTER TABLE message_stats ADD COLUMN {col} {col_type} DEFAULT 0"
+                        )
+                    except sqlite3.OperationalError:
+                        # If ALTER fails for any reason, log and continue
+                        logger.exception(
+                            "Failed to add missing column '%s' to message_stats", col
+                        )
+        except Exception:
+            # Do not block startup; logging will surface issues if inserts fail
+            logger.exception("Schema check failed for message_stats table")
 
     def log(self, summary: dict):
         if self._closed:

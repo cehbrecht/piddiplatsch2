@@ -155,6 +155,8 @@ testpaths = ["tests"]
 markers = [
     "integration: Integration tests (uses JSONL backend, no Docker required)",
     "smoke: End-to-end tests (requires Docker services: Kafka and Handle server)",
+  "plugin: Plugin tests (extensibility, discovery, and plugin logic)",
+  "cmip6: CMIP6 plugin tests",
 ]
 # Note: Tests without markers are considered unit tests (fast, no external dependencies)
 

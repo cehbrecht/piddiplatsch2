@@ -3,7 +3,7 @@ import json
 from piddiplatsch.consumer import ConsumerPipeline, DirectConsumer
 from piddiplatsch.exceptions import TransientExternalError
 from piddiplatsch.persist.skipped import SkipRecorder
-from piddiplatsch.processing.cmip6_processor import CMIP6Processor
+from piddiplatsch.plugins.cmip6.processor import CMIP6Processor
 
 
 class FailingPatchProcessor(CMIP6Processor):
