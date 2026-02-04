@@ -1,3 +1,6 @@
+import pytest
+pytestmark = [pytest.mark.plugin, pytest.mark.cmip6]
+
 from piddiplatsch.plugins.cmip6.record import CMIP6FileRecord, extract_asset_records
 from piddiplatsch.utils.models import parse_pid
 

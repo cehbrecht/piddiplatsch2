@@ -1,4 +1,5 @@
 import pytest
+pytestmark = [pytest.mark.plugin, pytest.mark.cmip6]
 
 from piddiplatsch.config import config
 from piddiplatsch.plugins.cmip6.model import CMIP6FileModel

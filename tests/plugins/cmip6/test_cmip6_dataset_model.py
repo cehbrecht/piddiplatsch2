@@ -2,6 +2,7 @@ import datetime
 import uuid
 
 import pytest
+pytestmark = [pytest.mark.plugin, pytest.mark.cmip6]
 from pydantic import ValidationError
 
 from piddiplatsch.config import config
