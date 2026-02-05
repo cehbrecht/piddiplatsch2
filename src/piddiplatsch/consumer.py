@@ -129,8 +129,13 @@ class ConsumerPipeline:
         self.dump_messages = dump_messages
         self.max_errors = int(max_errors)
         self.force = force
+        consumer_cfg = config.get("consumer", {})
+        transient_cfg = consumer_cfg.get("transient", {})
         self.stop_on_transient_skip = bool(
-            config.get("consumer", {}).get("stop_on_transient_skip", True)
+            transient_cfg.get(
+                "stop_on_transient_skip",
+                consumer_cfg.get("stop_on_transient_skip", True),
+            )
         )
         self._consecutive_transient_skips = 0
 
@@ -286,8 +291,13 @@ def start_consumer(
     # Optional STAC preflight
     try:
         if not force:
+            consumer_cfg = config.get("consumer", {})
+            transient_cfg = consumer_cfg.get("transient", {})
             stop_on_transient_skip = bool(
-                config.get("consumer", {}).get("stop_on_transient_skip", True)
+                transient_cfg.get(
+                    "stop_on_transient_skip",
+                    consumer_cfg.get("stop_on_transient_skip", True),
+                )
             )
             proc_instance.preflight_check(stop_on_transient_skip=stop_on_transient_skip)
     except Exception as e:

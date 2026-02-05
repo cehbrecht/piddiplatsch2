@@ -2,20 +2,21 @@
 processor = "cmip6"
 topic = "CMIP6"
 output_dir = "outputs"
-max_errors = 10  # -1 = unlimited, any positive int = stop after that many
- # --- Transient External Failure Handling (STAC/network) ---
- # stop_on_transient_skip: if true, stop consumption on transient external failures
- #   (e.g., STAC unreachable/timeouts/HTTP 5xx) after bounded retries.
- #   Override at runtime with the CLI flag --force to continue.
+ # Maximum number of errors before stopping; -1 = unlimited.
+ max_errors = 10
+
+[consumer.transient]
+ # --- Transient External Failures (STAC/network) ---
+ # Stop consumption on transient failures after bounded retries.
+ # Override at runtime with the CLI flag --force to continue.
  stop_on_transient_skip = true
- # transient_retries: number of attempts for transient fetch failures (PATCH fetch).
+ # Number of retry attempts for transient PATCH fetch failures.
  transient_retries = 3
- # transient_backoff_initial: initial backoff delay in seconds for retries.
+ # Initial backoff delay (seconds) for transient retries.
  transient_backoff_initial = 0.5
- # transient_backoff_max: maximum backoff delay in seconds.
+ # Maximum backoff delay (seconds) for transient retries.
  transient_backoff_max = 5.0
- # preflight_stac: probe STAC health at startup; if unhealthy and not forced,
- #   the consumer exits early (fail-fast).
+ # Probe STAC health at startup; if unhealthy and not forced, exit early (fail-fast).
  preflight_stac = true
 
 [kafka]
@@ -26,6 +27,8 @@ max_errors = 10  # -1 = unlimited, any positive int = stop after that many
 
 # Best practice for higher availability in librdkafka clients prior to 1.7
 "session.timeout.ms" = 45000
+
+# Note: dotted librdkafka keys are quoted to keep them as literal TOML keys.
 
 [handle]
 # backend = "jsonl"
@@ -48,7 +51,7 @@ index = "handle_21t14995"
 strict_mode = true
 
 [plugins.cmip6]
-# Base URL for landing pages used to construct dataset and file URLs
+# Base URL for landing pages used to construct dataset/file URLs
 landing_page_url = "https://handle-esgf.dkrz.de/lp"
 
 # Limit the number of HAS_PARTS entries; -1 for unlimited
@@ -60,22 +63,23 @@ excluded_asset_keys = ["reference_file", "globus", "thumbnail", "quicklook"]
 # Preferred asset keys to resolve host and published_on (optional)
 # preferred_asset_keys = ["reference_file", "data0000", "data0001"]
 
-# Enable previous-version lookup (optional; default true)
+# Enable previous-version lookup (optional; default: true)
 # enable_previous_version_lookup = true
 
 [lookup]
-backend = "stac" # or "es"
+# Backend to use for lookups ("stac" or "es")
+backend = "stac"
 enabled = true
 
 [stats]
-# Interval in seconds for logging stats (console + DB)
+# Log interval (seconds) for console/DB reporters
 interval_seconds = 10
 
-# Number of messages processed before logging stats
+# Message count threshold before logging a stats snapshot
 summary_interval = 1000
 
 # Enable SQLite reporter for persistent stats
 enable_db = true
 
-# Path to SQLite database file (only used if enable_db = true)
+# Path to SQLite database file (used only if enable_db = true)
 db_path = "stats.db"

@@ -10,5 +10,12 @@ dependencies:
   - pydantic>=2.11
   - multiformats
   - rich
+  - requests
+  - jsonpatch
+  - toml
+  - tqdm
+  - humanize
   # dev
   - pytest
+  - pip:
+      - millify
