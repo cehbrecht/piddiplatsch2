@@ -150,18 +150,28 @@ class CMIP6Processor(BaseProcessor):
         transient_cfg = consumer_cfg.get("transient", {})
         retries = int(
             transient_cfg.get(
-                "transient_retries", consumer_cfg.get("transient_retries", 3)
+                "retries",
+                transient_cfg.get(
+                    "transient_retries", consumer_cfg.get("transient_retries", 3)
+                ),
             )
         )
         base_delay = float(
             transient_cfg.get(
-                "transient_backoff_initial",
-                consumer_cfg.get("transient_backoff_initial", 0.5),
+                "backoff_initial",
+                transient_cfg.get(
+                    "transient_backoff_initial",
+                    consumer_cfg.get("transient_backoff_initial", 0.5),
+                ),
             )
         )
         max_delay = float(
             transient_cfg.get(
-                "transient_backoff_max", consumer_cfg.get("transient_backoff_max", 5.0)
+                "backoff_max",
+                transient_cfg.get(
+                    "transient_backoff_max",
+                    consumer_cfg.get("transient_backoff_max", 5.0),
+                ),
             )
         )
 

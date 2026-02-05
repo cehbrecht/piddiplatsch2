@@ -131,10 +131,14 @@ class ConsumerPipeline:
         self.force = force
         consumer_cfg = config.get("consumer", {})
         transient_cfg = consumer_cfg.get("transient", {})
+        # Prefer new key `stop_on_skip`, fallback to legacy `stop_on_transient_skip`
         self.stop_on_transient_skip = bool(
             transient_cfg.get(
-                "stop_on_transient_skip",
-                consumer_cfg.get("stop_on_transient_skip", True),
+                "stop_on_skip",
+                transient_cfg.get(
+                    "stop_on_transient_skip",
+                    consumer_cfg.get("stop_on_transient_skip", True),
+                ),
             )
         )
         self._consecutive_transient_skips = 0
@@ -295,8 +299,11 @@ def start_consumer(
             transient_cfg = consumer_cfg.get("transient", {})
             stop_on_transient_skip = bool(
                 transient_cfg.get(
-                    "stop_on_transient_skip",
-                    consumer_cfg.get("stop_on_transient_skip", True),
+                    "stop_on_skip",
+                    transient_cfg.get(
+                        "stop_on_transient_skip",
+                        consumer_cfg.get("stop_on_transient_skip", True),
+                    ),
                 )
             )
             proc_instance.preflight_check(stop_on_transient_skip=stop_on_transient_skip)

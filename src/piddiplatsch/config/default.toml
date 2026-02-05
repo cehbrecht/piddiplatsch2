@@ -9,13 +9,13 @@ output_dir = "outputs"
  # --- Transient External Failures (STAC/network) ---
  # Stop consumption on transient failures after bounded retries.
  # Override at runtime with the CLI flag --force to continue.
- stop_on_transient_skip = true
+ stop_on_skip = true
  # Number of retry attempts for transient PATCH fetch failures.
- transient_retries = 3
+ retries = 3
  # Initial backoff delay (seconds) for transient retries.
- transient_backoff_initial = 0.5
+ backoff_initial = 0.5
  # Maximum backoff delay (seconds) for transient retries.
- transient_backoff_max = 5.0
+ backoff_max = 5.0
  # Probe STAC health at startup; if unhealthy and not forced, exit early (fail-fast).
  preflight_stac = true
 
