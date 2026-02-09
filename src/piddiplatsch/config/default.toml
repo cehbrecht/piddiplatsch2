@@ -1,34 +1,60 @@
+#############################################
+# Piddiplatsch Default Configuration
+#
+# Overview of sections:
+# - consumer: message processing pipeline defaults
+# - kafka: Kafka client settings (librdkafka options supported)
+# - handle: Handle server settings (use overrides for secrets)
+# - stac: STAC client and collection
+# - elasticsearch: ES endpoint and index (if using ES lookups)
+# - schema: validation strictness
+# - plugins.cmip6: plugin-specific options
+# - lookup: choose STAC or ES backend
+# - stats: logging/SQLite reporter settings
+#
+# Best practice: keep defaults here minimal and documented.
+# Apply site-specific overrides in custom.toml or environment.
+#############################################
+
 [consumer]
 processor = "cmip6"
 topic = "CMIP6"
 output_dir = "outputs"
-max_errors = 10  # -1 = unlimited, any positive int = stop after that many
- # --- Transient External Failure Handling (STAC/network) ---
- # stop_on_transient_skip: if true, stop consumption on transient external failures
- #   (e.g., STAC unreachable/timeouts/HTTP 5xx) after bounded retries.
- #   Override at runtime with the CLI flag --force to continue.
- stop_on_transient_skip = true
- # transient_retries: number of attempts for transient fetch failures (PATCH fetch).
- transient_retries = 3
- # transient_backoff_initial: initial backoff delay in seconds for retries.
- transient_backoff_initial = 0.5
- # transient_backoff_max: maximum backoff delay in seconds.
- transient_backoff_max = 5.0
- # preflight_stac: probe STAC health at startup; if unhealthy and not forced,
- #   the consumer exits early (fail-fast).
- preflight_stac = true
+# Maximum number of errors before stopping; -1 = unlimited.
+max_errors = 10
+
+[consumer.transient]
+# --- Transient External Failures (STAC/network) ---
+# Stop consumption on transient failures after bounded retries.
+# Override at runtime with the CLI flag --force to continue.
+stop_on_skip = true
+# Retry attempts for transient STAC fetch/patch failures.
+retries = 3
+# Exponential backoff for transient retries (seconds).
+backoff_initial = 0.5  # seconds
+backoff_max = 5.0      # seconds cap
+# Probe STAC health at startup; if unhealthy and not forced, exit early (fail-fast).
+preflight_stac = true
 
 [kafka]
+# Kafka client configuration. Environment overrides recommended for brokers and group.
 "bootstrap.servers" = "localhost:39092"
 "group.id" = "piddiplatsch-001"
 "auto.offset.reset" = "earliest"
 "enable.auto.commit" = true
 
-# Best practice for higher availability in librdkafka clients prior to 1.7
+# Best practice for higher availability in librdkafka clients prior to 1.7.
 "session.timeout.ms" = 45000
 
+# Note: dotted librdkafka keys are quoted to keep them as literal TOML keys.
+
 [handle]
-# backend = "jsonl"
+# Handle backend: use "pyhandle" to publish, or "jsonl" for local output only.
+# Avoid committing real credentials; set username/password via overrides.
+# Example override (custom.toml):
+# [handle]
+# username = "300:21.TEST/your-user"
+# password = "***"
 backend = "pyhandle"
 server_url = "http://localhost:8000"
 prefix = "21.TEST"
@@ -36,46 +62,51 @@ username = "300:21.TEST/testuser"
 password = "testpass"
 
 [stac]
+# Remote STAC API base URL; omit to use local/dummy client.
 base_url = "https://api.stac.esgf.ceda.ac.uk"
-timeout = 10
+timeout = 10  # seconds
 collection = "cmip6"
 
 [elasticsearch]
+# Elasticsearch endpoint (used when lookup.backend = "es").
 base_url = "http://elastic-hippo.cloud.dkrz.de:9200"
+# Target index for lookups/writes (backend-specific usage).
 index = "handle_21t14995"
 
 [schema]
+# Enforce strict schema validation; set false to be permissive.
 strict_mode = true
 
 [plugins.cmip6]
-# Base URL for landing pages used to construct dataset and file URLs
+# Base URL for landing pages used to construct dataset/file URLs.
 landing_page_url = "https://handle-esgf.dkrz.de/lp"
 
-# Limit the number of HAS_PARTS entries; -1 for unlimited
+# Limit the number of HAS_PARTS entries; -1 for unlimited.
 max_parts = -1
 
-# Asset keys to exclude from HAS_PARTS generation
+# Asset keys excluded from HAS_PARTS generation (non-data assets, previews, etc.).
 excluded_asset_keys = ["reference_file", "globus", "thumbnail", "quicklook"]
 
-# Preferred asset keys to resolve host and published_on (optional)
+# Preferred asset keys to resolve host and published_on (optional).
 # preferred_asset_keys = ["reference_file", "data0000", "data0001"]
 
-# Enable previous-version lookup (optional; default true)
+# Enable previous-version lookup (optional; default: true).
 # enable_previous_version_lookup = true
 
 [lookup]
-backend = "stac" # or "es"
+# Lookup backend: "stac" (requires stac.base_url) or "es" (requires elasticsearch.base_url).
+backend = "stac"
 enabled = true
 
 [stats]
-# Interval in seconds for logging stats (console + DB)
+# Log interval (seconds) for console/DB reporters.
 interval_seconds = 10
 
-# Number of messages processed before logging stats
+# Message count threshold before logging a stats snapshot.
 summary_interval = 1000
 
-# Enable SQLite reporter for persistent stats
+# Enable SQLite reporter for persistent stats.
 enable_db = true
 
-# Path to SQLite database file (only used if enable_db = true)
+# Path to SQLite database file (used only if enable_db = true).
 db_path = "stats.db"

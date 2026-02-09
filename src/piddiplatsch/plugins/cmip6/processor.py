@@ -33,7 +33,14 @@ class CMIP6Processor(BaseProcessor):
         """
         stac_cfg = config.get("stac", {})
         base_url = stac_cfg.get("base_url")
-        preflight = bool(config.get("consumer", {}).get("preflight_stac", True))
+        consumer_cfg = config.get("consumer", {})
+        transient_cfg = consumer_cfg.get("transient", {})
+        preflight = bool(
+            transient_cfg.get(
+                "preflight_stac",
+                consumer_cfg.get("preflight_stac", True),
+            )
+        )
         timeout = float(stac_cfg.get("timeout", 10.0))
         if not preflight or not base_url:
             return
@@ -139,11 +146,34 @@ class CMIP6Processor(BaseProcessor):
         collection_id = payload["collection_id"]
         item_id = payload["item_id"]
         patch_data = payload["patch"]
-        retries = int(config.get("consumer", {}).get("transient_retries", 3))
-        base_delay = float(
-            config.get("consumer", {}).get("transient_backoff_initial", 0.5)
+        consumer_cfg = config.get("consumer", {})
+        transient_cfg = consumer_cfg.get("transient", {})
+        retries = int(
+            transient_cfg.get(
+                "retries",
+                transient_cfg.get(
+                    "transient_retries", consumer_cfg.get("transient_retries", 3)
+                ),
+            )
         )
-        max_delay = float(config.get("consumer", {}).get("transient_backoff_max", 5.0))
+        base_delay = float(
+            transient_cfg.get(
+                "backoff_initial",
+                transient_cfg.get(
+                    "transient_backoff_initial",
+                    consumer_cfg.get("transient_backoff_initial", 0.5),
+                ),
+            )
+        )
+        max_delay = float(
+            transient_cfg.get(
+                "backoff_max",
+                transient_cfg.get(
+                    "transient_backoff_max",
+                    consumer_cfg.get("transient_backoff_max", 5.0),
+                ),
+            )
+        )
 
         last_err: Exception | None = None
         delay = base_delay
