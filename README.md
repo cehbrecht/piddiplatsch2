@@ -8,7 +8,10 @@
 
 ---
 
-**Piddiplatsch** is a [Kafka](https://kafka.apache.org/) consumer for CMIP6+ records that integrates with a [Handle Service](https://pypi.org/project/pyhandle/) for persistent identifiers (PIDs).
+**Piddiplatsch** is a [Kafka](https://kafka.apache.org/) consumer for CMIP6+ records that integrates with a [Handle Service](https://pypi.org/project/pyhandle/) to reliably register persistent identifiers (PIDs).  
+*Curious by nature. Persistent by design.*
+
+Inspired by the TV puppet [Pittiplatsch](https://en.wikipedia.org/wiki/Pittiplatsch), the name reflects more than wordplay. “Pitti” gives us the CLI name `piddi`, while the PID pun is purely phonetic. Like its namesake, Piddiplatsch is curious, persistent, and unafraid of a little chaos: it jumps into streaming data, handles errors head-on, and keeps going until the job is done.
 
 ---
 
@@ -139,13 +142,7 @@ See implementation details in [src/piddiplatsch/persist/retry.py](src/piddiplats
 
 ---
 
-## 🧾 Name (Origin)
-
-Piddiplatsch is a playful nod to the TV puppet [Pittiplatsch](https://en.wikipedia.org/wiki/Pittiplatsch). The puppet’s shortname "pitti" inspired our CLI shortname "piddi". Any relation to PID services is purely phonetic: it merely starts with "PID(di)".
-
-piddiplatsch is like Pittiplatsch the gremlin-enthusiast data wrangler — curious, persistent, and unafraid to dive into messy streams and come out with reliable results.
-
----
+ 
 
 ## 🧩 Plugins (Concise)
 
