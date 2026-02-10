@@ -5,9 +5,9 @@ services:
     hostname: kafka-gen
     container_name: kafka-gen
     volumes:
-      - ./scripts/create_cluster_id.sh:/tmp/create_cluster_id.sh:ro
+      - ./scripts:/tmp/scripts:ro
       - ./clusterID:/tmp/clusterID
-    command: "bash -c 'bash /tmp/create_cluster_id.sh'"
+    command: "bash -c 'bash /tmp/scripts/create_cluster_id.sh'"
     networks:
       - kafka-net
 
@@ -33,9 +33,9 @@ services:
       KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
     volumes:
       - kafka1-data:/var/lib/kafka/data
-      - ./scripts/update_run.sh:/tmp/update_run.sh:ro
+      - ./scripts:/tmp/scripts:ro
       - ./clusterID:/tmp/clusterID
-    command: "bash -c 'bash /tmp/update_run.sh && /etc/confluent/docker/run'"
+    command: "bash -c 'bash /tmp/scripts/update_run.sh && /etc/confluent/docker/run'"
     networks:
       - kafka-net
 
@@ -61,9 +61,9 @@ services:
       KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
     volumes:
       - kafka2-data:/var/lib/kafka/data
-      - ./scripts/update_run.sh:/tmp/update_run.sh:ro
+      - ./scripts:/tmp/scripts:ro
       - ./clusterID:/tmp/clusterID
-    command: "bash -c 'bash /tmp/update_run.sh && /etc/confluent/docker/run'"
+    command: "bash -c 'bash /tmp/scripts/update_run.sh && /etc/confluent/docker/run'"
     networks:
       - kafka-net
 
@@ -89,9 +89,9 @@ services:
       KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
     volumes:
       - kafka3-data:/var/lib/kafka/data
-      - ./scripts/update_run.sh:/tmp/update_run.sh:ro
+      - ./scripts:/tmp/scripts:ro
       - ./clusterID:/tmp/clusterID
-    command: "bash -c 'bash /tmp/update_run.sh && /etc/confluent/docker/run'"
+    command: "bash -c 'bash /tmp/scripts/update_run.sh && /etc/confluent/docker/run'"
     networks:
       - kafka-net
 

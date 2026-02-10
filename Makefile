@@ -114,7 +114,7 @@ test-smoke: start-docker ## run smoke tests only (requires Docker: Kafka + Handl
 	@echo "Running smoke tests ..."
 	# Ensure Kafka topic exists before starting consumer
 	@echo "Ensuring Kafka topic exists (from config) ..."
-	@bash scripts/ensure_kafka_topic.sh tests/config.toml 10 2 || true
+	@bash scripts/ensure_kafka_topic.sh || true
 	# Start production consumer in background
 	@echo "Starting piddi consumer (background) ..."
 	@bash -c 'piddi --config tests/config.toml consume & echo $$! > .consumer.pid && echo "Consumer PID: $$(cat .consumer.pid)"'
