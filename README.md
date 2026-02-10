@@ -111,6 +111,25 @@ piddi consume
 
 ```bash
 piddi --config custom.toml --verbose --debug --log my.log consume --dump
+
+### Observe mode (example)
+
+For exploratory deployments where you want to inspect incoming messages without registering real PIDs, use the provided relaxed config and dry-run flags:
+
+```bash
+# Example config with relaxed constraints
+cp etc/observe.toml .
+
+# Run in observe mode (no real Handle writes)
+piddi --config observe.toml consume --dry-run --dump --force
+```
+
+What this does:
+- Sets `consumer.max_errors=1000` and `stop_on_skip=false` (keeps going)
+- Uses `handle.backend=jsonl` (writes records locally)
+- Disables strict schema checks (`schema.strict_mode=false`)
+
+When ready for production, simply run with your normal config (defaults are conservative), and omit `--dry-run` and `--force`.
 ```
 
 ---
