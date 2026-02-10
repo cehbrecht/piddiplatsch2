@@ -273,10 +273,8 @@ def start_consumer(
     dry_run: bool = False,
     force: bool = False,
 ):
-    if enable_db:
-        stats.__init__(db_path=db_path)
-    else:
-        stats.__init__()
+    # Initialize stats cleanly for this run (encapsulated)
+    stats.configure_for_run(enable_db=enable_db, db_path=db_path)
 
     if direct_messages is not None:
         consumer = DirectConsumer(direct_messages)
