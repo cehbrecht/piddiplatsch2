@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 from pathlib import Path
 
 from confluent_kafka import Producer
@@ -23,7 +24,25 @@ def get_admin_client(kafka_cfg):
 
 def ensure_topic_exists(topic, kafka_cfg, num_partitions=1, replication_factor=1):
     admin_client = get_admin_client(kafka_cfg)
-    metadata = admin_client.list_topics(timeout=5)
+    # Retry metadata fetch briefly to allow brokers to become fully ready
+    attempts = 15
+    delay = 1.0
+    last_err = None
+    for i in range(attempts):
+        try:
+            metadata = admin_client.list_topics(timeout=5)
+            break
+        except Exception as e:
+            last_err = e
+            logging.debug(
+                f"Kafka AdminClient.list_topics failed (attempt {i + 1}/{attempts}): {e}"
+            )
+            time.sleep(delay)
+            if delay < 4.0:
+                delay = min(4.0, delay * 1.5)
+    else:
+        # Exhausted attempts
+        raise last_err
 
     if topic in metadata.topics:
         logging.debug(f"Kafka topic '{topic}' already exists.")

@@ -114,7 +114,7 @@ test-smoke: start-docker ## run smoke tests only (requires Docker: Kafka + Handl
 	@echo "Running smoke tests ..."
 	# Ensure Kafka topic exists before starting consumer
 	@echo "Ensuring Kafka topic exists (from config) ..."
-	@bash -c 'python -c "from piddiplatsch.config import config; config.load_user_config(\"tests/config.toml\"); from piddiplatsch.testing.kafka_client import ensure_topic_exists_from_config; ensure_topic_exists_from_config()"'
+	@bash scripts/ensure_kafka_topic.sh tests/config.toml 10 2 || true
 	# Start production consumer in background
 	@echo "Starting piddi consumer (background) ..."
 	@bash -c 'piddi --config tests/config.toml consume & echo $$! > .consumer.pid && echo "Consumer PID: $$(cat .consumer.pid)"'
@@ -167,9 +167,9 @@ start-docker: ## start Docker services (Kafka + Handle server) for testing
 	@echo "🐳 Starting Docker services (Kafka + Handle server)..."
 	@echo "======================================================================"
 	@docker-compose up --build -d
-	@echo "⏳ Waiting 5 seconds for services to initialize..."
-	@sleep 5
-	@echo "✅ Docker services ready!"
+	@echo "🔍 Checking Kafka readiness on localhost:39092 (max 25s)..."
+	@bash -c 'retries=25; i=0; while [ $$i -lt $$retries ]; do if nc -z localhost 39092 >/dev/null 2>&1; then echo "✅ Kafka is ready!"; exit 0; fi; sleep 1; i=$$((i+1)); done; echo "⚠️ Kafka may not be ready yet; proceeding anyway."'
+	@echo "✅ Docker services started!"
 	@echo ""
 
 stop-docker: ## stop Docker test services
