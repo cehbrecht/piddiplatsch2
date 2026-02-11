@@ -2,7 +2,14 @@ from __future__ import annotations
 
 from typing import Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 from urllib.parse import urlsplit
 
 
@@ -24,9 +31,9 @@ class KafkaConfig(BaseModel):
     enable_auto_commit: Optional[bool] = Field(None, alias="enable.auto.commit")
     session_timeout_ms: Optional[int] = Field(None, alias="session.timeout.ms")
 
-    def validate_format(self) -> list[str]:
-        errors: list[str] = []
-
+    @field_validator("bootstrap_servers")
+    @classmethod
+    def _check_bootstrap_servers(cls, v: str) -> str:
         def _valid_hostport(token: str) -> bool:
             token = token.strip()
             if not token:
@@ -39,13 +46,13 @@ class KafkaConfig(BaseModel):
             except Exception:
                 return False
 
-        invalid = [t for t in self.bootstrap_servers.split(",") if not _valid_hostport(t)]
+        invalid = [t for t in v.split(",") if not _valid_hostport(t)]
         if invalid:
-            errors.append(
+            raise ValueError(
                 "[kafka].bootstrap.servers must be a comma-separated list of host:port; invalid: "
                 + ", ".join(s.strip() for s in invalid)
             )
-        return errors
+        return v
 
 
 class HandleConfig(BaseModel):
@@ -56,6 +63,15 @@ class HandleConfig(BaseModel):
     prefix: Optional[str] = None
     username: Optional[str] = None
     password: Optional[str] = None
+
+    @model_validator(mode="after")
+    def _check_pyhandle_requirements(self) -> "HandleConfig":
+        if self.backend == "pyhandle":
+            if not self.server_url:
+                raise ValueError("Missing required setting: [handle].server_url")
+            if not self.prefix:
+                raise ValueError("Missing required setting: [handle].prefix")
+        return self
 
 
 class StacConfig(BaseModel):
@@ -103,6 +119,17 @@ class AppConfig(BaseModel):
     schema_config: Optional[SchemaConfig] = Field(None, alias="schema")
     plugins: Optional[PluginsConfig] = None
 
+    @model_validator(mode="after")
+    def _check_lookup_requirements(self) -> "AppConfig":
+        if self.lookup and self.lookup.enabled:
+            if self.lookup.backend == "stac":
+                if not (self.stac and self.stac.base_url):
+                    raise ValueError("Missing required setting: [stac].base_url")
+            elif self.lookup.backend == "es":
+                if not (self.elasticsearch and self.elasticsearch.base_url):
+                    raise ValueError("Missing required setting: [elasticsearch].base_url")
+        return self
+
 
 def validate_config(data: dict) -> tuple[list[str], list[str]]:
     """Validate config using Pydantic models and simple cross-checks.
@@ -121,35 +148,14 @@ def validate_config(data: dict) -> tuple[list[str], list[str]]:
             errors.append(f"{loc}: {msg}")
         return errors, warnings
 
-    # kafka format checks
-    errors.extend(cfg.kafka.validate_format())
-
-    # handle backend requirements
-    if cfg.handle and cfg.handle.backend not in {None, "pyhandle", "jsonl"}:
-        errors.append("[handle].backend must be 'pyhandle' or 'jsonl'")
-    if cfg.handle and cfg.handle.backend == "pyhandle":
-        if not cfg.handle.server_url:
-            errors.append("Missing required setting: [handle].server_url")
-        if not cfg.handle.prefix:
-            errors.append("Missing required setting: [handle].prefix")
-        if (
-            cfg.handle.username == "300:21.TEST/testuser"
-            and cfg.handle.password == "testpass"
-        ):
-            warnings.append("[handle] demo credentials detected; do not use in production")
-
-    # lookup backend requirements
-    if cfg.lookup and cfg.lookup.enabled:
-        if cfg.lookup.backend not in {"stac", "es"}:
-            errors.append("[lookup].backend must be 'stac' or 'es' when enabled")
-        elif cfg.lookup.backend == "stac":
-            if not (cfg.stac and cfg.stac.base_url):
-                errors.append("Missing required setting: [stac].base_url")
-        elif cfg.lookup.backend == "es":
-            if not (cfg.elasticsearch and cfg.elasticsearch.base_url):
-                errors.append("Missing required setting: [elasticsearch].base_url")
-            elif not (cfg.elasticsearch.index):
-                warnings.append("[elasticsearch].index is not set; some features may be unavailable")
+    # warnings
+    if cfg.handle and (
+        cfg.handle.username == "300:21.TEST/testuser" and cfg.handle.password == "testpass"
+    ):
+        warnings.append("[handle] demo credentials detected; do not use in production")
+    if cfg.lookup and cfg.lookup.enabled and cfg.lookup.backend == "es":
+        if cfg.elasticsearch and not (cfg.elasticsearch.index):
+            warnings.append("[elasticsearch].index is not set; some features may be unavailable")
 
     # schema strict_mode type handled by Pydantic; add no-op
 
