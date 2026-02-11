@@ -73,6 +73,20 @@ piddi --config tests/config.toml config validate
 
 Validations include presence and format of `consumer.processor`, `consumer.topic`, `kafka.bootstrap.servers` (comma-separated `host:port`), and backend requirements for `handle` and `lookup`.
 
+### Makefile: Config Validation Target
+
+Before smoke tests, the Makefile validates both the default config and the test config.
+
+```bash
+# Validate default + tests/config.toml
+make config-validate
+
+# Smoke tests automatically run validation first
+make test-smoke
+```
+
+This catches misconfigurations early (non-zero exit on errors) before bringing up Docker.
+
 ---
 
 ## ✅ Testing

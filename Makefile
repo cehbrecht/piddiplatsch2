@@ -102,6 +102,12 @@ pre-commit: ## run all pre-commit hooks
 
 test: test-unit test-integration ## run all fast tests (unit + integration, no Docker required)
 
+config-validate: ## validate default and test configuration before smoke/integration
+	@echo "Validating default configuration ..."
+	@bash -c 'python -m piddiplatsch.cli config validate'
+	@echo "Validating tests/config.toml ..."
+	@bash -c 'python -m piddiplatsch.cli --config tests/config.toml config validate'
+
 test-unit: ## run unit tests only (fast, no external dependencies - unmarked tests)
 	@echo "Running unit tests ..."
 	@bash -c 'python -m pytest -v -m "not integration and not smoke" tests/'
@@ -110,7 +116,7 @@ test-integration: ## run integration tests only (JSONL backend, no Docker requir
 	@echo "Running integration tests ..."
 	@bash -c 'python -m pytest -v -m "integration" tests/'
 
-test-smoke: start-docker ## run smoke tests only (requires Docker: Kafka + Handle server)
+test-smoke: config-validate start-docker ## run smoke tests only (requires Docker: Kafka + Handle server)
 	@echo "Running smoke tests ..."
 	# Ensure Kafka topic exists before starting consumer
 	@echo "Ensuring Kafka topic exists (from config) ..."

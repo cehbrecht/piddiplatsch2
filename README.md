@@ -160,6 +160,17 @@ piddi --config custom.toml config validate
 
 Exits non-zero on errors; prints warnings when applicable.
 
+### Show Effective Config
+
+```bash
+piddi --config custom.toml config show           # TOML
+piddi --config custom.toml config show --format json
+piddi --config custom.toml config show --section consumer
+piddi --config custom.toml config show --section kafka --key group.id
+```
+
+Prints the merged defaults + your overrides for quick inspection.
+
 ---
 
 ## 🔄 Recovery & Retry
