@@ -36,6 +36,12 @@ services:
       - ./scripts:/tmp/scripts:ro
       - ./clusterID:/tmp/clusterID
     command: "bash -c 'bash /tmp/scripts/update_run.sh && /etc/confluent/docker/run'"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:19092 --list >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
     networks:
       - kafka-net
 
@@ -64,6 +70,12 @@ services:
       - ./scripts:/tmp/scripts:ro
       - ./clusterID:/tmp/clusterID
     command: "bash -c 'bash /tmp/scripts/update_run.sh && /etc/confluent/docker/run'"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:19093 --list >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
     networks:
       - kafka-net
 
@@ -92,6 +104,12 @@ services:
       - ./scripts:/tmp/scripts:ro
       - ./clusterID:/tmp/clusterID
     command: "bash -c 'bash /tmp/scripts/update_run.sh && /etc/confluent/docker/run'"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:19094 --list >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
     networks:
       - kafka-net
 
