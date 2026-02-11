@@ -59,6 +59,20 @@ This configuration:
 - Uses `handle.backend=jsonl` for local record output
 - Disables strict schema checks (`schema.strict_mode=false`)
 
+### Config Validation
+
+Validate the loaded configuration (defaults merged with `--config file`). Structural checks only; exits non-zero on errors:
+
+```bash
+# Validate current setup
+piddi config validate
+
+# Validate a specific TOML
+piddi --config tests/config.toml config validate
+```
+
+Validations include presence and format of `consumer.processor`, `consumer.topic`, `kafka.bootstrap.servers` (comma-separated `host:port`), and backend requirements for `handle` and `lookup`.
+
 ---
 
 ## ✅ Testing
