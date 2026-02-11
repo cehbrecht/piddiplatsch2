@@ -152,6 +152,14 @@ piddi --config custom.toml
 
 Kafka, Handle Service, consumer behaviour, and processor selection are all controlled via this file.
 
+### Validate Config
+
+```bash
+piddi --config custom.toml config validate
+```
+
+Exits non-zero on errors; prints warnings when applicable.
+
 ---
 
 ## 🔄 Recovery & Retry
