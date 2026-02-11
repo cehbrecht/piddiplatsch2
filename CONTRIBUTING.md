@@ -150,6 +150,8 @@ make docker-build    # rebuild images
 make docker-clean    # clean images and volumes
 ```
 
+See [scripts/README.md](scripts/README.md) for details on the Docker/smoke helper scripts used by these targets.
+
 ### Troubleshooting (Kafka Healthchecks)
 
 If Docker services don’t become healthy quickly:
