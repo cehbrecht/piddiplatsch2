@@ -68,6 +68,26 @@ Basics:
 
 Detailed options and the observe-mode example live in [CONTRIBUTING.md](CONTRIBUTING.md).
 
+### Observe Mode (Example)
+
+For exploratory runs without real Handle writes, use the relaxed example config:
+
+```bash
+# Option A: reference the file in-place
+piddi --config etc/observe.toml consume --dry-run --dump --force
+
+# Option B: copy and run locally
+cp etc/observe.toml .
+piddi --config observe.toml consume --dry-run --dump --force
+```
+
+What this does:
+- No external Handle Service calls (records written locally as JSONL)
+- Continues through transient skips (`--force`), useful for exploration
+- Dumps incoming messages to `outputs/dump/` when `--dump` is used
+
+See the configuration at [etc/observe.toml](etc/observe.toml).
+
 ---
 
 ## 🛠️ Configuration
