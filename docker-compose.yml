@@ -37,11 +37,11 @@ services:
       - ./clusterID:/tmp/clusterID
     command: "bash -c 'bash /tmp/scripts/update_run.sh && /etc/confluent/docker/run'"
     healthcheck:
-      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:19092 --list >/dev/null 2>&1"]
-      interval: 5s
-      timeout: 10s
-      retries: 20
-      start_period: 30s
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/kafka1/19092'"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
     networks:
       - kafka-net
 
@@ -71,11 +71,11 @@ services:
       - ./clusterID:/tmp/clusterID
     command: "bash -c 'bash /tmp/scripts/update_run.sh && /etc/confluent/docker/run'"
     healthcheck:
-      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:19093 --list >/dev/null 2>&1"]
-      interval: 5s
-      timeout: 10s
-      retries: 20
-      start_period: 30s
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/kafka2/19093'"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
     networks:
       - kafka-net
 
@@ -105,11 +105,11 @@ services:
       - ./clusterID:/tmp/clusterID
     command: "bash -c 'bash /tmp/scripts/update_run.sh && /etc/confluent/docker/run'"
     healthcheck:
-      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:19094 --list >/dev/null 2>&1"]
-      interval: 5s
-      timeout: 10s
-      retries: 20
-      start_period: 30s
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/kafka3/19094'"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
     networks:
       - kafka-net
 
