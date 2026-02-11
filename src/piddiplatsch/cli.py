@@ -152,5 +152,31 @@ def retry(ctx, path: tuple[Path, ...], delete_after: bool, dry_run: bool):
         click.echo("  ✓ All items processed successfully!")
 
 
+# config commands
+
+
+@cli.group()
+def config_cmd():
+    """Configuration commands."""
+    pass
+
+
+@config_cmd.command("validate")
+def config_validate():
+    """Validate the loaded configuration file and defaults."""
+    errors, warnings = config.validate()
+    if warnings:
+        click.echo("Warnings:")
+        for w in warnings:
+            click.echo(f"  - {w}")
+    if errors:
+        click.echo("Errors:")
+        for e in errors:
+            click.echo(f"  - {e}")
+        # Non-zero exit if invalid
+        raise SystemExit(1)
+    click.echo("✓ Configuration is valid")
+
+
 if __name__ == "__main__":
     cli()
