@@ -1,0 +1,25 @@
+#############################################
+# ESGF Example Overrides (non-defaults only)
+#
+# This file provides minimal overrides on top
+# of src/piddiplatsch/config/default.toml.
+#
+# Focus: Kafka settings for ESGF deployments.
+#############################################
+
+[kafka]
+# Replace with your ESGF brokers and group
+"bootstrap.servers" = "broker1.esgf.org:9093,broker2.esgf.org:9093"
+"group.id" = "piddi-esgf-demo"
+
+# Optional but recommended identifiers
+"client.id" = "piddi-esgf"
+
+# ESGF clusters commonly use SASL over SSL
+"security.protocol" = "SASL_SSL"
+"sasl.mechanisms" = "PLAIN"  # or SCRAM-SHA-256/512 depending on broker
+"sasl.username" = "esgf_user"
+"sasl.password" = "esgf_pass"
+
+# If your broker uses a custom CA, also set:
+# "ssl.ca.location" = "/path/to/ca.pem"
