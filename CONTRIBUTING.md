@@ -136,6 +136,31 @@ make docker-build    # rebuild images
 make docker-clean    # clean images and volumes
 ```
 
+### Troubleshooting (Kafka Healthchecks)
+
+If Docker services don’t become healthy quickly:
+
+- Verify container status and logs:
+   ```bash
+   docker-compose ps
+   docker-compose logs kafka1 kafka2 kafka3
+   ```
+- Use the helper script to wait for broker health:
+   ```bash
+   scripts/wait_for_kafka_health.sh 20 2
+   ```
+- Fallback check (port open on localhost):
+   ```bash
+   nc -z localhost 39092 && echo "Kafka port open"
+   ```
+- Adjust retries:
+   - Compose healthchecks use short intervals and 12 retries.
+   - Increase retries in `scripts/wait_for_kafka_health.sh` if your machine is slow.
+
+Notes:
+- Healthchecks probe internal broker ports via container hostnames (e.g., `kafka1:19092`).
+- The Makefile falls back to a quick port probe on `localhost:39092` to avoid long waits.
+
 ---
 
 ## 🧼 Code Style and Linting
