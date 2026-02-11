@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import toml
 from rich.logging import RichHandler
@@ -122,6 +123,26 @@ class Config:
         bs = require("kafka", "bootstrap.servers")
         if bs and not isinstance(bs, str):
             errors.append("[kafka].bootstrap.servers must be a string host:port list")
+        elif isinstance(bs, str):
+            # Validate comma-separated host:port entries using urlsplit on a schemeless URL (supports [IPv6]:port)
+            def _valid_hostport(token: str) -> bool:
+                token = token.strip()
+                if not token:
+                    return False
+                try:
+                    parsed = urlsplit(f"//{token}", allow_fragments=False)
+                    host = parsed.hostname
+                    port = parsed.port
+                    return host is not None and port is not None and 1 <= port <= 65535
+                except Exception:
+                    return False
+
+            invalid = [t for t in bs.split(",") if not _valid_hostport(t)]
+            if invalid:
+                errors.append(
+                    "[kafka].bootstrap.servers must be a comma-separated list of host:port; invalid: "
+                    + ", ".join(s.strip() for s in invalid)
+                )
 
         # handle backend
         backend = self.get("handle", "backend")
