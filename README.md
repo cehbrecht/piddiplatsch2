@@ -53,14 +53,22 @@ piddi --config custom.toml --verbose consume --dry-run --dump
 - Register/update PIDs via Handle Service
 - CLI commands: `consume`, `retry`
 - Multihash checksum support
+- Simple plugin support: select via `consumer.processor` (e.g., "cmip6")
 
 For full usage details and local Docker smoke tests, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
-## 🧪 Testing
+## 🚀 Usage (Overview)
 
-Testing guidance (unit, integration, smoke) is documented in [CONTRIBUTING.md](CONTRIBUTING.md).
+Basics:
+- Start consumer: `piddi consume`
+- Pass a config: `piddi --config custom.toml`
+- Use `--dry-run` and `--dump` for safe local inspection
+
+Detailed options and the observe-mode example live in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+---
 
 ## 🛠️ Configuration
 
@@ -79,25 +87,15 @@ piddi --config custom.toml
 
 ---
 
-## 🚀 Usage (Overview)
+## 🧪 Testing
 
-Basics:
-- Start consumer: `piddi consume`
-- Pass a config: `piddi --config custom.toml`
-- Use `--dry-run` and `--dump` for safe local inspection
+Quick examples:
+- All tests (unit + integration): `make test`
+- Unit only: `make test-unit`
+- Integration only: `make test-integration`
+- Smoke (Docker): `make test-smoke`
 
-Detailed options and the observe-mode example live in [CONTRIBUTING.md](CONTRIBUTING.md).
-
----
-
-## 🤝 Contributing
-
-Interested in contributing? Check out our [CONTRIBUTING.md](CONTRIBUTING.md) for:
-- Development setup
-- Testing guidelines (unit, integration, smoke tests)
-- Code style and linting
-- Version management
-- Development workflow
+Full guidance (env, Docker details) is in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
@@ -122,4 +120,10 @@ See implementation details in [src/piddiplatsch/persist/retry.py](src/piddiplats
 ## 🧩 Plugins (Overview)
 
 Select a plugin via `consumer.processor` (e.g., "cmip6"). Configuration and implementation guidance are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+---
+
+## 🤝 Contributing
+
+Interested in contributing? See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, testing, style, and workflow.
 
