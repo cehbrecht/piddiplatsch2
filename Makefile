@@ -167,8 +167,7 @@ start-docker: ## start Docker services (Kafka + Handle server) for testing
 	@echo "🐳 Starting Docker services (Kafka + Handle server)..."
 	@echo "======================================================================"
 	@docker-compose up --build -d
-	@echo "🔍 Checking Kafka readiness on localhost:39092 (max 25s)..."
-	@bash -c 'retries=25; i=0; while [ $$i -lt $$retries ]; do if nc -z localhost 39092 >/dev/null 2>&1; then echo "✅ Kafka is ready!"; exit 0; fi; sleep 1; i=$$((i+1)); done; echo "⚠️ Kafka may not be ready yet; proceeding anyway."'
+	@bash -c 'scripts/wait_for_kafka_health.sh 30 2' || ($(MAKE) stop-docker; exit 1)
 	@echo "✅ Docker services started!"
 	@echo ""
 
