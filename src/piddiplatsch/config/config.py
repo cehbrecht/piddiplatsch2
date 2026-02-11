@@ -1,9 +1,9 @@
 import logging
 from pathlib import Path
-from urllib.parse import urlsplit
 
 import toml
 from rich.logging import RichHandler
+from piddiplatsch.config.schema import validate_config
 
 DEFAULT_CONFIG_PATH = Path(__file__).parent / "default.toml"
 
@@ -97,91 +97,8 @@ class Config:
         )
 
     def validate(self) -> tuple[list[str], list[str]]:
-        """Validate the loaded configuration.
-
-        Returns (errors, warnings).
-        The function performs structural and semantic checks only; no network calls.
-        """
-        errors: list[str] = []
-        warnings: list[str] = []
-
-        def require(section: str, key: str):
-            value = self.get(section, key)
-            if value is None or (isinstance(value, str) and value.strip() == ""):
-                errors.append(f"Missing required setting: [{section}].{key}")
-            return value
-
-        # consumer basics
-        processor = require("consumer", "processor")
-        topic = require("consumer", "topic")
-        if processor and not isinstance(processor, str):
-            errors.append("[consumer].processor must be a string")
-        if topic and not isinstance(topic, str):
-            errors.append("[consumer].topic must be a string")
-
-        # kafka config
-        bs = require("kafka", "bootstrap.servers")
-        if bs and not isinstance(bs, str):
-            errors.append("[kafka].bootstrap.servers must be a string host:port list")
-        elif isinstance(bs, str):
-            # Validate comma-separated host:port entries using urlsplit on a schemeless URL (supports [IPv6]:port)
-            def _valid_hostport(token: str) -> bool:
-                token = token.strip()
-                if not token:
-                    return False
-                try:
-                    parsed = urlsplit(f"//{token}", allow_fragments=False)
-                    host = parsed.hostname
-                    port = parsed.port
-                    return host is not None and port is not None and 1 <= port <= 65535
-                except Exception:
-                    return False
-
-            invalid = [t for t in bs.split(",") if not _valid_hostport(t)]
-            if invalid:
-                errors.append(
-                    "[kafka].bootstrap.servers must be a comma-separated list of host:port; invalid: "
-                    + ", ".join(s.strip() for s in invalid)
-                )
-
-        # handle backend
-        backend = self.get("handle", "backend")
-        if backend not in {"pyhandle", "jsonl", None}:
-            errors.append("[handle].backend must be 'pyhandle' or 'jsonl'")
-        if backend == "pyhandle":
-            require("handle", "server_url")
-            require("handle", "prefix")
-            # Warn if default demo credentials are present
-            user = self.get("handle", "username")
-            pwd = self.get("handle", "password")
-            if user == "300:21.TEST/testuser" and pwd == "testpass":
-                warnings.append("[handle] demo credentials detected; do not use in production")
-
-        # lookup backend
-        enabled = self.get("lookup", "enabled", True)
-        backend_lookup = self.get("lookup", "backend")
-        if enabled:
-            if backend_lookup not in {"stac", "es"}:
-                errors.append("[lookup].backend must be 'stac' or 'es' when enabled")
-            if backend_lookup == "stac":
-                require("stac", "base_url")
-            if backend_lookup == "es":
-                require("elasticsearch", "base_url")
-                # index often required; warn if missing
-                if self.get("elasticsearch", "index") in (None, ""):
-                    warnings.append("[elasticsearch].index is not set; some features may be unavailable")
-
-        # schema
-        strict = self.get("schema", "strict_mode")
-        if strict is not None and not isinstance(strict, bool):
-            errors.append("[schema].strict_mode must be a boolean")
-
-        # plugins: cmip6 hints
-        cmip6_lp = self.get_plugin("cmip6", "landing_page_url")
-        if cmip6_lp in (None, ""):
-            warnings.append("[plugins.cmip6].landing_page_url not set; landing pages may be missing")
-
-        return errors, warnings
+        """Validate the loaded configuration using Pydantic models."""
+        return validate_config(self.config_data)
 
 
 # singleton instance
