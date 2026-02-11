@@ -51,27 +51,16 @@ piddi --config custom.toml --verbose consume --dry-run --dump
 
 - Kafka consumer for CMIP6+ records
 - Register/update PIDs via Handle Service
-- Local testing via Docker (Kafka + mock Handle)
 - CLI commands: `consume`, `retry`
 - Multihash checksum support
+
+For full usage details and local Docker smoke tests, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
 ## 🧪 Testing
 
-Quick checks and end-to-end:
-
-```bash
-# Fast tests (unit + integration)
-make test
-
-# Unit only / Integration only
-make test-unit
-make test-integration
-
-# Smoke (starts Docker: Kafka + mock Handle)
-make test-smoke
-```
+Testing guidance (unit, integration, smoke) is documented in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 🛠️ Configuration
 
@@ -90,47 +79,14 @@ piddi --config custom.toml
 
 ---
 
-## 🚀 Usage
+## 🚀 Usage (Overview)
 
-> ⚠️ **Requires external Kafka and Handle services to be running.**  
-> 💡 For local testing/development, see [CONTRIBUTING.md](CONTRIBUTING.md) for Docker setup.
+Basics:
+- Start consumer: `piddi consume`
+- Pass a config: `piddi --config custom.toml`
+- Use `--dry-run` and `--dump` for safe local inspection
 
-### Start the consumer
-
-```bash
-piddi consume
-```
-
-### Options
-
-- **Verbose**: `--verbose`
-- **Debug/log file**: `--debug --log my.log`
-- **Dump messages**: `--dump` (writes JSONL files under `outputs/dump/`)
-- **Dry-run**: `--dry-run` (writes handle records to JSONL without contacting Handle Service)
-- **Force-continue**: `--force` (continue on transient external failures like STAC outages; still persists skipped messages)
-
-```bash
-piddi --config custom.toml --verbose --debug --log my.log consume --dump
-
-### Observe mode (example)
-
-For exploratory deployments where you want to inspect incoming messages without registering real PIDs, use the provided relaxed config and dry-run flags:
-
-```bash
-# Example config with relaxed constraints
-cp etc/observe.toml .
-
-# Run in observe mode (no real Handle writes)
-piddi --config observe.toml consume --dry-run --dump --force
-```
-
-What this does:
-- Sets `consumer.max_errors=1000` and `stop_on_skip=false` (keeps going)
-- Uses `handle.backend=jsonl` (writes records locally)
-- Disables strict schema checks (`schema.strict_mode=false`)
-
-When ready for production, simply run with your normal config (defaults are conservative), and omit `--dry-run` and `--force`.
-```
+Detailed options and the observe-mode example live in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
@@ -163,23 +119,7 @@ See implementation details in [src/piddiplatsch/persist/retry.py](src/piddiplats
 
  
 
-## 🧩 Plugins (Concise)
+## 🧩 Plugins (Overview)
 
-- One plugin active at a time, selected via `consumer.processor` (e.g., `"cmip6"`).
-- Static registry: CMIP6 is registered by default; future plugins (e.g., `cordex`) are added explicitly.
-- Config lives under `[plugins.<name>]`, for example:
-
-```toml
-[plugins.cmip6]
-landing_page_url = "https://handle-esgf.dkrz.de/lp"
-max_parts = -1
-excluded_asset_keys = ["reference_file", "globus", "thumbnail", "quicklook"]
-```
-
-To add a plugin:
-- Implement a processor (subclass of `BaseProcessor`) under `src/piddiplatsch/plugins/<name>/processor.py`.
-- Register it in the static registry (see `piddiplatsch.core.registry.register_processor("<name>", YourProcessor)`).
-- Provide `[plugins.<name>]` config as needed.
-
-Note: Design is intentionally simple and may evolve; no dynamic framework is required.
+Select a plugin via `consumer.processor` (e.g., "cmip6"). Configuration and implementation guidance are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
 

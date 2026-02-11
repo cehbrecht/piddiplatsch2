@@ -1,10 +1,22 @@
 ---
 
-## 🔌 Plugins (Brief)
+## 🔌 Plugins
 
 - One plugin active at a time, selected via `consumer.processor` (e.g., "cmip6").
 - Config for each plugin lives under `[plugins.<name>]` in the TOML.
-- See the concise Plugins section in the README for current guidance.
+- Example (CMIP6):
+
+```toml
+[plugins.cmip6]
+landing_page_url = "https://handle-esgf.dkrz.de/lp"
+max_parts = -1
+excluded_asset_keys = ["reference_file", "globus", "thumbnail", "quicklook"]
+```
+
+To add a plugin:
+- Implement a processor under `src/piddiplatsch/plugins/<name>/processor.py`.
+- Register it in the static registry (see `piddiplatsch.core.registry.register_processor("<name>", YourProcessor)`).
+- Provide `[plugins.<name>]` config as needed.
 
 # Contributing to Piddiplatsch
 
@@ -104,6 +116,8 @@ Docker is only used for smoke tests. The containers provide:
 - Kafka cluster (3 nodes)
 - Mock Handle server
 
+Kafka readiness can be slightly delayed; the workflow uses a simple port check (`nc -z`) and a Python helper to ensure the topic exists with retries.
+
 Start Docker services manually:
 
 ```bash
@@ -129,6 +143,35 @@ make docker-clean
 ```
 
 ---
+
+## 🔧 CLI Usage & Options
+
+Requires external Kafka and Handle services (or use the local Docker stack for smoke).
+
+- Start consumer: `piddi consume`
+- Common flags:
+   - `--config <path>`: point to your TOML config
+   - `--verbose`: more logging
+   - `--debug --log my.log`: enable debug and log to file
+   - `--dump`: write incoming messages to `outputs/dump/`
+   - `--dry-run`: write handle records to JSONL without contacting Handle Service
+   - `--force`: continue on transient external failures (e.g., STAC outages)
+
+### Observe mode (example)
+
+For exploratory runs without real Handle writes, use the relaxed example config together with dry-run:
+
+```bash
+cp etc/observe.toml .
+piddi --config observe.toml consume --dry-run --dump --force
+```
+
+This configuration:
+- Sets `consumer.max_errors=1000` and `stop_on_skip=false` to keep processing
+- Uses `handle.backend=jsonl` for local record output
+- Disables strict schema checks (`schema.strict_mode=false`)
+
+When ready for production, run with your normal config (defaults are conservative) and omit `--dry-run` and `--force`.
 
 ## 🧼 Code Style and Linting
 
