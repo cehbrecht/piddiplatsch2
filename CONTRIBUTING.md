@@ -1,26 +1,7 @@
----
-
-## 🔌 Plugins
-
-- One plugin active at a time, selected via `consumer.processor` (e.g., "cmip6").
-- Config for each plugin lives under `[plugins.<name>]` in the TOML.
-- Example (CMIP6):
-
-```toml
-[plugins.cmip6]
-landing_page_url = "https://handle-esgf.dkrz.de/lp"
-max_parts = -1
-excluded_asset_keys = ["reference_file", "globus", "thumbnail", "quicklook"]
-```
-
-To add a plugin:
-- Implement a processor under `src/piddiplatsch/plugins/<name>/processor.py`.
-- Register it in the static registry (see `piddiplatsch.core.registry.register_processor("<name>", YourProcessor)`).
-- Provide `[plugins.<name>]` config as needed.
-
 # Contributing to Piddiplatsch
 
-Thank you for your interest in contributing to Piddiplatsch! This guide will help you get started with development, testing, and making contributions.
+Thank you for your interest in contributing to Piddiplatsch!  
+This guide will help you get started with development, testing, and making contributions.
 
 ---
 
@@ -30,6 +11,7 @@ Thank you for your interest in contributing to Piddiplatsch! This guide will hel
 
 - [Miniconda (via conda-forge)](https://conda-forge.org/download/)
 - Git
+- Python 3.11+
 
 ### Setting Up Your Development Environment
 
@@ -40,7 +22,7 @@ cd piddiplatsch2
 
 # Create and activate conda environment
 conda env create
-conda activate piddiplatsch2
+conda activate piddi
 
 # Install in development mode with dev dependencies
 pip install -e ".[dev]"
@@ -50,116 +32,22 @@ make develop
 
 ---
 
-## ✅ Testing
-
-This project uses a three-tier testing strategy to ensure code quality at different levels.
-
-### Test Types
-
-**Unit Tests** (fast, no external dependencies)
-- Located in `tests/`
-- Pure logic tests with mocked dependencies
-- No pytest markers required
-- Run on every commit
-
-**Integration Tests** (medium speed, JSONL backend)
-- Located in `tests/integration/`
-- Tests component interactions using JSONL backend
-- Marked with `@pytest.mark.integration`
-- No Docker required
-- Uses test configuration from `tests/config.toml`
-
-**Smoke Tests** (end-to-end, requires Docker)
-- Located in `tests/smoke/`
-- Full workflow tests with Kafka + mock Handle server
-- Marked with `@pytest.mark.smoke`
-- Docker services started/stopped automatically
-- **Note:** Docker is only for testing, not production
-
-### Running Tests
-
-Run all fast tests (unit + integration):
-
-```bash
-make test
-```
-
-Run only unit tests:
-
-```bash
-make test-unit
-```
-
-Run only integration tests:
-
-```bash
-make test-integration
-```
-
-Run smoke tests (Docker services started automatically):
-
-```bash
-make smoke
-# or
-make test-smoke
-```
-
-Run all tests including smoke tests:
-
-```bash
-make test-all
-```
-
-### Docker Management for Testing
-
-Docker is only used for smoke tests. The containers provide:
-- Kafka cluster (3 nodes)
-- Mock Handle server
-
-Kafka readiness can be slightly delayed; the workflow uses a simple port check (`nc -z`) and a Python helper to ensure the topic exists with retries.
-
-Start Docker services manually:
-
-```bash
-make start-docker
-```
-
-Stop Docker services:
-
-```bash
-make stop-docker
-```
-
-Rebuild Docker images:
-
-```bash
-make docker-build
-```
-
-Clean up Docker images and volumes:
-
-```bash
-make docker-clean
-```
-
----
-
 ## 🔧 CLI Usage & Options
 
-Requires external Kafka and Handle services (or use the local Docker stack for smoke).
+Requires Kafka and Handle services (or use the local Docker stack for smoke tests).
 
 - Start consumer: `piddi consume`
 - Common flags:
-   - `--config <path>`: point to your TOML config
-   - `--verbose`: more logging
-   - `--debug --log my.log`: enable debug and log to file
-   - `--dump`: write incoming messages to `outputs/dump/`
-   - `--dry-run`: write handle records to JSONL without contacting Handle Service
-   - `--force`: continue on transient external failures (e.g., STAC outages)
+  - `--config <path>`: point to your TOML config
+  - `--verbose`: more logging
+  - `--debug --log my.log`: enable debug and log to file
+  - `--dump`: write incoming messages to `outputs/dump/`
+  - `--dry-run`: write handle records to JSONL without contacting Handle Service
+  - `--force`: continue on transient external failures (e.g., STAC outages)
 
-### Observe mode (example)
+### Observe Mode Example
 
-For exploratory runs without real Handle writes, use the relaxed example config together with dry-run:
+For exploratory runs without real Handle writes:
 
 ```bash
 cp etc/observe.toml .
@@ -171,7 +59,70 @@ This configuration:
 - Uses `handle.backend=jsonl` for local record output
 - Disables strict schema checks (`schema.strict_mode=false`)
 
-When ready for production, run with your normal config (defaults are conservative) and omit `--dry-run` and `--force`.
+---
+
+## ✅ Testing
+
+Piddiplatsch uses a three-tier testing strategy: **unit**, **integration**, and **smoke tests**.
+
+### Test Types
+
+**Unit Tests** (fast, no external dependencies)  
+- Located in `tests/`
+- Pure logic tests with mocked dependencies
+- Run on every commit
+
+**Integration Tests** (medium speed, JSONL backend)  
+- Located in `tests/integration/`
+- Test component interactions using JSONL backend
+- Marked with `@pytest.mark.integration`
+- No Docker required
+- Uses test configuration from `tests/config.toml`
+
+**Smoke Tests** (end-to-end, requires Docker)  
+- Located in `tests/smoke/`
+- Full workflow tests with Kafka + mock Handle server
+- Marked with `@pytest.mark.smoke`
+- Docker services started/stopped automatically
+
+### Running Tests
+
+```bash
+# Run all unit + integration tests
+make test
+
+# Run only unit tests
+make test-unit
+
+# Run only integration tests
+make test-integration
+
+# Run smoke tests (Docker services started automatically)
+make test-smoke
+
+# Run all tests including smoke tests
+make test-all
+
+# Run a single test file (example)
+pytest tests/test_my_module.py
+```
+
+### Docker Management for Testing
+
+Docker is only used for smoke tests. The containers provide:
+- Kafka cluster (3 nodes)
+- Mock Handle server
+
+Manual commands:
+
+```bash
+make start-docker    # start services
+make stop-docker     # stop services
+make docker-build    # rebuild images
+make docker-clean    # clean images and volumes
+```
+
+---
 
 ## 🧼 Code Style and Linting
 
@@ -180,7 +131,7 @@ This project uses automated tools to maintain code quality:
 - [`black`](https://black.readthedocs.io) - Code formatting
 - [`isort`](https://pycqa.github.io/isort/) - Import sorting
 - [`ruff`](https://docs.astral.sh/ruff/) - Linting and fast checks
-- [`pre-commit`](https://pre-commit.com) - Git hooks for automated checks
+- [`pre-commit`](https://pre-commit.com) - Git hooks
 
 ### Setup Pre-commit Hooks
 
@@ -189,19 +140,12 @@ pip install pre-commit
 pre-commit install
 ```
 
-This will automatically run checks before each commit.
+Pre-commit hooks run automatically before each commit.
 
 ### Manual Checks
 
-Run all pre-commit checks:
-
 ```bash
 pre-commit run --all-files
-```
-
-Or use Makefile targets:
-
-```bash
 make lint         # Run ruff, black, and isort checks
 make format       # Auto-format with black and isort
 make check-format # Check formatting only
@@ -229,7 +173,7 @@ make bump-major    # 1.0.0 → 2.0.0
 git push && git push --tags
 ```
 
-The version is stored in `pyproject.toml` and automatically tagged in git.
+Version is stored in `pyproject.toml` and automatically tagged in git.
 
 ---
 
@@ -239,30 +183,25 @@ The version is stored in `pyproject.toml` and automatically tagged in git.
    ```bash
    git checkout -b feature/your-feature-name
    ```
-
 2. **Make your changes**
    - Write code
    - Add/update tests
    - Update documentation if needed
-
 3. **Run tests and linting**
    ```bash
    make lint
    make test
    ```
-
 4. **Commit your changes**
    ```bash
    git add .
    git commit -m "Description of your changes"
    ```
-   Pre-commit hooks will run automatically.
-
+   Pre-commit hooks run automatically.
 5. **Push and create Pull Request**
    ```bash
    git push origin feature/your-feature-name
    ```
-   Then create a PR on GitHub.
 
 ---
 
@@ -311,9 +250,36 @@ def test_full_workflow(handle_client, testfile):
 
 ---
 
+## 🔌 Plugins
+
+- One plugin active at a time, selected via `consumer.processor` (e.g., "cmip6").
+- Config for each plugin lives under `[plugins.<name>]` in the TOML.
+- Example (CMIP6):
+
+```toml
+[plugins.cmip6]
+landing_page_url = "https://handle-esgf.dkrz.de/lp"
+max_parts = -1
+excluded_asset_keys = ["reference_file", "globus", "thumbnail", "quicklook"]
+```
+
+### Adding a Plugin
+
+1. Implement a processor under:
+```
+src/piddiplatsch/plugins/<name>/processor.py
+```
+2. Register it in the static registry:
+```python
+piddiplatsch.core.registry.register_processor("<name>", YourProcessor)
+```
+3. Provide `[plugins.<name>]` config as needed.
+
+---
+
 ## 🐛 Reporting Issues
 
-When reporting issues, please include:
+Include:
 - Python version
 - Operating system
 - Steps to reproduce
@@ -324,11 +290,11 @@ When reporting issues, please include:
 
 ## 💡 Questions?
 
-Feel free to:
-- Open an issue for questions
-- Start a discussion on GitHub
+- Open an issue on GitHub
+- Start a discussion
 - Check existing issues and PRs
 
 ---
 
 Thank you for contributing to Piddiplatsch! 🎉
+
