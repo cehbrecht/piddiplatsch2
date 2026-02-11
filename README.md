@@ -152,6 +152,25 @@ piddi --config custom.toml
 
 Kafka, Handle Service, consumer behaviour, and processor selection are all controlled via this file.
 
+### ESGF Example Config
+
+For non-Docker ESGF Kafka setups, copy the minimal override from [etc/esgf-example.toml](etc/esgf-example.toml) to `custom.toml` and edit your real ESGF options locally (do not commit secrets):
+
+```bash
+# Copy example and edit your ESGF Kafka settings
+cp etc/esgf-example.toml custom.toml
+vim custom.toml   # set brokers, group.id, SASL, CA path, etc.
+
+# Validate and inspect
+piddi --config custom.toml config validate
+piddi --config custom.toml config show
+
+# Safe test run (no Handle writes; dumps messages)
+piddi --config custom.toml --verbose consume --dry-run --dump
+```
+
+This keeps your private ESGF credentials local while enabling safe end-to-end testing with `--dry-run` and `--dump`.
+
 ### Validate Config
 
 ```bash
