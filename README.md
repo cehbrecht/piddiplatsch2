@@ -83,10 +83,7 @@ piddi --config custom.toml --verbose consume --dry-run --dump
 For exploratory runs without external dependencies, use the relaxed example config:
 
 ```bash
-# Option A: reference the file in-place
-piddi --config etc/observe.toml consume --dry-run --dump --force
-
-# Option B: copy and run locally
+# copy and run locally
 cp etc/observe.toml .
 piddi --config observe.toml consume --dry-run --dump --force
 ```
