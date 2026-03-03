@@ -17,8 +17,8 @@ This guide will help you get started with development, testing, and making contr
 
 ```bash
 # Clone the repository
-git clone git@github.com:cehbrecht/piddiplatsch2.git
-cd piddiplatsch2
+git clone git@github.com:cehbrecht/piddiplatsch.git
+cd piddiplatsch
 
 # Create and activate conda environment
 conda env create
