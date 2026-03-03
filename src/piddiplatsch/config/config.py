@@ -4,6 +4,8 @@ from pathlib import Path
 import toml
 from rich.logging import RichHandler
 
+from piddiplatsch.config.schema import validate_config
+
 DEFAULT_CONFIG_PATH = Path(__file__).parent / "default.toml"
 
 
@@ -94,6 +96,10 @@ class Config:
             datefmt="[%X]",
             handlers=handlers,
         )
+
+    def validate(self) -> tuple[list[str], list[str]]:
+        """Validate the loaded configuration using Pydantic models."""
+        return validate_config(self.config_data)
 
 
 # singleton instance

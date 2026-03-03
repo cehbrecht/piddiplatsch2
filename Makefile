@@ -102,24 +102,30 @@ pre-commit: ## run all pre-commit hooks
 
 test: test-unit test-integration ## run all fast tests (unit + integration, no Docker required)
 
+config-validate: ## validate default and test configuration before smoke/integration
+	@echo "Validating default configuration ..."
+	@bash -c 'python -m piddiplatsch.cli config validate'
+	@echo "Validating tests/config.toml ..."
+	@bash -c 'python -m piddiplatsch.cli --config tests/config.toml config validate'
+
 test-unit: ## run unit tests only (fast, no external dependencies - unmarked tests)
 	@echo "Running unit tests ..."
-	@bash -c 'pytest -v -m "not integration and not smoke" tests/'
+	@bash -c 'python -m pytest -v -m "not integration and not smoke" tests/'
 
 test-integration: ## run integration tests only (JSONL backend, no Docker required)
 	@echo "Running integration tests ..."
-	@bash -c 'pytest -v -m "integration" tests/'
+	@bash -c 'python -m pytest -v -m "integration" tests/'
 
-test-smoke: start-docker ## run smoke tests only (requires Docker: Kafka + Handle server)
+test-smoke: config-validate start-docker ## run smoke tests only (requires Docker: Kafka + Handle server)
 	@echo "Running smoke tests ..."
 	# Ensure Kafka topic exists before starting consumer
 	@echo "Ensuring Kafka topic exists (from config) ..."
-	@bash -c 'python -c "from piddiplatsch.config import config; config.load_user_config(\"tests/config.toml\"); from piddiplatsch.testing.kafka_client import ensure_topic_exists_from_config; ensure_topic_exists_from_config()"'
+	@python scripts/ensure_kafka_topic.py || true
 	# Start production consumer in background
 	@echo "Starting piddi consumer (background) ..."
-	@bash -c 'piddi --config tests/config.toml consume & echo $$! > .consumer.pid && echo "Consumer PID: $$(cat .consumer.pid)"'
+	@bash -c 'python -m piddiplatsch.cli --config tests/config.toml consume & echo $$! > .consumer.pid && echo "Consumer PID: $$(cat .consumer.pid)"'
 	# Run smoke tests; on failure, ensure consumer and docker are stopped
-	@bash -c 'pytest -v -s -m "smoke" tests/' || ($(MAKE) stop-consumer; $(MAKE) stop-docker; exit 1)
+	@bash -c 'python -m pytest -v -s -m "smoke" tests/' || ($(MAKE) stop-consumer; $(MAKE) stop-docker; exit 1)
 	# Stop consumer and docker after tests
 	@$(MAKE) stop-consumer
 	@$(MAKE) stop-docker
@@ -129,9 +135,9 @@ test-all: test-unit test-integration test-smoke ## run all tests including smoke
 smoke: test-smoke
 
 coverage: ## check code coverage quickly with the default Python
-	@bash -c 'coverage run --source piddiplatsch -m pytest'
-	@bash -c 'coverage report -m'
-	@bash -c 'coverage html'
+	@bash -c 'python -m coverage run --source piddiplatsch -m pytest'
+	@bash -c 'python -m coverage report -m'
+	@bash -c 'python -m coverage html'
 	$(BROWSER) htmlcov/index.html
 
 ## Deployment targets:
@@ -167,9 +173,8 @@ start-docker: ## start Docker services (Kafka + Handle server) for testing
 	@echo "🐳 Starting Docker services (Kafka + Handle server)..."
 	@echo "======================================================================"
 	@docker-compose up --build -d
-	@echo "⏳ Waiting 5 seconds for services to initialize..."
-	@sleep 5
-	@echo "✅ Docker services ready!"
+	@bash -c 'scripts/wait_for_kafka_health.sh 20 2' || (echo "⚠️ Brokers not healthy; falling back to port check on localhost:39092" && bash -c 'retries=20; i=0; while [ $$i -lt $$retries ]; do if nc -z localhost 39092 >/dev/null 2>&1; then echo "✅ Kafka port open (fallback)!"; exit 0; fi; sleep 1; i=$$((i+1)); done; echo "❌ Kafka not ready after fallback."; exit 1')
+	@echo "✅ Docker services started!"
 	@echo ""
 
 stop-docker: ## stop Docker test services
@@ -186,7 +191,7 @@ start-consumer:
 	# Ensure Kafka topic exists before starting consumer
 	@echo "Ensuring Kafka topic exists (from config) ..."
 	@bash -c 'python -c "from piddiplatsch.config import config; config.load_user_config(\"tests/config.toml\"); from piddiplatsch.testing.kafka_client import ensure_topic_exists_from_config; ensure_topic_exists_from_config()"'
-	@bash -c 'piddi --config tests/config.toml consume & echo $$! > .consumer.pid && echo "Consumer PID: $$(cat .consumer.pid)"'
+	@bash -c 'python -m piddiplatsch.cli --config tests/config.toml consume & echo $$! > .consumer.pid && echo "Consumer PID: $$(cat .consumer.pid)"'
 
 stop-consumer:
 	@echo "Stopping piddi consumer ..."

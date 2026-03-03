@@ -1,6 +1,8 @@
+import json
 from pathlib import Path
 
 import click
+import toml
 
 from piddiplatsch.config import config
 from piddiplatsch.consumer import start_consumer
@@ -150,6 +152,66 @@ def retry(ctx, path: tuple[Path, ...], delete_after: bool, dry_run: bool):
                 click.echo(f"    - {rel_path}")
     else:
         click.echo("  ✓ All items processed successfully!")
+
+
+# config commands
+
+
+@cli.group(name="config")
+def config_cmd():
+    """Configuration commands."""
+    pass
+
+
+@config_cmd.command("validate")
+def config_validate():
+    """Validate the loaded configuration file and defaults."""
+    errors, warnings = config.validate()
+    if warnings:
+        click.echo("Warnings:")
+        for w in warnings:
+            click.echo(f"  - {w}")
+    if errors:
+        click.echo("Errors:")
+        for e in errors:
+            click.echo(f"  - {e}")
+        # Non-zero exit if invalid
+        raise SystemExit(1)
+    click.echo("✓ Configuration is valid")
+
+
+@config_cmd.command("show")
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["toml", "json"], case_sensitive=False),
+    default="toml",
+    show_default=True,
+    help="Output format",
+)
+@click.option("--section", type=str, help="Show only a specific section")
+@click.option("--key", type=str, help="Show a specific key within section")
+def config_show(fmt: str, section: str | None, key: str | None):
+    """Print the effective configuration (defaults + overrides)."""
+    # Build the view of config to render
+    if section and key:
+        value = config.get(section, key)
+        if value is None:
+            raise SystemExit(f"Not found: [{section}] {key}")
+        data = {section: {key: value}}
+    elif section:
+        sect = config.get(section)
+        if not sect:
+            raise SystemExit(f"Not found: [{section}]")
+        data = {section: sect}
+    else:
+        data = config.config_data
+
+    # Render
+    if fmt.lower() == "json":
+        click.echo(json.dumps(data, indent=2, sort_keys=True))
+    else:
+        click.echo(toml.dumps(data))
 
 
 if __name__ == "__main__":

@@ -260,6 +260,21 @@ class Stats:
         self.reporters = [ConsoleReporter()]
         self._closed = False
 
+    def configure_for_run(self, enable_db: bool = False, db_path: str | None = None):
+        """Reset counters and reporters for a fresh run, optionally enabling DB.
+
+        This keeps reporter setup encapsulated and avoids leaking lifecycle
+        details into callers like the consumer.
+        """
+        self.reset()
+        if enable_db and db_path:
+            try:
+                self.reporters.append(SQLiteReporter(db_path=db_path))
+            except Exception:
+                logger.exception(
+                    "Failed to initialize SQLiteReporter; continuing without DB reporter"
+                )
+
     # --- Core increment ---
     def increment(self, key: CounterKey, n=1):
         if key == CounterKey.HANDLE_TIME:

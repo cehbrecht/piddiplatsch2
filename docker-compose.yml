@@ -5,9 +5,9 @@ services:
     hostname: kafka-gen
     container_name: kafka-gen
     volumes:
-      - ./scripts/create_cluster_id.sh:/tmp/create_cluster_id.sh
+      - ./scripts:/tmp/scripts:ro
       - ./clusterID:/tmp/clusterID
-    command: "bash -c '/tmp/create_cluster_id.sh'"
+    command: "bash -c 'bash /tmp/scripts/create_cluster_id.sh'"
     networks:
       - kafka-net
 
@@ -33,9 +33,15 @@ services:
       KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
     volumes:
       - kafka1-data:/var/lib/kafka/data
-      - ./scripts/update_run.sh:/tmp/update_run.sh
+      - ./scripts:/tmp/scripts:ro
       - ./clusterID:/tmp/clusterID
-    command: "bash -c '/tmp/update_run.sh && /etc/confluent/docker/run'"
+    command: "bash -c 'bash /tmp/scripts/update_run.sh && /etc/confluent/docker/run'"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/kafka1/19092'"]
+      interval: 3s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
     networks:
       - kafka-net
 
@@ -61,9 +67,15 @@ services:
       KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
     volumes:
       - kafka2-data:/var/lib/kafka/data
-      - ./scripts/update_run.sh:/tmp/update_run.sh
+      - ./scripts:/tmp/scripts:ro
       - ./clusterID:/tmp/clusterID
-    command: "bash -c '/tmp/update_run.sh && /etc/confluent/docker/run'"
+    command: "bash -c 'bash /tmp/scripts/update_run.sh && /etc/confluent/docker/run'"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/kafka2/19093'"]
+      interval: 3s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
     networks:
       - kafka-net
 
@@ -89,9 +101,15 @@ services:
       KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
     volumes:
       - kafka3-data:/var/lib/kafka/data
-      - ./scripts/update_run.sh:/tmp/update_run.sh
+      - ./scripts:/tmp/scripts:ro
       - ./clusterID:/tmp/clusterID
-    command: "bash -c '/tmp/update_run.sh && /etc/confluent/docker/run'"
+    command: "bash -c 'bash /tmp/scripts/update_run.sh && /etc/confluent/docker/run'"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/kafka3/19094'"]
+      interval: 3s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
     networks:
       - kafka-net
 
