@@ -19,6 +19,10 @@ class BaseProcessor:
         self.retries = retries
         self.logger = logging.getLogger(__name__)
 
+    def __str__(self):
+        """Return a friendly name for progress display."""
+        return self.__class__.__name__.replace("Processor", "").lower()
+
     def _safe_add_record(self, record) -> None:
         last_err = None
         for attempt in range(1, self.retries + 2):
