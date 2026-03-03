@@ -18,14 +18,14 @@ Inspired by the TV puppet [Pittiplatsch](https://en.wikipedia.org/wiki/Pittiplat
 
 ## 🎯 Intended Audience
 
-Piddiplatsch is primarily developed and used at **DKRZ** in the context of CMIP data ingestion and PID registration workflows.
+Piddiplatsch is developed for the **[ESGF](https://esgf.llnl.gov/)** (Earth System Grid Federation) community to support CMIP data ingestion and PID registration workflows. It is currently used in production at **DKRZ**.
 
-It is intended for users who:
-- work with CMIP6-style dataset or file records
-- are comfortable running Kafka consumers
-- need to register or update PIDs via a Handle.Net service
+It is intended for:
+- ESGF data nodes managing CMIP6+ dataset and file records
+- Sites that need to register or update PIDs via Handle.Net service
+- Users comfortable running Kafka consumers in production environments
 
-The project is fully open-source and documented. Curious users or future adopters with similar requirements are welcome to explore and reuse it.
+The project is fully open-source and documented. ESGF sites and other organizations with similar requirements are welcome to adopt and contributete.
 
 ---
 
