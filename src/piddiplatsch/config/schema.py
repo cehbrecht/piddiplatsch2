@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Literal, Optional
+from typing import Literal
+from urllib.parse import urlsplit
 
 from pydantic import (
     BaseModel,
@@ -10,7 +11,6 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-from urllib.parse import urlsplit
 
 
 class ConsumerConfig(BaseModel):
@@ -18,18 +18,18 @@ class ConsumerConfig(BaseModel):
 
     processor: str
     topic: str
-    output_dir: Optional[str] = None
-    max_errors: Optional[int] = None
+    output_dir: str | None = None
+    max_errors: int | None = None
 
 
 class KafkaConfig(BaseModel):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
     bootstrap_servers: str = Field(..., alias="bootstrap.servers")
-    group_id: Optional[str] = Field(None, alias="group.id")
-    auto_offset_reset: Optional[str] = Field(None, alias="auto.offset.reset")
-    enable_auto_commit: Optional[bool] = Field(None, alias="enable.auto.commit")
-    session_timeout_ms: Optional[int] = Field(None, alias="session.timeout.ms")
+    group_id: str | None = Field(None, alias="group.id")
+    auto_offset_reset: str | None = Field(None, alias="auto.offset.reset")
+    enable_auto_commit: bool | None = Field(None, alias="enable.auto.commit")
+    session_timeout_ms: int | None = Field(None, alias="session.timeout.ms")
 
     @field_validator("bootstrap_servers")
     @classmethod
@@ -58,14 +58,14 @@ class KafkaConfig(BaseModel):
 class HandleConfig(BaseModel):
     model_config = ConfigDict(extra="allow")
 
-    backend: Optional[Literal["pyhandle", "jsonl"]] = None
-    server_url: Optional[str] = None
-    prefix: Optional[str] = None
-    username: Optional[str] = None
-    password: Optional[str] = None
+    backend: Literal["pyhandle", "jsonl"] | None = None
+    server_url: str | None = None
+    prefix: str | None = None
+    username: str | None = None
+    password: str | None = None
 
     @model_validator(mode="after")
-    def _check_pyhandle_requirements(self) -> "HandleConfig":
+    def _check_pyhandle_requirements(self) -> HandleConfig:
         if self.backend == "pyhandle":
             if not self.server_url:
                 raise ValueError("Missing required setting: [handle].server_url")
@@ -76,35 +76,35 @@ class HandleConfig(BaseModel):
 
 class StacConfig(BaseModel):
     model_config = ConfigDict(extra="allow")
-    base_url: Optional[str] = None
+    base_url: str | None = None
 
 
 class ElasticsearchConfig(BaseModel):
     model_config = ConfigDict(extra="allow")
-    base_url: Optional[str] = None
-    index: Optional[str] = None
+    base_url: str | None = None
+    index: str | None = None
 
 
 class LookupConfig(BaseModel):
     model_config = ConfigDict(extra="allow")
 
-    backend: Optional[Literal["stac", "es"]] = None
+    backend: Literal["stac", "es"] | None = None
     enabled: bool = True
 
 
 class SchemaConfig(BaseModel):
     model_config = ConfigDict(extra="allow")
-    strict_mode: Optional[bool] = None
+    strict_mode: bool | None = None
 
 
 class PluginsCmip6Config(BaseModel):
     model_config = ConfigDict(extra="allow")
-    landing_page_url: Optional[str] = None
+    landing_page_url: str | None = None
 
 
 class PluginsConfig(BaseModel):
     model_config = ConfigDict(extra="allow")
-    cmip6: Optional[PluginsCmip6Config] = None
+    cmip6: PluginsCmip6Config | None = None
 
 
 class AppConfig(BaseModel):
@@ -112,22 +112,24 @@ class AppConfig(BaseModel):
 
     consumer: ConsumerConfig
     kafka: KafkaConfig
-    handle: Optional[HandleConfig] = None
-    stac: Optional[StacConfig] = None
-    elasticsearch: Optional[ElasticsearchConfig] = None
-    lookup: Optional[LookupConfig] = None
-    schema_config: Optional[SchemaConfig] = Field(None, alias="schema")
-    plugins: Optional[PluginsConfig] = None
+    handle: HandleConfig | None = None
+    stac: StacConfig | None = None
+    elasticsearch: ElasticsearchConfig | None = None
+    lookup: LookupConfig | None = None
+    schema_config: SchemaConfig | None = Field(None, alias="schema")
+    plugins: PluginsConfig | None = None
 
     @model_validator(mode="after")
-    def _check_lookup_requirements(self) -> "AppConfig":
+    def _check_lookup_requirements(self) -> AppConfig:
         if self.lookup and self.lookup.enabled:
             if self.lookup.backend == "stac":
                 if not (self.stac and self.stac.base_url):
                     raise ValueError("Missing required setting: [stac].base_url")
             elif self.lookup.backend == "es":
                 if not (self.elasticsearch and self.elasticsearch.base_url):
-                    raise ValueError("Missing required setting: [elasticsearch].base_url")
+                    raise ValueError(
+                        "Missing required setting: [elasticsearch].base_url"
+                    )
         return self
 
 
@@ -150,18 +152,27 @@ def validate_config(data: dict) -> tuple[list[str], list[str]]:
 
     # warnings
     if cfg.handle and (
-        cfg.handle.username == "300:21.TEST/testuser" and cfg.handle.password == "testpass"
+        cfg.handle.username == "300:21.TEST/testuser"
+        and cfg.handle.password == "testpass"
     ):
         warnings.append("[handle] demo credentials detected; do not use in production")
     if cfg.lookup and cfg.lookup.enabled and cfg.lookup.backend == "es":
         if cfg.elasticsearch and not (cfg.elasticsearch.index):
-            warnings.append("[elasticsearch].index is not set; some features may be unavailable")
+            warnings.append(
+                "[elasticsearch].index is not set; some features may be unavailable"
+            )
 
     # schema strict_mode type handled by Pydantic; add no-op
 
     # plugins cmip6 hint
-    lp = cfg.plugins.cmip6.landing_page_url if (cfg.plugins and cfg.plugins.cmip6) else None
+    lp = (
+        cfg.plugins.cmip6.landing_page_url
+        if (cfg.plugins and cfg.plugins.cmip6)
+        else None
+    )
     if lp in (None, ""):
-        warnings.append("[plugins.cmip6].landing_page_url not set; landing pages may be missing")
+        warnings.append(
+            "[plugins.cmip6].landing_page_url not set; landing pages may be missing"
+        )
 
     return errors, warnings

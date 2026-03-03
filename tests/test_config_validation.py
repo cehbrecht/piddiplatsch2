@@ -1,5 +1,3 @@
-import pytest
-
 from piddiplatsch.config.schema import validate_config
 
 
@@ -16,7 +14,7 @@ def _base_config():
 def test_invalid_bootstrap_servers_format():
     cfg = _base_config()
     cfg["kafka"] = {"bootstrap.servers": "localhost"}  # missing :port
-    errors, warnings = validate_config(cfg)
+    errors, _ = validate_config(cfg)
     assert errors, "Expected errors for invalid bootstrap.servers format"
     assert any(
         "bootstrap.servers" in e and "host:port" in e for e in errors
@@ -26,7 +24,7 @@ def test_invalid_bootstrap_servers_format():
 def test_valid_bootstrap_servers_format():
     cfg = _base_config()
     cfg["kafka"] = {"bootstrap.servers": "localhost:39092"}
-    errors, warnings = validate_config(cfg)
+    errors, _ = validate_config(cfg)
     assert not errors, f"Did not expect errors: {errors}"
 
 
@@ -35,7 +33,7 @@ def test_lookup_stac_requires_base_url():
     cfg["kafka"] = {"bootstrap.servers": "localhost:39092"}
     cfg["lookup"] = {"enabled": True, "backend": "stac"}
     # omit [stac].base_url
-    errors, warnings = validate_config(cfg)
+    errors, _ = validate_config(cfg)
     assert errors, "Expected error for missing [stac].base_url"
     assert any(
         "[stac].base_url" in e for e in errors
@@ -47,7 +45,7 @@ def test_lookup_es_requires_base_url():
     cfg["kafka"] = {"bootstrap.servers": "localhost:39092"}
     cfg["lookup"] = {"enabled": True, "backend": "es"}
     # omit [elasticsearch].base_url
-    errors, warnings = validate_config(cfg)
+    errors, _ = validate_config(cfg)
     assert errors, "Expected error for missing [elasticsearch].base_url"
     assert any(
         "[elasticsearch].base_url" in e for e in errors

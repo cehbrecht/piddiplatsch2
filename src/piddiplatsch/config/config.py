@@ -3,6 +3,7 @@ from pathlib import Path
 
 import toml
 from rich.logging import RichHandler
+
 from piddiplatsch.config.schema import validate_config
 
 DEFAULT_CONFIG_PATH = Path(__file__).parent / "default.toml"

@@ -8,6 +8,10 @@ All notable changes to this project are documented here.
 ### Documentation
 - Streamlined README: concise Testing section, compact Recovery/Retry, removed duplicates.
 - Added explicit smoke test note: run `make test-smoke` for local end-to-end.
+- Added status bar documentation explaining metrics in verbose mode.
+### Fixed
+- Code style: Modernized type annotations (`X | None` instead of `Optional[X]`).
+- Progress bar now displays processor name (e.g., `cmip6`) instead of object representation.
 
 ## [2.1.0] - 2026-01-22
 ### Added
