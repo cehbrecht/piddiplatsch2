@@ -83,7 +83,7 @@ piddi --config custom.toml --verbose consume --dry-run --dump
 For exploratory runs without external dependencies, use the relaxed example config:
 
 ```bash
-# copy and run locally
+#copy and run locally
 cp etc/observe.toml .
 piddi --config observe.toml consume --dry-run --dump --force
 ```
@@ -127,6 +127,28 @@ Common first runs:
   ```bash
   piddi --config custom.toml consume
   ```
+
+### Status Bar (Verbose Mode)
+
+Use `-v` or `--verbose` to display a live progress bar:
+
+```bash
+piddi -c custom.toml -v consume
+```
+
+Status line format:
+```
+cmip6   | msg:458 (22.69/s)| hdl:1.8k (88.79/s)| E:0| W:1.3k| D:70| replica:64| skip:0| patch:152| last_err:-- | ⏱ 00:00:20
+```
+
+- **msg**: messages processed (rate/s)
+- **hdl**: handles registered (rate/s)
+- **E**: errors, **W**: warnings, **D**: retracted messages
+- **replica**: datasets with replica nodes (alternate locations)
+- **skip**: messages skipped (transient external errors, e.g., STAC unavailable)
+- **patch**: messages processed as JSON patches (incremental updates)
+- **last_err**: time since last error
+- **⏱**: total elapsed time
 
 Detailed CLI options and extended examples live in [CONTRIBUTING.md](CONTRIBUTING.md).
 
