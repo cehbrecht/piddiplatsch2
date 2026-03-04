@@ -1,6 +1,6 @@
 # Piddiplatsch
 
-[![Build Status](https://github.com/cehbrecht/piddiplatsch/actions/workflows/ci.yml/badge.svg)](https://github.com/cehbrecht/piddiplatsch/actions)
+[![Build Status](https://github.com/ESGF/piddiplatsch/actions/workflows/ci.yml/badge.svg)](https://github.com/ESGF/piddiplatsch/actions)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![pre-commit enabled](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://pre-commit.com/)
@@ -47,7 +47,7 @@ Install, run, and test in minutes (CLI: `piddi`):
 
 ```bash
 # 1) Setup environment
-git clone git@github.com:cehbrecht/piddiplatsch.git
+git clone git@github.com:ESGF/piddiplatsch.git
 cd piddiplatsch
 conda env create && conda activate piddi
 make develop
